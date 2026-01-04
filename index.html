@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dois Corpos - Planejador de Casamento</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+
+        body { font-family: 'Lato', sans-serif; background-color: #FDFBF7; color: #4A4A4A; }
+        h1, h2, h3, h4, .serif-font { font-family: 'Playfair Display', serif; }
+        
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin: 0 auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+
+        .nav-item.active { border-bottom: 2px solid #9F8189; color: #886F76; font-weight: 700; }
+        
+        .card { background-color: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        
+        .tag-pill { @apply text-xs px-2 py-1 rounded-full border border-stone-200 cursor-pointer select-none transition; }
+        .tag-pill.selected { @apply bg-rose-100 border-rose-300 text-rose-800 font-bold; }
+
+        /* Task Status Colors */
+        .task-ok { border-left: 4px solid #10B981; }
+        .task-warn { border-left: 4px solid #F59E0B; }
+        .task-late { border-left: 4px solid #EF4444; }
+
+        /* Login Overlay Animation */
+        #login-overlay { transition: opacity 0.5s ease-out, visibility 0.5s; }
+        #login-overlay.hidden-fade { opacity: 0; visibility: hidden; pointer-events: none; }
+        
+        /* Input Styles for Login */
+        .login-input { @apply w-full p-3 border border-stone-300 rounded mb-3 focus:outline-none focus:border-stone-500 focus:ring-1 focus:ring-stone-500 bg-stone-50 text-sm; }
+    </style>
+    <!-- Chosen Palette: Dusty Rose & Warm Neutrals -->
+    <!-- Application Structure: Auth (Email/Pass) -> Firestore -> UI -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- LOGIN OVERLAY (Tela de Entrada) -->
+    <div id="login-overlay" class="fixed inset-0 z-[100] bg-stone-100 flex flex-col items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-2xl text-center border border-stone-200">
+            <h1 class="text-4xl serif-font text-stone-800 mb-2">Dois Corpos</h1>
+            <p class="text-stone-500 mb-8 italic text-sm">Gestão Inteligente para o seu Grande Dia</p>
+            
+            <div id="auth-form" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Email</label>
+                    <input type="email" id="email" class="login-input" placeholder="seu@email.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Senha</label>
+                    <input type="password" id="password" class="login-input" placeholder="••••••••">
+                </div>
+                
+                <p id="auth-error" class="text-red-500 text-xs h-4 text-center font-bold"></p>
+
+                <button onclick="handleAuth()" id="btn-auth" class="w-full py-3 px-6 bg-stone-800 text-white rounded-lg font-bold shadow-lg hover:bg-stone-700 transition transform hover:-translate-y-0.5 mt-2">
+                    Entrar
+                </button>
+                
+                <div class="text-center mt-4 border-t pt-4">
+                    <p class="text-xs text-stone-400 mb-2" id="toggle-text">Não tem uma conta?</p>
+                    <button onclick="toggleAuthMode()" class="text-sm font-bold text-rose-600 hover:text-rose-800 underline transition" id="toggle-btn">
+                        Criar conta agora
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading State for Auto-Login -->
+            <div id="auth-loading" class="hidden">
+                <svg class="animate-spin h-8 w-8 text-stone-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-stone-400 text-xs mt-2">Verificando sessão...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl text-stone-700 font-bold serif-font tracking-wide">Dois Corpos</span>
+                    <!-- Status Indicator -->
+                    <div class="flex items-center space-x-2">
+                        <span id="connection-dot" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse"></span>
+                        <span id="connection-status" class="text-xs text-stone-500 font-medium">Conectando...</span>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <button onclick="switchTab('dashboard')" class="nav-item active px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-700">Visão Geral</button>
+                    <button onclick="switchTab('budget')" class="nav-item px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-700">Orçamento</button>
+                    <button onclick="switchTab('guests')" class="nav-item px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-700">Convidados</button>
+                    <button onclick="switchTab('timeline')" class="nav-item px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-700">Tarefas</button>
+                    <button onclick="switchTab('tools')" class="nav-item px-3 py-2 text-sm font-medium text-stone-500 hover:text-stone-700">Calculadora</button>
+                </nav>
+                <button onclick="handleLogout()" class="text-xs text-stone-400 hover:text-red-500 underline">Sair</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="space-y-8 animate-fade-in">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl text-stone-800 serif-font">Painel de Controle</h2>
+                <p class="text-stone-500 text-sm">Visão geral do seu planejamento.</p>
+            </div>
+
+            <div class="flex justify-center mb-6">
+                 <div class="bg-white p-3 rounded shadow-sm flex items-center space-x-2 border border-stone-200">
+                     <span class="text-sm font-bold text-stone-600">Data do Casamento:</span>
+                     <input type="date" id="wedding-date-input" class="border-b border-stone-300 focus:outline-none text-stone-700" onchange="updateSettings()">
+                 </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6 border-t-4 border-rose-300">
+                    <h3 class="text-lg font-semibold text-stone-700">Dias Restantes</h3>
+                    <div class="flex items-baseline mt-2">
+                        <span class="text-5xl font-bold text-rose-900 mr-2" id="days-count">--</span>
+                        <span class="text-stone-500">dias</span>
+                    </div>
+                </div>
+                <div class="card p-6 border-t-4 border-emerald-300">
+                    <h3 class="text-lg font-semibold text-stone-700">Orçamento</h3>
+                    <div class="flex items-baseline mt-2">
+                        <span class="text-3xl font-bold text-emerald-800" id="dash-budget-percent">0%</span>
+                        <span class="text-stone-500 ml-2">Gasto</span>
+                    </div>
+                     <p class="text-sm text-stone-400 mt-2" id="dash-budget-left">Calculando...</p>
+                </div>
+                <div class="card p-6 border-t-4 border-blue-300">
+                    <h3 class="text-lg font-semibold text-stone-700">Convidados</h3>
+                    <div class="flex items-baseline mt-2">
+                        <span class="text-4xl font-bold text-blue-900 mr-2" id="dash-guest-count">0</span>
+                        <span class="text-stone-500">Pessoas</span>
+                    </div>
+                    <p class="text-sm text-stone-400 mt-2" id="dash-guest-confirmed">0 Confirmados</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- BUDGET -->
+        <section id="budget" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-4 border-b pb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-stone-800 serif-font">Gerenciador Financeiro</h2>
+                    <p class="text-stone-500 text-sm">Adicione gastos para ver dicas de economia.</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center bg-white p-2 rounded border border-stone-300">
+                    <span class="mr-2 font-bold text-stone-600">Orçamento Total: R$</span>
+                    <input type="number" id="total-budget-input" class="w-28 text-right font-bold text-stone-800 outline-none border-b border-stone-200" onchange="updateSettings()">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="card p-4 bg-stone-50 border border-stone-200">
+                        <h4 class="text-sm font-bold text-stone-700 mb-2 uppercase">Adicionar Despesa</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <select id="new-exp-cat" class="sm:col-span-2 p-2 border rounded text-sm bg-white">
+                                <option value="" disabled selected>Selecione Categoria...</option>
+                                <option value="Buffet & Comida">Buffet & Comida</option>
+                                <option value="Local">Local</option>
+                                <option value="Foto & Vídeo">Foto & Vídeo</option>
+                                <option value="Decoração">Decoração</option>
+                                <option value="Música/DJ">Música/DJ</option>
+                                <option value="Vestido/Beleza">Vestido/Beleza</option>
+                                <option value="Doces/Bolo">Doces/Bolo</option>
+                                <option value="Assessoria">Assessoria</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                            <input type="number" id="new-exp-val" placeholder="Valor (R$)" class="p-2 border rounded text-sm">
+                            <button onclick="addExpense()" class="bg-emerald-600 text-white rounded text-sm font-bold hover:bg-emerald-700 transition">Adicionar</button>
+                        </div>
+                    </div>
+                    <div class="card overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-stone-100 text-stone-600 text-xs uppercase font-bold">
+                                    <tr>
+                                        <th class="p-3">Categoria</th>
+                                        <th class="p-3 text-right">Valor Pago (R$)</th>
+                                        <th class="p-3 text-center">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="budget-list-body" class="text-sm divide-y divide-stone-100"></tbody>
+                                <tfoot class="bg-stone-50 font-bold text-stone-800">
+                                    <tr>
+                                        <td class="p-3">TOTAL GASTO</td>
+                                        <td class="p-3 text-right" id="footer-total-spent">R$ 0</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="card p-4">
+                        <h3 class="font-bold text-center text-stone-700 mb-2">Distribuição</h3>
+                        <div class="chart-container h-48">
+                            <canvas id="budgetChart"></canvas>
+                        </div>
+                        <div class="mt-4 text-center border-t pt-2">
+                             <p class="text-xs text-stone-500 uppercase">Saldo Disponível</p>
+                             <p class="text-2xl font-bold" id="budget-balance-display">R$ 0</p>
+                        </div>
+                    </div>
+                    <div class="card p-4 bg-yellow-50 border border-yellow-200">
+                        <h3 class="font-bold text-yellow-800 text-sm mb-3 flex items-center">
+                            <span class="text-lg mr-2">💡</span> Dicas de Economia
+                        </h3>
+                        <div id="savings-tips" class="text-xs space-y-2 text-stone-700"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GUESTS -->
+        <section id="guests" class="hidden space-y-6">
+             <div class="mb-4 border-b pb-4">
+                <h2 class="text-2xl font-bold text-stone-800 serif-font">Convidados</h2>
+                <p class="text-stone-500 text-sm">Gerencie sua lista e marque as tags.</p>
+            </div>
+            <div class="card p-5 bg-rose-50 border border-rose-100 shadow-sm">
+                <h4 class="text-sm font-bold text-rose-800 mb-3 uppercase">Novo Convidado</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-4">
+                        <label class="block text-xs text-stone-500 mb-1">Nome Principal</label>
+                        <input type="text" id="new-guest-name" class="w-full p-2 border rounded text-sm focus:border-rose-400 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs text-stone-500 mb-1">Acomp.</label>
+                        <input type="number" id="new-guest-partners" value="0" min="0" class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div class="sm:col-span-6 space-y-1">
+                        <label class="block text-xs text-stone-500">Etiquetas:</label>
+                        <div class="flex flex-wrap gap-2" id="guest-tags-selector">
+                            <span class="tag-pill" onclick="toggleTagSelection(this)">Padrinho</span>
+                            <span class="tag-pill" onclick="toggleTagSelection(this)">Madrinha</span>
+                            <span class="tag-pill" onclick="toggleTagSelection(this)">Equipe</span>
+                            <span class="tag-pill" onclick="toggleTagSelection(this)">Presenteou</span>
+                            <span class="tag-pill" onclick="toggleTagSelection(this)">Convidado</span>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-12 mt-2">
+                        <button onclick="addGuest()" class="w-full bg-rose-600 text-white p-2 rounded text-sm font-bold hover:bg-rose-700 transition">Salvar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 space-y-4">
+                    <div class="card p-4">
+                        <h4 class="text-stone-700 font-bold mb-2">Resumo</h4>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex justify-between"><span>Convites:</span> <strong id="stats-invites">0</strong></li>
+                            <li class="flex justify-between"><span>Total Pessoas:</span> <strong id="stats-total-pax">0</strong></li>
+                            <li class="flex justify-between text-green-600"><span>Confirmados:</span> <strong id="stats-confirmed">0</strong></li>
+                        </ul>
+                    </div>
+                    <div class="card p-4">
+                        <div class="chart-container h-40">
+                            <canvas id="guestChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:col-span-2 card overflow-hidden flex flex-col h-[600px]">
+                    <div class="overflow-y-auto custom-scroll flex-grow">
+                        <table class="w-full text-left">
+                            <thead class="bg-stone-100 sticky top-0 z-10">
+                                <tr class="text-xs font-bold text-stone-600 uppercase">
+                                    <th class="p-3">Nome</th>
+                                    <th class="p-3">Total</th>
+                                    <th class="p-3">Tags</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="guest-list-body" class="text-sm divide-y divide-stone-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TASKS -->
+        <section id="timeline" class="hidden space-y-6">
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-stone-800 serif-font">Tarefas & Prazos</h2>
+                <div class="flex gap-4 text-xs mt-2">
+                    <span class="flex items-center"><span class="w-3 h-3 bg-green-500 mr-1 rounded-full"></span> No Prazo</span>
+                    <span class="flex items-center"><span class="w-3 h-3 bg-yellow-500 mr-1 rounded-full"></span> Atenção (10d)</span>
+                    <span class="flex items-center"><span class="w-3 h-3 bg-red-500 mr-1 rounded-full"></span> Vencida</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1 card p-5 bg-stone-50 h-fit sticky top-24">
+                    <h4 class="font-bold text-stone-700 mb-3">Nova Tarefa</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs text-stone-500">Descrição</label>
+                            <input type="text" id="new-task-input" placeholder="Ex: Fechar fotógrafo" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-stone-500">Categoria</label>
+                            <select id="new-task-cat" class="w-full p-2 border rounded text-sm bg-white">
+                                <option value="Geral">Geral</option>
+                                <option value="Cerimônia">Cerimônia</option>
+                                <option value="Festa/Buffet">Festa/Buffet</option>
+                                <option value="Burocracia">Burocracia</option>
+                                <option value="Trajes/Beleza">Trajes/Beleza</option>
+                                <option value="Lua de Mel">Lua de Mel</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-stone-500">Data Limite</label>
+                            <input type="date" id="new-task-date" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <button onclick="addTask()" class="w-full bg-stone-700 text-white py-2 rounded font-bold text-sm hover:bg-stone-800">Adicionar Tarefa</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 card p-6">
+                    <div id="tasks-list" class="space-y-3">
+                        <p class="text-stone-400 text-center py-8">Carregando tarefas...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TOOLS -->
+        <section id="tools" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-stone-800 serif-font">Calculadora de Bebidas</h2>
+            <div class="card p-6 border-t-4 border-yellow-400">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-stone-700 mb-1">Total de Bebedores</label>
+                            <input type="number" id="calc-guests" value="100" class="w-full p-2 border rounded" oninput="calculateDrinks()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-stone-700 mb-1">Perfil</label>
+                            <select id="calc-profile" class="w-full p-2 border rounded" onchange="calculateDrinks()">
+                                <option value="moderate">Cerveja + Refri</option>
+                                <option value="high">Cerveja + Destilados</option>
+                                <option value="low">Brunch (Leve)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 grid grid-cols-2 gap-4 text-center">
+                        <div class="p-3 bg-stone-50 rounded"><span class="block text-xl font-bold" id="res-beer">0</span><span class="text-xs uppercase">Latas Cerveja</span></div>
+                        <div class="p-3 bg-stone-50 rounded"><span class="block text-xl font-bold" id="res-water">0</span><span class="text-xs uppercase">Garrafas Água</span></div>
+                        <div class="p-3 bg-stone-50 rounded"><span class="block text-xl font-bold" id="res-soda">0</span><span class="text-xs uppercase">Refri (2L)</span></div>
+                        <div class="p-3 bg-stone-50 rounded"><span class="block text-xl font-bold" id="res-sparkling">0</span><span class="text-xs uppercase">Espumante</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // FIREBASE CONFIGURATION
+        // Priority: Use the config provided by the user for the specific project
+        let firebaseConfig = {
+            apiKey: "AIzaSyBbd5GSe2dAOuDPFy3K3h6r53Op9y1iFbw",
+            authDomain: "doiscorpos-2f241.firebaseapp.com",
+            projectId: "doiscorpos-2f241",
+            storageBucket: "doiscorpos-2f241.firebasestorage.app",
+            messagingSenderId: "924599762554",
+            appId: "1:924599762554:web:5a61ad6d21580a74a105c3"
+        };
+        
+        // Fallback to Env config if running in preview without the above hardcoded values
+        if (typeof __firebase_config !== 'undefined') {
+            // Note: In preview environment, we might want to respect the env config, 
+            // but the user explicitly requested THEIR database. 
+            // We'll prioritize the hardcoded config above if it works.
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // App ID logic
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'doiscorpos-app';
+
+        let currentUser = null;
+        let unsubscribeSettings, unsubscribeBudget, unsubscribeGuests, unsubscribeTasks;
+        
+        // AUTH UI LOGIC
+        let isRegistering = false;
+
+        window.toggleAuthMode = () => {
+            isRegistering = !isRegistering;
+            const btn = document.getElementById('btn-auth');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleBtn = document.getElementById('toggle-btn');
+            const error = document.getElementById('auth-error');
+            
+            error.innerText = "";
+            
+            if (isRegistering) {
+                btn.innerText = "Cadastrar & Entrar";
+                toggleText.innerText = "Já tem uma conta?";
+                toggleBtn.innerText = "Fazer Login";
+            } else {
+                btn.innerText = "Entrar";
+                toggleText.innerText = "Não tem uma conta?";
+                toggleBtn.innerText = "Criar conta agora";
+            }
+        };
+
+        window.handleAuth = async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('auth-error');
+            const btn = document.getElementById('btn-auth');
+            
+            if (!email || !password) {
+                errorEl.innerText = "Preencha todos os campos.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...`;
+
+            try {
+                if (isRegistering) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                // Auth listener will handle the UI update
+            } catch (error) {
+                console.error(error);
+                let msg = "Erro na autenticação.";
+                if (error.code === 'auth/wrong-password') msg = "Senha incorreta.";
+                if (error.code === 'auth/user-not-found') msg = "Usuário não encontrado.";
+                if (error.code === 'auth/email-already-in-use') msg = "Email já cadastrado.";
+                if (error.code === 'auth/weak-password') msg = "Senha muito fraca.";
+                errorEl.innerText = msg;
+                btn.disabled = false;
+                btn.innerText = isRegistering ? "Cadastrar & Entrar" : "Entrar";
+            }
+        };
+
+        window.handleLogout = async () => {
+            await signOut(auth);
+            location.reload();
+        };
+
+        // AUTH STATE MONITOR
+        // Attempt Custom Token (Preview) First, then fall back to normal flow
+        const initAuth = async () => {
+            // Only use custom token if provided by the environment (Preview Mode)
+            // AND if the config actually matches the preview environment to avoid mismatches
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                     // Check if we are using the environment config or user config
+                     // If user provided a specific project ID that differs from env, we skip custom token
+                     // This is a heuristic: custom tokens from env only work with env config
+                     if(typeof __firebase_config !== 'undefined') {
+                         const envConfig = JSON.parse(__firebase_config);
+                         if(envConfig.projectId === firebaseConfig.projectId) {
+                             document.getElementById('auth-form').classList.add('hidden');
+                             document.getElementById('auth-loading').classList.remove('hidden');
+                             await signInWithCustomToken(auth, __initial_auth_token);
+                         }
+                     }
+                } catch (e) {
+                    console.warn("Auto-login skipped or failed:", e);
+                    // Fallback to manual login form
+                    document.getElementById('auth-form').classList.remove('hidden');
+                    document.getElementById('auth-loading').classList.add('hidden');
+                }
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                
+                // Hide Login Overlay
+                const overlay = document.getElementById('login-overlay');
+                overlay.classList.add('hidden-fade');
+
+                // Update Header Status
+                document.getElementById('connection-status').innerText = "Online";
+                document.getElementById('connection-status').className = "text-xs text-green-700 font-bold";
+                document.getElementById('connection-dot').className = "w-2.5 h-2.5 rounded-full bg-green-500";
+
+                setupListeners(user.uid);
+            } else {
+                // Show Login Overlay if logged out
+                 const overlay = document.getElementById('login-overlay');
+                 overlay.classList.remove('hidden-fade');
+                 document.getElementById('auth-form').classList.remove('hidden');
+                 document.getElementById('auth-loading').classList.add('hidden');
+            }
+        });
+
+        // --- FIRESTORE LISTENERS ---
+        function setupListeners(userId) {
+            const userRoot = `artifacts/${appId}/users/${userId}`;
+
+            // 1. Settings
+            unsubscribeSettings = onSnapshot(doc(db, userRoot, 'settings', 'general'), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('wedding-date-input').value = data.date || '';
+                    document.getElementById('total-budget-input').value = data.budgetTotal || 0;
+                    updateDashboard(data);
+                    renderBudget(state.budget, data);
+                }
+            });
+
+            // 2. Budget
+            unsubscribeBudget = onSnapshot(collection(db, userRoot, 'expenses'), (snap) => {
+                state.budget = [];
+                snap.forEach(d => state.budget.push({ id: d.id, ...d.data() }));
+                renderBudget(state.budget, getSettings());
+                updateDashboard(getSettings());
+            });
+
+            // 3. Guests
+            unsubscribeGuests = onSnapshot(collection(db, userRoot, 'guests'), (snap) => {
+                state.guests = [];
+                snap.forEach(d => state.guests.push({ id: d.id, ...d.data() }));
+                renderGuests(state.guests);
+                updateDashboard(getSettings());
+            });
+
+            // 4. Tasks
+            unsubscribeTasks = onSnapshot(collection(db, userRoot, 'tasks'), (snap) => {
+                state.tasks = [];
+                snap.forEach(d => state.tasks.push({ id: d.id, ...d.data() }));
+                renderTasks(state.tasks);
+            });
+        }
+
+        // --- STATE & HELPERS ---
+        let state = { budget: [], guests: [], tasks: [] };
+        const getSettings = () => ({
+            date: document.getElementById('wedding-date-input').value,
+            budgetTotal: parseFloat(document.getElementById('total-budget-input').value) || 0
+        });
+
+        // --- EXPORTED ACTIONS ---
+        window.updateSettings = async () => {
+            if (!currentUser) return;
+            const settings = getSettings();
+            await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/settings`, 'general'), settings, { merge: true });
+        };
+
+        window.addExpense = async () => {
+            if (!currentUser) return;
+            const cat = document.getElementById('new-exp-cat').value;
+            const val = parseFloat(document.getElementById('new-exp-val').value);
+            if (cat && val) {
+                await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/expenses`), { category: cat, amount: val, timestamp: serverTimestamp() });
+                document.getElementById('new-exp-cat').value = "";
+                document.getElementById('new-exp-val').value = "";
+            }
+        };
+
+        window.deleteExpense = async (id) => await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/expenses`, id));
+
+        window.addGuest = async () => {
+            if (!currentUser) return;
+            const name = document.getElementById('new-guest-name').value;
+            const partners = parseInt(document.getElementById('new-guest-partners').value) || 0;
+            const tags = [];
+            document.querySelectorAll('#guest-tags-selector .tag-pill.selected').forEach(el => tags.push(el.innerText));
+
+            if (name) {
+                await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/guests`), { name, partners, tags, status: 'pending', timestamp: serverTimestamp() });
+                document.getElementById('new-guest-name').value = '';
+                document.getElementById('new-guest-partners').value = '0';
+                document.querySelectorAll('#guest-tags-selector .tag-pill.selected').forEach(el => el.classList.remove('selected'));
+            }
+        };
+
+        window.updateGuestStatus = async (id, val) => await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/guests`, id), { status: val }, { merge: true });
+        window.deleteGuest = async (id) => { if (confirm("Remover?")) await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/guests`, id)); }
+
+        window.toggleTagSelection = (el) => el.classList.toggle('selected');
+
+        window.addTask = async () => {
+            if (!currentUser) return;
+            const text = document.getElementById('new-task-input').value;
+            const cat = document.getElementById('new-task-cat').value;
+            const date = document.getElementById('new-task-date').value;
+            if (text) {
+                await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/tasks`), { text, category: cat, deadline: date, done: false, timestamp: serverTimestamp() });
+                document.getElementById('new-task-input').value = '';
+            }
+        };
+
+        window.toggleTask = async (id, done) => await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/tasks`, id), { done: !done }, { merge: true });
+        window.deleteTask = async (id) => await deleteDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/tasks`, id));
+
+        // --- RENDERING ---
+        function updateDashboard(settings) {
+            if (!settings) settings = getSettings();
+            
+            // Date
+            if(settings.date) {
+                const diff = Math.ceil((new Date(settings.date) - new Date()) / (1000 * 60 * 60 * 24));
+                document.getElementById('days-count').innerText = diff > 0 ? diff : 0;
+            }
+
+            // Budget
+            const spent = state.budget.reduce((a, b) => a + b.amount, 0);
+            const total = settings.budgetTotal || 0;
+            const pct = total > 0 ? Math.round((spent / total) * 100) : 0;
+            document.getElementById('dash-budget-percent').innerText = `${pct}%`;
+            document.getElementById('dash-budget-left').innerText = `Livre: ${(total - spent).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})}`;
+
+            // Guests
+            let count = 0, conf = 0;
+            state.guests.forEach(g => {
+                const p = 1 + (g.partners || 0);
+                if(g.status !== 'declined') count += p;
+                if(g.status === 'confirmed') conf += p;
+            });
+            document.getElementById('dash-guest-count').innerText = count;
+            document.getElementById('dash-guest-confirmed').innerText = `${conf} Confirmados`;
+        }
+
+        let chartInst = null;
+        function renderBudget(expenses, settings) {
+            if(!settings) settings = getSettings();
+            const list = document.getElementById('budget-list-body');
+            list.innerHTML = '';
+            let totalSpent = 0;
+            let cats = {};
+
+            expenses.forEach(e => {
+                totalSpent += e.amount;
+                cats[e.category] = (cats[e.category] || 0) + e.amount;
+                list.innerHTML += `
+                    <tr class="hover:bg-stone-50 border-b border-stone-100">
+                        <td class="p-3 font-medium text-stone-700">${e.category}</td>
+                        <td class="p-3 text-right text-stone-600">R$ ${e.amount.toLocaleString('pt-BR')}</td>
+                        <td class="p-3 text-center"><button onclick="deleteExpense('${e.id}')" class="text-red-400 hover:text-red-600 font-bold">X</button></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('footer-total-spent').innerText = totalSpent.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('budget-balance-display').innerText = ((settings.budgetTotal || 0) - totalSpent).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+
+            // Analysis
+            const tips = document.getElementById('savings-tips');
+            tips.innerHTML = '';
+            const benchmarks = { 'Buffet & Comida': 0.40, 'Decoração': 0.15, 'Foto & Vídeo': 0.12, 'Local': 0.15 };
+            let hasTip = false;
+            
+            if(settings.budgetTotal > 0) {
+                Object.keys(benchmarks).forEach(k => {
+                    const r = (cats[k] || 0) / settings.budgetTotal;
+                    if(r > benchmarks[k]) {
+                        hasTip = true;
+                        tips.innerHTML += `<div class="p-2 bg-white rounded border border-yellow-200 mb-1"><strong>${k}:</strong> Gasto de ${(r*100).toFixed(0)}% (Média: ${benchmarks[k]*100}%).</div>`;
+                    }
+                });
+            }
+            if(!hasTip && totalSpent > 0) tips.innerHTML = `<span class="text-green-600 font-bold">Gastos equilibrados!</span>`;
+            
+            // Chart
+            const ctx = document.getElementById('budgetChart');
+            if(chartInst) chartInst.destroy();
+            const labels = Object.keys(cats);
+            const data = Object.values(cats);
+            const rem = Math.max(0, (settings.budgetTotal || 0) - totalSpent);
+            if(rem > 0) { labels.push('Livre'); data.push(rem); }
+
+            chartInst = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels, datasets: [{ data, backgroundColor: ['#F87171', '#FBBF24', '#34D399', '#60A5FA', '#A78BFA', '#E5E7EB'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 10} } } }
+            });
+        }
+
+        let guestChart = null;
+        function renderGuests(guests) {
+            const list = document.getElementById('guest-list-body');
+            list.innerHTML = '';
+            let counts = { confirmed: 0, pending: 0, declined: 0 };
+            
+            guests.forEach(g => {
+                const p = 1 + (g.partners || 0);
+                if(counts[g.status] !== undefined) counts[g.status] += p;
+                
+                let tagsHtml = (g.tags || []).map(t => `<span class="inline-block text-[10px] px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 mr-1">${t}</span>`).join('');
+                
+                list.innerHTML += `
+                    <tr class="hover:bg-stone-50 border-b border-stone-100">
+                        <td class="p-3 font-medium text-stone-700">${g.name}</td>
+                        <td class="p-3 text-stone-500">${p}</td>
+                        <td class="p-3">${tagsHtml}</td>
+                        <td class="p-3">
+                            <select onchange="updateGuestStatus('${g.id}', this.value)" class="text-xs border rounded p-1 ${g.status === 'confirmed' ? 'bg-green-50 text-green-800' : 'bg-yellow-50 text-yellow-800'}">
+                                <option value="pending" ${g.status === 'pending' ? 'selected' : ''}>Pendente</option>
+                                <option value="confirmed" ${g.status === 'confirmed' ? 'selected' : ''}>Confirmado</option>
+                                <option value="declined" ${g.status === 'declined' ? 'selected' : ''}>Não Vai</option>
+                            </select>
+                        </td>
+                        <td class="p-3 text-right"><button onclick="deleteGuest('${g.id}')" class="text-stone-400 hover:text-red-500 font-bold px-2">X</button></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('stats-invites').innerText = guests.length;
+            document.getElementById('stats-total-pax').innerText = counts.confirmed + counts.pending;
+            document.getElementById('stats-confirmed').innerText = counts.confirmed;
+
+            const ctx = document.getElementById('guestChart');
+            if(guestChart) guestChart.destroy();
+            guestChart = new Chart(ctx, {
+                type: 'pie',
+                data: { labels: ['Confirmados', 'Pendentes', 'Não Vão'], datasets: [{ data: [counts.confirmed, counts.pending, counts.declined], backgroundColor: ['#10B981', '#F59E0B', '#EF4444'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'left', labels: {boxWidth: 10} } } }
+            });
+        }
+
+        function renderTasks(tasks) {
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = '';
+            if(tasks.length === 0) { list.innerHTML = `<p class="text-center text-stone-400 text-sm">Nenhuma tarefa.</p>`; return; }
+            
+            tasks.sort((a,b) => (a.done === b.done) ? 0 : a.done ? 1 : -1).forEach(t => {
+                let statusClass = "border-l-4 border-stone-300";
+                let dateTxt = "";
+                
+                if(t.deadline && !t.done) {
+                    const diff = Math.ceil((new Date(t.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    dateTxt = new Date(t.deadline).toLocaleDateString('pt-BR');
+                    if(diff < 0) statusClass = "task-late bg-red-50";
+                    else if(diff <= 10) statusClass = "task-warn bg-yellow-50";
+                    else statusClass = "task-ok";
+                }
+
+                list.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-white shadow-sm rounded mb-2 ${t.done ? 'opacity-60 border-l-4 border-stone-200' : statusClass}">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask('${t.id}', ${t.done})" class="h-5 w-5 rounded">
+                            <div>
+                                <p class="text-sm font-bold text-stone-700 ${t.done ? 'line-through' : ''}">${t.text}</p>
+                                <div class="flex gap-2 text-xs mt-1">
+                                    <span class="px-2 py-0.5 bg-stone-100 rounded text-stone-500">${t.category || 'Geral'}</span>
+                                    ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="deleteTask('${t.id}')" class="text-xs text-stone-300 hover:text-red-500">Apagar</button>
+                    </div>
+                `;
+            });
+        }
+        
+        // Export Calcs
+        window.calculateDrinks = () => {
+             const guests = parseInt(document.getElementById('calc-guests').value) || 0;
+            const profile = document.getElementById('calc-profile').value;
+            let beerM = 2, waterM = 0.8, sodaM = 0.6, sparkM = 0.25;
+            if (profile === 'high') { beerM = 4; waterM = 1; sodaM = 0.4; } 
+            else if (profile === 'low') { beerM = 1.5; sparkM = 0.4; }
+            document.getElementById('res-beer').innerText = Math.ceil(guests * beerM);
+            document.getElementById('res-water').innerText = Math.ceil(guests * waterM);
+            document.getElementById('res-soda').innerText = Math.ceil(guests * sodaM);
+            document.getElementById('res-sparkling').innerText = Math.ceil(guests * sparkM);
+        }
+
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(b => { b.classList.remove('active', 'text-stone-700'); b.classList.add('text-stone-500'); });
+            document.querySelectorAll(`button[onclick="switchTab('${tabId}')"]`).forEach(b => b.classList.add('active', 'text-stone-700'));
+            if(tabId === 'tools') window.calculateDrinks();
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
