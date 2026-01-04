@@ -120,10 +120,21 @@
                 <p class="text-stone-500 text-sm">Visão geral do seu planejamento.</p>
             </div>
 
+            <!-- SETTINGS AREA (Updated) -->
             <div class="flex justify-center mb-6">
-                 <div class="bg-white p-3 rounded shadow-sm flex items-center space-x-2 border border-stone-200">
-                     <span class="text-sm font-bold text-stone-600">Data do Casamento:</span>
-                     <input type="date" id="wedding-date-input" class="border-b border-stone-300 focus:outline-none text-stone-700" onchange="updateSettings()">
+                 <div class="bg-white p-4 rounded-lg shadow-sm flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4 border border-stone-200">
+                     <div class="flex items-center space-x-2">
+                         <span class="text-sm font-bold text-stone-600">Data:</span>
+                         <input type="date" id="wedding-date-input" class="border p-1 rounded text-stone-700 text-sm">
+                     </div>
+                     <div class="flex items-center space-x-2">
+                         <span class="text-sm font-bold text-stone-600">Orçamento Total: R$</span>
+                         <input type="number" id="total-budget-input" class="border p-1 rounded w-28 text-stone-700 text-sm">
+                     </div>
+                     <button onclick="updateSettings()" class="bg-stone-800 text-white text-xs font-bold px-4 py-2 rounded hover:bg-stone-700 transition">
+                         Salvar Configurações
+                     </button>
+                     <span id="save-status" class="text-xs font-bold text-green-600 opacity-0 transition-opacity">✅ Salvo!</span>
                  </div>
             </div>
 
@@ -161,10 +172,7 @@
                     <h2 class="text-2xl font-bold text-stone-800 serif-font">Gerenciador Financeiro</h2>
                     <p class="text-stone-500 text-sm">Adicione gastos para ver dicas de economia.</p>
                 </div>
-                <div class="mt-4 md:mt-0 flex items-center bg-white p-2 rounded border border-stone-300">
-                    <span class="mr-2 font-bold text-stone-600">Orçamento Total: R$</span>
-                    <input type="number" id="total-budget-input" class="w-28 text-right font-bold text-stone-800 outline-none border-b border-stone-200" onchange="updateSettings()">
-                </div>
+                <!-- Removed duplicate budget input from here to focus on Dashboard settings -->
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -380,7 +388,6 @@
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // FIREBASE CONFIGURATION
-        // Priority: Use the config provided by the user for the specific project
         let firebaseConfig = {
             apiKey: "AIzaSyBbd5GSe2dAOuDPFy3K3h6r53Op9y1iFbw",
             authDomain: "doiscorpos-2f241.firebaseapp.com",
@@ -390,18 +397,14 @@
             appId: "1:924599762554:web:5a61ad6d21580a74a105c3"
         };
         
-        // Fallback to Env config if running in preview without the above hardcoded values
         if (typeof __firebase_config !== 'undefined') {
-            // Note: In preview environment, we might want to respect the env config, 
-            // but the user explicitly requested THEIR database. 
-            // We'll prioritize the hardcoded config above if it works.
+            // Using preview environment config if available and matching
         }
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // App ID logic
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'doiscorpos-app';
 
         let currentUser = null;
@@ -416,9 +419,7 @@
             const toggleText = document.getElementById('toggle-text');
             const toggleBtn = document.getElementById('toggle-btn');
             const error = document.getElementById('auth-error');
-            
             error.innerText = "";
-            
             if (isRegistering) {
                 btn.innerText = "Cadastrar & Entrar";
                 toggleText.innerText = "Já tem uma conta?";
@@ -442,7 +443,7 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processando...`;
+            btn.innerHTML = `Processando...`;
 
             try {
                 if (isRegistering) {
@@ -450,14 +451,13 @@
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
-                // Auth listener will handle the UI update
             } catch (error) {
                 console.error(error);
-                let msg = "Erro na autenticação.";
+                let msg = "Erro na autenticação: " + error.code;
                 if (error.code === 'auth/wrong-password') msg = "Senha incorreta.";
                 if (error.code === 'auth/user-not-found') msg = "Usuário não encontrado.";
                 if (error.code === 'auth/email-already-in-use') msg = "Email já cadastrado.";
-                if (error.code === 'auth/weak-password') msg = "Senha muito fraca.";
+                if (error.code === 'auth/weak-password') msg = "Senha muito fraca (min 6 caracteres).";
                 errorEl.innerText = msg;
                 btn.disabled = false;
                 btn.innerText = isRegistering ? "Cadastrar & Entrar" : "Entrar";
@@ -469,16 +469,11 @@
             location.reload();
         };
 
-        // AUTH STATE MONITOR
-        // Attempt Custom Token (Preview) First, then fall back to normal flow
+        // AUTO LOGIN ATTEMPT
         const initAuth = async () => {
-            // Only use custom token if provided by the environment (Preview Mode)
-            // AND if the config actually matches the preview environment to avoid mismatches
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 try {
-                     // Check if we are using the environment config or user config
-                     // If user provided a specific project ID that differs from env, we skip custom token
-                     // This is a heuristic: custom tokens from env only work with env config
+                     // Heuristic check to avoid custom token error on mismatched projects
                      if(typeof __firebase_config !== 'undefined') {
                          const envConfig = JSON.parse(__firebase_config);
                          if(envConfig.projectId === firebaseConfig.projectId) {
@@ -488,8 +483,7 @@
                          }
                      }
                 } catch (e) {
-                    console.warn("Auto-login skipped or failed:", e);
-                    // Fallback to manual login form
+                    console.warn("Auto-login skipped/failed:", e);
                     document.getElementById('auth-form').classList.remove('hidden');
                     document.getElementById('auth-loading').classList.add('hidden');
                 }
@@ -500,19 +494,13 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                
-                // Hide Login Overlay
                 const overlay = document.getElementById('login-overlay');
                 overlay.classList.add('hidden-fade');
-
-                // Update Header Status
                 document.getElementById('connection-status').innerText = "Online";
                 document.getElementById('connection-status').className = "text-xs text-green-700 font-bold";
                 document.getElementById('connection-dot').className = "w-2.5 h-2.5 rounded-full bg-green-500";
-
                 setupListeners(user.uid);
             } else {
-                // Show Login Overlay if logged out
                  const overlay = document.getElementById('login-overlay');
                  overlay.classList.remove('hidden-fade');
                  document.getElementById('auth-form').classList.remove('hidden');
@@ -524,7 +512,7 @@
         function setupListeners(userId) {
             const userRoot = `artifacts/${appId}/users/${userId}`;
 
-            // 1. Settings
+            // 1. Settings (Explicitly catching permission errors here too)
             unsubscribeSettings = onSnapshot(doc(db, userRoot, 'settings', 'general'), (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -532,6 +520,11 @@
                     document.getElementById('total-budget-input').value = data.budgetTotal || 0;
                     updateDashboard(data);
                     renderBudget(state.budget, data);
+                }
+            }, (error) => {
+                console.error("Error reading settings:", error);
+                if(error.code === 'permission-denied') {
+                    alert("Atenção: Permissão negada para ler dados. Verifique as regras do Firestore no Console do Firebase.");
                 }
             });
 
@@ -567,10 +560,27 @@
         });
 
         // --- EXPORTED ACTIONS ---
+        
+        // NEW: Explicit Save with visual feedback and Error Handling
         window.updateSettings = async () => {
             if (!currentUser) return;
             const settings = getSettings();
-            await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/settings`, 'general'), settings, { merge: true });
+            const statusEl = document.getElementById('save-status');
+            
+            try {
+                await setDoc(doc(db, `artifacts/${appId}/users/${currentUser.uid}/settings`, 'general'), settings, { merge: true });
+                
+                // Show Success
+                statusEl.classList.remove('opacity-0');
+                setTimeout(() => statusEl.classList.add('opacity-0'), 2000);
+            } catch (error) {
+                console.error("Error saving settings:", error);
+                if (error.code === 'permission-denied') {
+                    alert("ERRO DE PERMISSÃO: Não foi possível salvar.\n\nVá no Console do Firebase > Firestore Database > Regras (Rules) e mude 'allow write: if false' para 'allow read, write: if request.auth != null;'");
+                } else {
+                    alert("Erro ao salvar: " + error.message);
+                }
+            }
         };
 
         window.addExpense = async () => {
@@ -578,9 +588,11 @@
             const cat = document.getElementById('new-exp-cat').value;
             const val = parseFloat(document.getElementById('new-exp-val').value);
             if (cat && val) {
-                await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/expenses`), { category: cat, amount: val, timestamp: serverTimestamp() });
-                document.getElementById('new-exp-cat').value = "";
-                document.getElementById('new-exp-val').value = "";
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/expenses`), { category: cat, amount: val, timestamp: serverTimestamp() });
+                    document.getElementById('new-exp-cat').value = "";
+                    document.getElementById('new-exp-val').value = "";
+                } catch(e) { console.error(e); alert("Erro ao adicionar despesa. Verifique as regras do Firebase."); }
             }
         };
 
@@ -594,10 +606,12 @@
             document.querySelectorAll('#guest-tags-selector .tag-pill.selected').forEach(el => tags.push(el.innerText));
 
             if (name) {
-                await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/guests`), { name, partners, tags, status: 'pending', timestamp: serverTimestamp() });
-                document.getElementById('new-guest-name').value = '';
-                document.getElementById('new-guest-partners').value = '0';
-                document.querySelectorAll('#guest-tags-selector .tag-pill.selected').forEach(el => el.classList.remove('selected'));
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/guests`), { name, partners, tags, status: 'pending', timestamp: serverTimestamp() });
+                    document.getElementById('new-guest-name').value = '';
+                    document.getElementById('new-guest-partners').value = '0';
+                    document.querySelectorAll('#guest-tags-selector .tag-pill.selected').forEach(el => el.classList.remove('selected'));
+                } catch(e) { console.error(e); alert("Erro ao adicionar convidado. Verifique as regras do Firebase."); }
             }
         };
 
@@ -612,8 +626,10 @@
             const cat = document.getElementById('new-task-cat').value;
             const date = document.getElementById('new-task-date').value;
             if (text) {
-                await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/tasks`), { text, category: cat, deadline: date, done: false, timestamp: serverTimestamp() });
-                document.getElementById('new-task-input').value = '';
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${currentUser.uid}/tasks`), { text, category: cat, deadline: date, done: false, timestamp: serverTimestamp() });
+                    document.getElementById('new-task-input').value = '';
+                } catch(e) { console.error(e); alert("Erro ao adicionar tarefa. Verifique as regras do Firebase."); }
             }
         };
 
