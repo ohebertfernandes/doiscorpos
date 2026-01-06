@@ -6,6 +6,7 @@
     <title>Dois Corpos - Planejador de Casamento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
@@ -87,7 +88,8 @@
         .task-section-header.today { color: #D97706; border-color: #FDE68A; }
         .task-section-header.week { color: #059669; border-color: #A7F3D0; }
 
-        #edit-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        /* --- MODALS --- */
+        #edit-modal, #view-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
         #login-overlay { background-color: #F0FDFA; background-image: radial-gradient(#E0E7FF 1px, transparent 1px); background-size: 20px 20px; }
     </style>
 </head>
@@ -113,6 +115,38 @@
                 </div>
             </div>
             <div id="auth-loading" class="hidden py-6"><p class="text-emerald-800 text-sm animate-pulse">Conectando...</p></div>
+        </div>
+    </div>
+
+    <!-- VIEW TASK MODAL (The Card) -->
+    <div id="view-modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4">
+        <div class="bg-white p-0 rounded-xl shadow-2xl w-full max-w-md border border-stone-100 overflow-hidden animate-fade-in relative">
+            <div class="h-3 bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
+            <button onclick="closeViewModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 bg-white rounded-full p-1"><i class="fa-solid fa-times"></i></button>
+            
+            <div class="p-8">
+                <span id="view-category" class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded mb-2 inline-block">Categoria</span>
+                
+                <h3 id="view-title" class="text-2xl font-serif text-stone-800 mb-2 leading-tight">Título da Tarefa</h3>
+                
+                <div class="flex items-center text-stone-500 text-sm mb-4">
+                    <i class="fa-regular fa-calendar mr-2"></i>
+                    <span id="view-date">Data Limite</span>
+                </div>
+
+                <div id="view-tags" class="flex flex-wrap gap-1 mb-6"></div>
+
+                <div class="bg-stone-50 p-4 rounded-lg border-l-4 border-emerald-200">
+                    <h4 class="text-xs font-bold text-stone-400 uppercase mb-1">Observações</h4>
+                    <p id="view-obs" class="text-sm text-stone-700 whitespace-pre-wrap italic">Nenhuma observação.</p>
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button id="view-edit-btn" class="text-xs font-bold text-stone-500 hover:text-emerald-700 flex items-center">
+                        <i class="fa-solid fa-pencil mr-1"></i> Editar Tarefa
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -325,26 +359,38 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-1 card p-4 h-fit">
-                    <h4 class="font-bold text-emerald-800 text-sm mb-3">Estatísticas</h4>
-                    <div class="space-y-3 text-sm text-stone-600">
-                        <div class="flex justify-between border-b border-stone-100 pb-1">
-                            <span>Convites:</span> 
-                            <b id="stats-invites">0</b>
+                <div class="md:col-span-1 space-y-4">
+                    <div class="card p-4 h-fit">
+                        <h4 class="font-bold text-emerald-800 text-sm mb-3">Estatísticas</h4>
+                        <div class="space-y-3 text-sm text-stone-600">
+                            <div class="flex justify-between border-b border-stone-100 pb-1">
+                                <span>Convites:</span> 
+                                <b id="stats-invites">0</b>
+                            </div>
+                            <div class="flex justify-between border-b border-stone-100 pb-1">
+                                <span>Total de Pessoas:</span> 
+                                <b id="stats-total-pax" class="text-blue-800 text-lg">0</b>
+                            </div>
+                            <div class="flex justify-between text-green-600 pt-1">
+                                <span>Confirmados:</span> 
+                                <b id="stats-confirmed">0</b>
+                            </div>
                         </div>
-                        <div class="flex justify-between border-b border-stone-100 pb-1">
-                            <span>Total de Pessoas:</span> 
-                            <b id="stats-total-pax" class="text-blue-800 text-lg">0</b>
-                        </div>
-                        <div class="flex justify-between text-green-600 pt-1">
-                            <span>Confirmados:</span> 
-                            <b id="stats-confirmed">0</b>
+                        <div class="mt-4 h-32"><canvas id="guestChart"></canvas></div>
+                    </div>
+
+                    <!-- NEW: Guest Tags Report -->
+                    <div class="card p-4 h-fit border-l-4 border-indigo-200">
+                        <h4 class="font-bold text-indigo-900 text-sm mb-3">Por Categoria (Pessoas)</h4>
+                        <div id="guest-tags-report" class="space-y-2 text-xs">
+                            <!-- Populated by JS -->
+                            <p class="text-stone-400 italic">Adicione tags para ver o relatório.</p>
                         </div>
                     </div>
-                    <div class="mt-4 h-32"><canvas id="guestChart"></canvas></div>
                 </div>
+
                 <div class="md:col-span-2 card overflow-hidden">
-                    <div class="overflow-y-auto max-h-[500px] custom-scroll">
+                    <div class="overflow-y-auto max-h-[600px] custom-scroll">
                         <table class="w-full text-left">
                             <thead class="bg-stone-50 sticky top-0 text-xs font-bold text-stone-500 uppercase">
                                 <tr>
@@ -371,7 +417,6 @@
                     <div class="card p-4 bg-stone-50">
                         <h4 class="text-xs font-bold text-stone-500 uppercase mb-3">Nova Tarefa</h4>
                         <input type="text" id="new-task-input" placeholder="Título da tarefa..." class="input-elegant w-full mb-2 text-sm">
-                        <!-- Updated Categories to match Budget -->
                         <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm">
                             <option value="Geral">Geral</option>
                             <option value="Cerimônia">Cerimônia</option>
@@ -583,7 +628,6 @@
             if(timerInterval) clearInterval(timerInterval);
             const run = () => {
                 if(!state.settings.date) return;
-                
                 const [y, m, d] = state.settings.date.split('-');
                 let targetDate = new Date(y, m-1, d);
                 if(state.settings.time) {
@@ -700,7 +744,45 @@
         window.toggleTask = (id, current) => updateItem('tasks', id, { done: !current });
         window.deleteTask = (id) => deleteItem('tasks', id);
 
+        window.viewTask = (id) => {
+            const task = state.tasks.find(t => t.id === id);
+            if(!task) return;
+            document.getElementById('view-category').innerText = task.category || 'Geral';
+            document.getElementById('view-title').innerText = task.text;
+            if(task.deadline) {
+                const [y, m, d] = task.deadline.split('-');
+                document.getElementById('view-date').innerText = `${d}/${m}/${y}`;
+            } else { document.getElementById('view-date').innerText = 'Sem data'; }
+            
+            const tagContainer = document.getElementById('view-tags');
+            tagContainer.innerHTML = '';
+            if(task.tags && task.tags.length > 0) {
+                task.tags.forEach(t => {
+                    tagContainer.innerHTML += `<span class="text-[10px] px-2 py-1 rounded bg-stone-100 border border-stone-200" style="border-left: 3px solid ${t.color}">${t.name}</span>`;
+                });
+            } else { tagContainer.innerHTML = '<span class="text-xs text-stone-300 italic">Sem tags</span>'; }
+
+            const obsEl = document.getElementById('view-obs');
+            if(task.observation) { obsEl.innerText = task.observation; obsEl.classList.remove('italic', 'text-stone-400'); } 
+            else { obsEl.innerText = 'Nenhuma observação registrada.'; obsEl.classList.add('italic', 'text-stone-400'); }
+
+            document.getElementById('view-edit-btn').onclick = () => { closeViewModal(); openEditModal('tasks', id); };
+            document.getElementById('view-modal').classList.remove('hidden');
+        };
+        window.closeViewModal = () => document.getElementById('view-modal').classList.add('hidden');
+
         let currentEditInfo = null; 
+        window.createTagInModal = async () => {
+            const name = document.getElementById('modal-new-tag-name').value;
+            const color = document.getElementById('modal-new-tag-color').value;
+            if(name) {
+                try {
+                    await addDoc(collection(db, getUserRoot(), 'custom_tags'), { name, color, timestamp: serverTimestamp() });
+                    document.getElementById('modal-new-tag-name').value = '';
+                } catch(e) { handleDbError(e); }
+            }
+        }
+
         window.openEditModal = (coll, id) => {
             const modal = document.getElementById('edit-modal');
             const content = document.getElementById('modal-content');
@@ -744,17 +826,25 @@
                     ${tagsHtml}
                 `;
             } else if(coll === 'tasks') {
+                const currentTaskTags = item.tags || [];
                 let tagsHtml = `<div class="flex flex-wrap gap-1 mt-2" id="edit-task-tags">`;
                 state.customTags.forEach(tag => {
-                    const isSel = (item.tags || []).some(t => t.name === tag.name) ? 'selected' : '';
+                    const isSel = currentTaskTags.some(t => (t.id && t.id === tag.id) || t.name === tag.name) ? 'selected' : '';
                     tagsHtml += `<span class="tag-selector-pill ${isSel}" onclick="this.classList.toggle('selected')" data-tag-obj='${JSON.stringify(tag)}' style="border-left: 3px solid ${tag.color}">${tag.name}</span>`;
                 });
                 tagsHtml += `</div>`;
+                
+                const createTagHtml = `
+                    <div class="mt-3 pt-3 border-t border-stone-100 flex items-center gap-2">
+                        <input type="text" id="modal-new-tag-name" placeholder="Nova Tag..." class="text-xs border p-1 rounded w-full">
+                        <input type="color" id="modal-new-tag-color" value="#10B981" class="color-swatch">
+                        <button onclick="createTagInModal()" class="text-xs bg-stone-700 text-white px-2 py-1 rounded">Criar</button>
+                    </div>
+                `;
 
                 content.innerHTML = `
                     <label class="text-xs font-bold text-stone-500">Descrição</label>
                     <input id="edit-text" type="text" class="input-elegant w-full mb-3" value="${item.text}">
-                    
                     <label class="text-xs font-bold text-stone-500">Categoria</label>
                     <select id="edit-cat" class="input-elegant w-full mb-3">
                         <option value="${item.category}" selected>${item.category}</option>
@@ -771,18 +861,15 @@
                         <option value="Doces/Bolo">Doces/Bolo</option>
                         <option value="Assessoria">Assessoria</option>
                     </select>
-
                     <label class="text-xs font-bold text-stone-500">Data Limite</label>
                     <input id="edit-date" type="date" class="input-elegant w-full mb-3" value="${item.deadline}">
-                    
                     <label class="text-xs font-bold text-stone-500">Observações</label>
                     <textarea id="edit-obs" class="input-elegant w-full h-24 resize-none mb-3">${item.observation || ''}</textarea>
-                    
                     <label class="text-xs font-bold text-stone-500">Tags</label>
                     ${tagsHtml}
+                    ${createTagHtml}
                 `;
             }
-
             modal.classList.remove('hidden');
         };
 
@@ -813,7 +900,6 @@
                 });
                 data.tags = tags;
             }
-
             await updateItem(coll, id, data);
             closeModal();
         };
@@ -845,18 +931,43 @@
             let totalPax = 0; 
             let guestsConf = 0;
 
+            // NEW: Aggregate Guest Tags Stats
+            let tagCounts = {};
+
             state.guests.forEach(g => {
                 const p = 1 + (parseInt(g.partners)||0);
                 if(g.status !== 'declined') { totalPax += p; }
                 if(g.status === 'confirmed') guestsConf += p;
+
+                if(g.tags && Array.isArray(g.tags)) {
+                    g.tags.forEach(t => {
+                        tagCounts[t] = (tagCounts[t] || 0) + p;
+                    });
+                }
             });
+
+            // Render Guest Tag Report
+            const reportEl = document.getElementById('guest-tags-report');
+            if(reportEl) {
+                reportEl.innerHTML = '';
+                if(Object.keys(tagCounts).length === 0) {
+                    reportEl.innerHTML = '<p class="text-stone-400 italic">Nenhuma tag atribuída.</p>';
+                } else {
+                    Object.keys(tagCounts).forEach(tag => {
+                        reportEl.innerHTML += `
+                            <div class="flex justify-between items-center border-b border-stone-50 pb-1">
+                                <span>${tag}</span>
+                                <span class="font-bold text-indigo-700">${tagCounts[tag]}</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
 
             const invEl = document.getElementById('dash-invites-count');
             if(invEl) invEl.innerText = invitesCount;
             const paxEl = document.getElementById('dash-total-pax');
             if(paxEl) paxEl.innerText = totalPax;
-            const guestCountEl = document.getElementById('dash-guest-count');
-            if(guestCountEl) guestCountEl.innerText = totalPax; 
             const confEl = document.getElementById('dash-guest-confirmed');
             if(confEl) confEl.innerText = `${guestsConf} Confirmados`;
 
@@ -924,21 +1035,16 @@
                     return;
                 }
 
-                // Updated Date Logic for Next Week/Month
                 const buckets = { late: [], today: [], week: [], month: [], nextMonth: [], future: [], noDate: [] };
                 const today = new Date(); today.setHours(0,0,0,0);
                 
-                // Calculate correct "This Week" End (Upcoming Saturday)
-                const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+                const dayOfWeek = today.getDay(); 
                 const distToSat = 6 - dayOfWeek;
                 const endOfWeek = new Date(today);
                 endOfWeek.setDate(today.getDate() + distToSat);
                 endOfWeek.setHours(23,59,59,999);
 
-                // End of Month logic
                 const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                
-                // Next Month logic
                 const startNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
                 const endNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
@@ -951,7 +1057,7 @@
                 pendingTasks.forEach(t => {
                     if(!t.deadline) { buckets.noDate.push(t); return; }
                     const [y, m, d] = t.deadline.split('-');
-                    const taskDate = new Date(y, m-1, d); // Local Midnight
+                    const taskDate = new Date(y, m-1, d); 
                     taskDate.setHours(0,0,0,0);
 
                     if (taskDate < today) buckets.late.push(t);
@@ -1009,7 +1115,9 @@
                         <div class="flex-grow">
                             <div class="flex items-center gap-2">
                                 <p class="text-sm font-bold text-stone-700 ${t.done?'line-through text-stone-400':''}">${t.text}</p>
-                                ${hasObs ? '<i class="fa-regular fa-eye text-stone-400 text-xs" title="Tem observação"></i>' : ''}
+                                <button onclick="viewTask('${t.id}')" class="text-stone-400 hover:text-emerald-600 p-1" title="Ver Detalhes">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
                             </div>
                             
                             <div class="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex flex-wrap gap-2 mt-1">
@@ -1017,12 +1125,10 @@
                                 ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
                             </div>
                             ${tagPills}
-                            ${hasObs ? `<p class="text-xs text-stone-500 mt-1 pl-2 border-l-2 border-stone-200 italic truncate max-w-xs">${t.observation}</p>` : ''}
                         </div>
                     </div>
-                    <div class="flex gap-3 flex-shrink-0 ml-2">
-                        <button onclick="openEditModal('tasks', '${t.id}')" class="text-stone-400 hover:text-blue-500 text-sm">✎</button>
-                        <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm">✕</button>
+                    <div class="flex gap-2 flex-shrink-0 ml-1">
+                        <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm px-2">✕</button>
                     </div>
                 </div>
             `;
