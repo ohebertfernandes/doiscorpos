@@ -54,24 +54,30 @@
             outline: none; border-color: var(--color-gold); background-color: white; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1); 
         }
 
-        .tag-pill { 
-            font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid #E5E7EB; 
+        /* --- TAGS STYLING --- */
+        .tag-selector-pill { 
+            font-size: 11px; padding: 4px 10px; border-radius: 999px; border: 1px solid #E5E7EB; 
             cursor: pointer; user-select: none; transition: all 0.2s; 
             background: white; color: #6B7280; display: inline-flex; items-center; margin-right: 4px; margin-bottom: 4px;
         }
-        .tag-pill:hover { border-color: var(--color-emerald-main); }
-        .tag-pill.selected { border-width: 2px; font-weight: bold; }
+        .tag-selector-pill:hover { border-color: var(--color-emerald-main); transform: translateY(-1px); }
+        .tag-selector-pill.selected { border-width: 2px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .task-tag-display {
+            font-size: 10px; padding: 2px 8px; border-radius: 6px; color: white; font-weight: bold;
+            display: inline-block; margin-right: 4px; margin-bottom: 2px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
 
         .color-swatch { -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer; padding: 0; background: none; }
         .color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
         .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; border: 1px solid #ddd; }
 
-        /* Countdown specific styles */
         .countdown-box { background: rgba(6, 78, 59, 0.03); border-radius: 8px; padding: 8px 4px; min-width: 50px; text-align: center; }
         .countdown-val { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--color-emerald-dark); }
         .countdown-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; color: #9CA3AF; margin-top: 2px; }
 
-        /* Task Section Headers */
         .task-section-header { 
             font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; 
             margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.25rem; border-bottom: 1px solid #E5E7EB;
@@ -81,7 +87,6 @@
         .task-section-header.today { color: #D97706; border-color: #FDE68A; }
         .task-section-header.week { color: #059669; border-color: #A7F3D0; }
 
-        /* --- MODAL --- */
         #edit-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
         #login-overlay { background-color: #F0FDFA; background-image: radial-gradient(#E0E7FF 1px, transparent 1px); background-size: 20px 20px; }
     </style>
@@ -305,12 +310,12 @@
                     <div class="col-span-6 sm:col-span-5">
                         <label class="text-[10px] font-bold text-stone-400 uppercase mb-1 block">Tags (Selecione)</label>
                         <div class="flex flex-wrap gap-1" id="guest-tags-selector">
-                            <span onclick="toggleTag(this)" class="tag-pill">Padrinho</span>
-                            <span onclick="toggleTag(this)" class="tag-pill">Madrinha</span>
-                            <span onclick="toggleTag(this)" class="tag-pill">Família</span>
-                            <span onclick="toggleTag(this)" class="tag-pill">Amigos</span>
-                            <span onclick="toggleTag(this)" class="tag-pill">Fornecedor</span>
-                            <span onclick="toggleTag(this)" class="tag-pill">Deu Presente</span>
+                            <span onclick="toggleTag(this)" class="tag-selector-pill">Padrinho</span>
+                            <span onclick="toggleTag(this)" class="tag-selector-pill">Madrinha</span>
+                            <span onclick="toggleTag(this)" class="tag-selector-pill">Família</span>
+                            <span onclick="toggleTag(this)" class="tag-selector-pill">Amigos</span>
+                            <span onclick="toggleTag(this)" class="tag-selector-pill">Fornecedor</span>
+                            <span onclick="toggleTag(this)" class="tag-selector-pill">Deu Presente</span>
                         </div>
                     </div>
                     <div class="col-span-12 mt-2">
@@ -366,13 +371,24 @@
                     <div class="card p-4 bg-stone-50">
                         <h4 class="text-xs font-bold text-stone-500 uppercase mb-3">Nova Tarefa</h4>
                         <input type="text" id="new-task-input" placeholder="Título da tarefa..." class="input-elegant w-full mb-2 text-sm">
+                        <!-- Updated Categories to match Budget -->
                         <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm">
-                            <option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option>
-                            <option value="Festa">Festa</option><option value="Roupa">Roupa</option>
+                            <option value="Geral">Geral</option>
+                            <option value="Cerimônia">Cerimônia</option>
+                            <option value="Festa/Buffet">Festa/Buffet</option>
+                            <option value="Burocracia">Burocracia</option>
+                            <option value="Trajes/Beleza">Trajes/Beleza</option>
+                            <option value="Lua de Mel">Lua de Mel</option>
+                            <option value="Buffet & Comida">Buffet & Comida</option>
+                            <option value="Local">Local</option>
+                            <option value="Foto & Vídeo">Foto & Vídeo</option>
+                            <option value="Decoração">Decoração</option>
+                            <option value="Música/DJ">Música/DJ</option>
+                            <option value="Doces/Bolo">Doces/Bolo</option>
+                            <option value="Assessoria">Assessoria</option>
                         </select>
                         <input type="date" id="new-task-date" class="input-elegant w-full mb-2 text-sm">
                         
-                        <!-- Observation & Tags in Quick Add -->
                         <textarea id="new-task-obs" placeholder="Observações (opcional)..." class="input-elegant w-full mb-2 text-sm h-20 resize-none"></textarea>
                         
                         <div class="mb-3">
@@ -382,7 +398,6 @@
                             </div>
                             <button onclick="toggleTagCreator()" class="text-xs text-emerald-600 hover:underline mt-1">+ Criar Tag</button>
                             
-                            <!-- Tag Creator Inline -->
                             <div id="tag-creator" class="hidden mt-2 p-2 bg-white rounded border border-emerald-200 shadow-sm">
                                 <input type="text" id="new-tag-name" placeholder="Nome da Tag" class="text-xs border p-1 rounded w-full mb-1">
                                 <div class="flex items-center gap-2">
@@ -396,11 +411,8 @@
                     </div>
                 </div>
                 
-                <!-- NEW: Task List Container -->
                 <div class="lg:col-span-2 card p-4 overflow-hidden">
-                    <div id="tasks-list" class="space-y-4">
-                        <!-- Content injected by JS with Section Headers -->
-                    </div>
+                    <div id="tasks-list" class="space-y-4"></div>
                 </div>
             </div>
         </section>
@@ -435,7 +447,6 @@
         import { getAuth, onAuthStateChanged, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- VISUALS ---
         function drawLogo(id) {
             const canvas = document.getElementById(id);
             if(!canvas) return;
@@ -448,7 +459,6 @@
         }
         window.addEventListener('load', () => { drawLogo('logo-login'); drawLogo('logo-header'); });
 
-        // --- FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyBbd5GSe2dAOuDPFy3K3h6r53Op9y1iFbw",
             authDomain: "doiscorpos-2f241.firebaseapp.com",
@@ -464,11 +474,9 @@
         let currentUser = null;
         let isRegistering = false;
         
-        // --- HELPER FOR DB PATH ---
         const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'doiscorpos-default';
         const getUserRoot = () => currentUser ? `artifacts/${getAppId()}/users/${currentUser.uid}` : null;
 
-        // --- AUTH LOGIC ---
         window.toggleAuthMode = () => {
             isRegistering = !isRegistering;
             document.getElementById('btn-auth').innerText = isRegistering ? "Cadastrar & Entrar" : "Entrar";
@@ -500,7 +508,6 @@
 
         window.handleLogout = async () => { await signOut(auth); location.reload(); };
 
-        // AUTO LOGIN (Env Token)
         const init = async () => {
             if(typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 try {
@@ -528,7 +535,6 @@
             }
         });
 
-        // --- FIRESTORE HANDLING ---
         const handleDbError = (err) => {
             console.error("DB Error:", err);
             if(err.code === 'permission-denied') {
@@ -544,20 +550,18 @@
             const root = getUserRoot();
             if(!root) return;
 
-            // Settings
             onSnapshot(doc(db, root, 'settings', 'general'), (snap) => {
                 if(snap.exists()) {
                     const d = snap.data();
-                    state.settings = d; // Store settings in state
+                    state.settings = d; 
                     document.getElementById('wedding-date-input').value = d.date || '';
                     document.getElementById('wedding-time-input').value = d.time || '';
                     document.getElementById('total-budget-input').value = d.budgetTotal || '';
                     updateUI(d);
-                    startCountdown(); // Start ticker
+                    startCountdown(); 
                 }
             }, (err) => console.warn("Read settings error", err));
 
-            // Collections
             onSnapshot(collection(db, root, 'expenses'), s => {
                 state.budget = []; s.forEach(d => state.budget.push({id: d.id, ...d.data()})); updateUI();
             });
@@ -574,29 +578,22 @@
             });
         }
 
-        // --- COUNTDOWN LOGIC (SEC UPDATER) ---
         let timerInterval = null;
         function startCountdown() {
             if(timerInterval) clearInterval(timerInterval);
-            
             const run = () => {
                 if(!state.settings.date) return;
                 
                 const [y, m, d] = state.settings.date.split('-');
                 let targetDate = new Date(y, m-1, d);
-                
-                // Add time if exists
                 if(state.settings.time) {
                     const [th, tm] = state.settings.time.split(':');
                     targetDate.setHours(th, tm, 0);
-                } else {
-                    targetDate.setHours(0,0,0);
-                }
+                } else { targetDate.setHours(0,0,0); }
 
                 const now = new Date();
                 let diff = targetDate - now;
-
-                if (diff < 0) diff = 0; // Don't show negative
+                if (diff < 0) diff = 0;
 
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -613,15 +610,10 @@
                 if(elM) elM.innerText = String(minutes).padStart(2, '0');
                 if(elS) elS.innerText = String(seconds).padStart(2, '0');
             };
-            
-            run(); // Immediate
-            timerInterval = setInterval(run, 1000);
+            run(); timerInterval = setInterval(run, 1000);
         }
 
-        // --- CUSTOM TAG LOGIC ---
-        window.toggleTagCreator = () => {
-            document.getElementById('tag-creator').classList.toggle('hidden');
-        }
+        window.toggleTagCreator = () => { document.getElementById('tag-creator').classList.toggle('hidden'); }
 
         window.createNewTag = async () => {
             const name = document.getElementById('new-tag-name').value;
@@ -641,7 +633,7 @@
                 quickTags.innerHTML = '';
                 state.customTags.forEach(tag => {
                     const el = document.createElement('span');
-                    el.className = 'tag-pill';
+                    el.className = 'tag-selector-pill';
                     el.innerText = tag.name;
                     el.style.borderLeft = `3px solid ${tag.color}`;
                     el.onclick = function() { this.classList.toggle('selected'); };
@@ -650,8 +642,6 @@
                 });
             }
         }
-
-        // --- CRUD OPERATIONS ---
 
         window.saveGlobalSettings = async () => {
             if(!getUserRoot()) return;
@@ -664,19 +654,10 @@
             } catch(e) { handleDbError(e); }
         };
 
-        // Helpers
-        async function addItem(coll, data) {
-            try { await addDoc(collection(db, getUserRoot(), coll), { ...data, timestamp: serverTimestamp() }); } catch(e) { handleDbError(e); }
-        }
-        async function updateItem(coll, id, data) {
-            try { await updateDoc(doc(db, getUserRoot(), coll, id), data); } catch(e) { handleDbError(e); }
-        }
-        async function deleteItem(coll, id) {
-            if(!confirm("Excluir item?")) return;
-            try { await deleteDoc(doc(db, getUserRoot(), coll, id)); } catch(e) { handleDbError(e); }
-        }
+        async function addItem(coll, data) { try { await addDoc(collection(db, getUserRoot(), coll), { ...data, timestamp: serverTimestamp() }); } catch(e) { handleDbError(e); } }
+        async function updateItem(coll, id, data) { try { await updateDoc(doc(db, getUserRoot(), coll, id), data); } catch(e) { handleDbError(e); } }
+        async function deleteItem(coll, id) { if(!confirm("Excluir item?")) return; try { await deleteDoc(doc(db, getUserRoot(), coll, id)); } catch(e) { handleDbError(e); } }
 
-        // Wrappers
         window.addExpense = () => {
             const cat = document.getElementById('new-exp-cat').value;
             const val = parseFloat(document.getElementById('new-exp-val').value);
@@ -688,11 +669,11 @@
             const name = document.getElementById('new-guest-name').value;
             const partners = parseInt(document.getElementById('new-guest-partners').value) || 0;
             const tags = [];
-            document.querySelectorAll('#guest-tags-selector .tag-pill.selected').forEach(el => tags.push(el.innerText));
+            document.querySelectorAll('#guest-tags-selector .tag-selector-pill.selected').forEach(el => tags.push(el.innerText));
             if(name) {
                 addItem('guests', { name, partners, tags, status: 'pending' });
                 document.getElementById('new-guest-name').value = '';
-                document.querySelectorAll('.tag-pill.selected').forEach(el => el.classList.remove('selected'));
+                document.querySelectorAll('.tag-selector-pill.selected').forEach(el => el.classList.remove('selected'));
             }
         };
         window.deleteGuest = (id) => deleteItem('guests', id);
@@ -704,10 +685,8 @@
             const cat = document.getElementById('new-task-cat').value;
             const date = document.getElementById('new-task-date').value;
             const obs = document.getElementById('new-task-obs').value;
-            
-            // Collect selected tags
             const selectedTags = [];
-            document.querySelectorAll('#task-quick-tags .tag-pill.selected').forEach(el => {
+            document.querySelectorAll('#task-quick-tags .tag-selector-pill.selected').forEach(el => {
                 selectedTags.push(JSON.parse(el.dataset.tagObj));
             });
 
@@ -715,15 +694,13 @@
                 addItem('tasks', { text, category: cat, deadline: date, done: false, observation: obs, tags: selectedTags });
                 document.getElementById('new-task-input').value = '';
                 document.getElementById('new-task-obs').value = '';
-                document.querySelectorAll('#task-quick-tags .tag-pill.selected').forEach(el => el.classList.remove('selected'));
+                document.querySelectorAll('#task-quick-tags .tag-selector-pill.selected').forEach(el => el.classList.remove('selected'));
             }
         };
         window.toggleTask = (id, current) => updateItem('tasks', id, { done: !current });
         window.deleteTask = (id) => deleteItem('tasks', id);
 
-        // --- EDITING FEATURES (MODAL) ---
         let currentEditInfo = null; 
-
         window.openEditModal = (coll, id) => {
             const modal = document.getElementById('edit-modal');
             const content = document.getElementById('modal-content');
@@ -737,7 +714,6 @@
 
             if(!item) return;
 
-            // Forms
             if(coll === 'expenses') {
                 content.innerHTML = `
                     <label class="text-xs font-bold text-stone-500">Valor</label>
@@ -755,7 +731,7 @@
                 let tagsHtml = `<div class="flex flex-wrap gap-2 mt-2" id="edit-guest-tags">`;
                 allTags.forEach(t => {
                     const isSel = currentTags.includes(t) ? 'selected' : '';
-                    tagsHtml += `<span onclick="toggleTag(this)" class="tag-pill ${isSel}">${t}</span>`;
+                    tagsHtml += `<span onclick="toggleTag(this)" class="tag-selector-pill ${isSel}">${t}</span>`;
                 });
                 tagsHtml += `</div>`;
 
@@ -771,7 +747,7 @@
                 let tagsHtml = `<div class="flex flex-wrap gap-1 mt-2" id="edit-task-tags">`;
                 state.customTags.forEach(tag => {
                     const isSel = (item.tags || []).some(t => t.name === tag.name) ? 'selected' : '';
-                    tagsHtml += `<span class="tag-pill ${isSel}" onclick="this.classList.toggle('selected')" data-tag-obj='${JSON.stringify(tag)}' style="border-left: 3px solid ${tag.color}">${tag.name}</span>`;
+                    tagsHtml += `<span class="tag-selector-pill ${isSel}" onclick="this.classList.toggle('selected')" data-tag-obj='${JSON.stringify(tag)}' style="border-left: 3px solid ${tag.color}">${tag.name}</span>`;
                 });
                 tagsHtml += `</div>`;
 
@@ -783,7 +759,17 @@
                     <select id="edit-cat" class="input-elegant w-full mb-3">
                         <option value="${item.category}" selected>${item.category}</option>
                         <option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option>
-                        <option value="Festa">Festa</option><option value="Roupa">Roupa</option>
+                        <option value="Festa/Buffet">Festa/Buffet</option>
+                        <option value="Burocracia">Burocracia</option>
+                        <option value="Trajes/Beleza">Trajes/Beleza</option>
+                        <option value="Lua de Mel">Lua de Mel</option>
+                        <option value="Buffet & Comida">Buffet & Comida</option>
+                        <option value="Local">Local</option>
+                        <option value="Foto & Vídeo">Foto & Vídeo</option>
+                        <option value="Decoração">Decoração</option>
+                        <option value="Música/DJ">Música/DJ</option>
+                        <option value="Doces/Bolo">Doces/Bolo</option>
+                        <option value="Assessoria">Assessoria</option>
                     </select>
 
                     <label class="text-xs font-bold text-stone-500">Data Limite</label>
@@ -814,7 +800,7 @@
                 data.name = document.getElementById('edit-name').value;
                 data.partners = parseInt(document.getElementById('edit-partners').value);
                 const tags = [];
-                document.querySelectorAll('#edit-guest-tags .tag-pill.selected').forEach(el => tags.push(el.innerText));
+                document.querySelectorAll('#edit-guest-tags .tag-selector-pill.selected').forEach(el => tags.push(el.innerText));
                 data.tags = tags;
             } else if(coll === 'tasks') {
                 data.text = document.getElementById('edit-text').value;
@@ -822,7 +808,7 @@
                 data.deadline = document.getElementById('edit-date').value;
                 data.observation = document.getElementById('edit-obs').value;
                 const tags = [];
-                document.querySelectorAll('#edit-task-tags .tag-pill.selected').forEach(el => {
+                document.querySelectorAll('#edit-task-tags .tag-selector-pill.selected').forEach(el => {
                     tags.push(JSON.parse(el.dataset.tagObj));
                 });
                 data.tags = tags;
@@ -832,16 +818,18 @@
             closeModal();
         };
 
-
-        // --- UI UPDATERS ---
         function updateUI(settings) {
             if(!settings && state.settings) settings = state.settings;
-            if(!settings) {
-                // Fallback default
-                settings = { date: '', budgetTotal: 0 };
-            }
+            if(!settings) { settings = { date: '', budgetTotal: 0 }; }
 
-            // Budget
+            if(settings.date) {
+                const [y, m, d] = settings.date.split('-');
+                const eventDate = new Date(y, m-1, d);
+                const today = new Date(); today.setHours(0,0,0,0);
+                const diff = Math.ceil((eventDate - today)/(1000*60*60*24));
+                const daysEl = document.getElementById('days-count');
+                if (daysEl) daysEl.innerText = diff > 0 ? diff : 0;
+            }
             const spent = state.budget.reduce((a,b) => a + b.amount, 0);
             const total = settings.budgetTotal || 0;
             const pct = total > 0 ? Math.min(100, Math.round((spent/total)*100)) : 0;
@@ -853,16 +841,13 @@
             const progEl = document.getElementById('dash-progress-bar');
             if(progEl) progEl.style.width = `${pct}%`;
 
-            // Guest Stats
             let invitesCount = state.guests.length; 
             let totalPax = 0; 
             let guestsConf = 0;
 
             state.guests.forEach(g => {
                 const p = 1 + (parseInt(g.partners)||0);
-                if(g.status !== 'declined') {
-                    totalPax += p;
-                }
+                if(g.status !== 'declined') { totalPax += p; }
                 if(g.status === 'confirmed') guestsConf += p;
             });
 
@@ -870,10 +855,11 @@
             if(invEl) invEl.innerText = invitesCount;
             const paxEl = document.getElementById('dash-total-pax');
             if(paxEl) paxEl.innerText = totalPax;
+            const guestCountEl = document.getElementById('dash-guest-count');
+            if(guestCountEl) guestCountEl.innerText = totalPax; 
             const confEl = document.getElementById('dash-guest-confirmed');
             if(confEl) confEl.innerText = `${guestsConf} Confirmados`;
 
-            // Stats tab elements
             const statInvEl = document.getElementById('stats-invites');
             if(statInvEl) statInvEl.innerText = invitesCount;
             const statPaxEl = document.getElementById('stats-total-pax');
@@ -886,7 +872,6 @@
         }
 
         function renderLists() {
-            // Budget List
             const bl = document.getElementById('budget-list-body');
             if(bl) {
                 bl.innerHTML = '';
@@ -904,14 +889,12 @@
                 });
             }
 
-            // Guest List
             const gl = document.getElementById('guest-list-body');
             if(gl) {
                 gl.innerHTML = '';
                 state.guests.forEach(g => {
                     const totalInParty = 1 + (parseInt(g.partners)||0);
                     let tags = (g.tags||[]).map(t => `<span class="bg-stone-100 text-stone-500 text-[9px] px-1 rounded border mr-1">${t}</span>`).join('');
-                    
                     gl.innerHTML += `
                         <tr class="hover:bg-emerald-50 border-b border-stone-100">
                             <td class="p-3 font-bold text-stone-700">${g.name}</td>
@@ -933,7 +916,6 @@
                 });
             }
 
-            // NEW TASK RENDER LOGIC (GROUPED)
             const tl = document.getElementById('tasks-list');
             if(tl) {
                 tl.innerHTML = '';
@@ -942,57 +924,44 @@
                     return;
                 }
 
-                // Bucket containers
-                const buckets = {
-                    late: [],
-                    today: [],
-                    week: [],
-                    month: [],
-                    nextMonth: [],
-                    future: [],
-                    noDate: []
-                };
-
-                const today = new Date(); 
-                today.setHours(0,0,0,0);
+                // Updated Date Logic for Next Week/Month
+                const buckets = { late: [], today: [], week: [], month: [], nextMonth: [], future: [], noDate: [] };
+                const today = new Date(); today.setHours(0,0,0,0);
                 
-                // Helper to check range
-                const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r; };
-                const endOfWeek = addDays(today, 7);
-                // End of current month
+                // Calculate correct "This Week" End (Upcoming Saturday)
+                const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+                const distToSat = 6 - dayOfWeek;
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(today.getDate() + distToSat);
+                endOfWeek.setHours(23,59,59,999);
+
+                // End of Month logic
                 const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                // Next month range
+                
+                // Next Month logic
                 const startNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
                 const endNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
-                // Sort Pending tasks by date ASC
                 const pendingTasks = state.tasks.filter(t => !t.done).sort((a,b) => {
                     if(!a.deadline) return 1; if(!b.deadline) return -1;
                     return new Date(a.deadline) - new Date(b.deadline);
                 });
-                
-                // Done tasks separate? Or just bottom? Let's filter out done for these lists or put them at very end.
-                // Request was "Sequence of execution", usually implies pending.
-                // Let's create a "Concluídas" bucket at the end.
                 const doneTasks = state.tasks.filter(t => t.done);
 
                 pendingTasks.forEach(t => {
                     if(!t.deadline) { buckets.noDate.push(t); return; }
-                    
-                    // Parse date string (YYYY-MM-DD) as local midnight
                     const [y, m, d] = t.deadline.split('-');
-                    const taskDate = new Date(y, m-1, d);
+                    const taskDate = new Date(y, m-1, d); // Local Midnight
                     taskDate.setHours(0,0,0,0);
 
                     if (taskDate < today) buckets.late.push(t);
                     else if (taskDate.getTime() === today.getTime()) buckets.today.push(t);
                     else if (taskDate <= endOfWeek) buckets.week.push(t);
-                    else if (taskDate <= endOfMonth) buckets.month.push(t); // Rest of month
+                    else if (taskDate <= endOfMonth) buckets.month.push(t); 
                     else if (taskDate >= startNextMonth && taskDate <= endNextMonth) buckets.nextMonth.push(t);
                     else buckets.future.push(t);
                 });
 
-                // Render Function
                 const renderBucket = (title, items, className) => {
                     if(items.length === 0) return;
                     tl.innerHTML += `<div class="task-section-header ${className}">${title} (${items.length})</div>`;
@@ -1022,10 +991,13 @@
             }
             const hasObs = t.observation && t.observation.trim().length > 0;
             let tagPills = '';
-            if(t.tags && Array.isArray(t.tags)) {
+            if(t.tags && Array.isArray(t.tags) && t.tags.length > 0) {
+                tagPills = '<div class="mt-2 flex flex-wrap gap-1">';
                 t.tags.forEach(tag => {
-                    tagPills += `<span class="text-[9px] px-2 py-0.5 rounded-full mr-1 font-bold text-white shadow-sm" style="background-color: ${tag.color || '#9ca3af'}">${tag.name}</span>`;
+                    const bg = tag.color || '#10B981';
+                    tagPills += `<span class="task-tag-display" style="background-color: ${bg};">${tag.name}</span>`;
                 });
+                tagPills += '</div>';
             }
 
             return `
@@ -1044,7 +1016,7 @@
                                 <span>${t.category}</span>
                                 ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
                             </div>
-                            <div class="mt-1">${tagPills}</div>
+                            ${tagPills}
                             ${hasObs ? `<p class="text-xs text-stone-500 mt-1 pl-2 border-l-2 border-stone-200 italic truncate max-w-xs">${t.observation}</p>` : ''}
                         </div>
                     </div>
@@ -1058,7 +1030,6 @@
 
         let chart1 = null, chart2 = null;
         function renderCharts(spent, total, items, gConf, gTotal) {
-            // Budget
             const ctx1 = document.getElementById('budgetChart');
             if(ctx1 && chart1) chart1.destroy();
             if(ctx1) {
@@ -1072,7 +1043,6 @@
                 document.getElementById('budget-balance-display').innerText = "R$ " + rem.toLocaleString('pt-BR');
             }
 
-            // Guests
             const ctx2 = document.getElementById('guestChart');
             if(ctx2 && chart2) chart2.destroy();
             if(ctx2) {
