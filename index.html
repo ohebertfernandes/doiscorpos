@@ -6,6 +6,7 @@
     <title>Dois Corpos - Planejador de Casamento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -53,8 +54,32 @@
             outline: none; border-color: var(--color-gold); background-color: white; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1); 
         }
 
-        .tag-pill { @apply text-[10px] px-2 py-1 rounded-full border border-stone-200 cursor-pointer select-none transition bg-white text-stone-600 uppercase tracking-wider; }
-        .tag-pill.selected { background-color: #ECFDF5; border-color: #10B981; color: #065F46; font-weight: bold; }
+        .tag-pill { 
+            font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid #E5E7EB; 
+            cursor: pointer; user-select: none; transition: all 0.2s; 
+            background: white; color: #6B7280; display: inline-flex; items-center; margin-right: 4px; margin-bottom: 4px;
+        }
+        .tag-pill:hover { border-color: var(--color-emerald-main); }
+        .tag-pill.selected { border-width: 2px; font-weight: bold; }
+
+        .color-swatch { -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer; padding: 0; background: none; }
+        .color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; border: 1px solid #ddd; }
+
+        /* Countdown specific styles */
+        .countdown-box { background: rgba(6, 78, 59, 0.03); border-radius: 8px; padding: 8px 4px; min-width: 50px; text-align: center; }
+        .countdown-val { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--color-emerald-dark); }
+        .countdown-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; color: #9CA3AF; margin-top: 2px; }
+
+        /* Task Section Headers */
+        .task-section-header { 
+            font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; 
+            margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.25rem; border-bottom: 1px solid #E5E7EB;
+            color: #9CA3AF; display: flex; justify-content: space-between; align-items: center;
+        }
+        .task-section-header.urgent { color: #EF4444; border-color: #FECACA; }
+        .task-section-header.today { color: #D97706; border-color: #FDE68A; }
+        .task-section-header.week { color: #059669; border-color: #A7F3D0; }
 
         /* --- MODAL --- */
         #edit-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
@@ -88,10 +113,13 @@
 
     <!-- EDIT MODAL -->
     <div id="edit-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-emerald-600 animate-fade-in">
-            <h3 class="text-xl font-serif text-emerald-900 mb-4">Editar Item</h3>
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-serif text-emerald-900">Editar / Detalhes</h3>
+                <button onclick="closeModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-times"></i></button>
+            </div>
             <div id="modal-content" class="space-y-4"></div> <!-- Dynamic Content -->
-            <div class="flex justify-end gap-2 mt-6">
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-stone-100">
                 <button onclick="closeModal()" class="px-4 py-2 text-sm text-stone-500 hover:bg-stone-100 rounded">Cancelar</button>
                 <button id="modal-save-btn" class="btn-primary px-6 py-2 rounded text-sm font-bold">Salvar Alterações</button>
             </div>
@@ -115,7 +143,7 @@
                     <button onclick="switchTab('guests')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Convidados</button>
                     <button onclick="switchTab('timeline')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Tarefas</button>
                 </nav>
-                <button onclick="handleLogout()" class="text-xs text-stone-400 hover:text-red-500">Sair</button>
+                <button onclick="handleLogout()" class="text-xs text-stone-400 hover:text-red-500"><i class="fa-solid fa-sign-out-alt"></i> Sair</button>
             </div>
         </div>
     </header>
@@ -129,19 +157,23 @@
                 <h2 class="text-3xl text-emerald-900 serif-font italic">Painel do Casal</h2>
             </div>
 
-            <!-- Global Settings (Date & Budget) -->
+            <!-- Global Settings -->
             <div class="flex justify-center">
-                 <div class="bg-white p-2 rounded-lg shadow border border-stone-100 flex flex-col sm:flex-row items-center gap-2">
+                 <div class="bg-white p-3 rounded-lg shadow border border-stone-100 flex flex-col md:flex-row items-center gap-3">
                      <div class="flex items-center gap-2 px-2">
-                         <span class="text-xs font-bold text-emerald-800 uppercase">Data:</span>
-                         <input type="date" id="wedding-date-input" class="bg-stone-50 border border-stone-200 rounded p-1 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
+                         <span class="text-xs font-bold text-emerald-800 uppercase"><i class="fa-regular fa-calendar mr-1"></i> Data:</span>
+                         <input type="date" id="wedding-date-input" class="bg-stone-50 border border-stone-200 rounded p-1.5 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
+                     </div>
+                     <div class="flex items-center gap-2 px-2">
+                         <span class="text-xs font-bold text-emerald-800 uppercase"><i class="fa-regular fa-clock mr-1"></i> Hora:</span>
+                         <input type="time" id="wedding-time-input" class="bg-stone-50 border border-stone-200 rounded p-1.5 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
                      </div>
                      <div class="flex items-center gap-2 px-2 border-l border-stone-100">
-                         <span class="text-xs font-bold text-emerald-800 uppercase">Orçamento Total R$:</span>
-                         <input type="number" id="total-budget-input" class="bg-stone-50 border border-stone-200 rounded p-1 w-28 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
+                         <span class="text-xs font-bold text-emerald-800 uppercase">Orçamento R$:</span>
+                         <input type="number" id="total-budget-input" class="bg-stone-50 border border-stone-200 rounded p-1.5 w-28 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
                      </div>
-                     <button onclick="saveGlobalSettings()" class="bg-emerald-800 text-white text-xs font-bold px-4 py-1.5 rounded hover:bg-emerald-700 transition ml-2">
-                         Salvar
+                     <button onclick="saveGlobalSettings()" class="bg-emerald-800 text-white text-xs font-bold px-4 py-2 rounded hover:bg-emerald-700 transition ml-2 shadow-sm">
+                         <i class="fa-solid fa-save mr-1"></i> Salvar
                      </button>
                  </div>
             </div>
@@ -149,10 +181,30 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Count -->
                 <div class="card p-6 border-t-4 border-rose-300">
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Contagem Regressiva</h3>
-                    <div class="mt-2 flex items-baseline">
-                        <span class="text-4xl serif-font text-emerald-900 mr-2" id="days-count">--</span>
-                        <span class="text-stone-500 italic text-sm">dias</span>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Contagem Regressiva</h3>
+                        <i class="fa-regular fa-heart text-rose-300"></i>
+                    </div>
+                    <div class="flex justify-center items-center gap-2">
+                        <div class="countdown-box">
+                            <span class="countdown-val" id="cd-days">00</span>
+                            <div class="countdown-label">Dias</div>
+                        </div>
+                        <span class="text-stone-300 text-xl font-serif">:</span>
+                        <div class="countdown-box">
+                            <span class="countdown-val" id="cd-hours">00</span>
+                            <div class="countdown-label">Horas</div>
+                        </div>
+                        <span class="text-stone-300 text-xl font-serif">:</span>
+                        <div class="countdown-box">
+                            <span class="countdown-val" id="cd-mins">00</span>
+                            <div class="countdown-label">Min</div>
+                        </div>
+                        <span class="text-stone-300 text-xl font-serif">:</span>
+                        <div class="countdown-box">
+                            <span class="countdown-val" id="cd-secs">00</span>
+                            <div class="countdown-label">Seg</div>
+                        </div>
                     </div>
                 </div>
                 <!-- Budget -->
@@ -162,7 +214,7 @@
                         <span class="text-3xl serif-font text-emerald-700" id="dash-budget-percent">0%</span>
                         <span class="text-stone-500 text-xs" id="dash-budget-left">Disponível: R$ 0</span>
                     </div>
-                    <div class="w-full bg-stone-100 h-1.5 mt-2 rounded-full overflow-hidden">
+                    <div class="w-full bg-stone-100 h-1.5 mt-4 rounded-full overflow-hidden">
                         <div id="dash-progress-bar" class="bg-emerald-500 h-full w-0 transition-all duration-1000"></div>
                     </div>
                 </div>
@@ -243,15 +295,15 @@
             <div class="card p-4 bg-white shadow-sm border border-emerald-100">
                 <div class="grid grid-cols-12 gap-3 items-end">
                     <div class="col-span-12 sm:col-span-5">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase">Nome Principal (Convite)</label>
+                        <label class="text-[10px] font-bold text-stone-400 uppercase">Nome Principal</label>
                         <input type="text" id="new-guest-name" class="input-elegant w-full text-sm">
                     </div>
                     <div class="col-span-6 sm:col-span-2">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase">+ Acompanhantes</label>
+                        <label class="text-[10px] font-bold text-stone-400 uppercase">+ Acomp.</label>
                         <input type="number" id="new-guest-partners" value="0" min="0" class="input-elegant w-full text-sm">
                     </div>
                     <div class="col-span-6 sm:col-span-5">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase mb-1 block">Tags (Clique para marcar)</label>
+                        <label class="text-[10px] font-bold text-stone-400 uppercase mb-1 block">Tags (Selecione)</label>
                         <div class="flex flex-wrap gap-1" id="guest-tags-selector">
                             <span onclick="toggleTag(this)" class="tag-pill">Padrinho</span>
                             <span onclick="toggleTag(this)" class="tag-pill">Madrinha</span>
@@ -272,7 +324,7 @@
                     <h4 class="font-bold text-emerald-800 text-sm mb-3">Estatísticas</h4>
                     <div class="space-y-3 text-sm text-stone-600">
                         <div class="flex justify-between border-b border-stone-100 pb-1">
-                            <span>Convites (Grupos):</span> 
+                            <span>Convites:</span> 
                             <b id="stats-invites">0</b>
                         </div>
                         <div class="flex justify-between border-b border-stone-100 pb-1">
@@ -292,7 +344,7 @@
                             <thead class="bg-stone-50 sticky top-0 text-xs font-bold text-stone-500 uppercase">
                                 <tr>
                                     <th class="p-3">Nome</th>
-                                    <th class="p-3">Pax Total</th>
+                                    <th class="p-3">Pax</th>
                                     <th class="p-3">Tags</th>
                                     <th class="p-3">Status</th>
                                     <th class="p-3 text-right"></th>
@@ -313,17 +365,42 @@
                 <div class="lg:col-span-1 h-fit sticky top-24">
                     <div class="card p-4 bg-stone-50">
                         <h4 class="text-xs font-bold text-stone-500 uppercase mb-3">Nova Tarefa</h4>
-                        <input type="text" id="new-task-input" placeholder="Título..." class="input-elegant w-full mb-2 text-sm">
+                        <input type="text" id="new-task-input" placeholder="Título da tarefa..." class="input-elegant w-full mb-2 text-sm">
                         <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm">
                             <option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option>
                             <option value="Festa">Festa</option><option value="Roupa">Roupa</option>
                         </select>
                         <input type="date" id="new-task-date" class="input-elegant w-full mb-2 text-sm">
-                        <button onclick="addTask()" class="bg-stone-700 text-white w-full py-2 rounded text-sm font-bold hover:bg-stone-800">Adicionar</button>
+                        
+                        <!-- Observation & Tags in Quick Add -->
+                        <textarea id="new-task-obs" placeholder="Observações (opcional)..." class="input-elegant w-full mb-2 text-sm h-20 resize-none"></textarea>
+                        
+                        <div class="mb-3">
+                            <label class="text-[10px] font-bold text-stone-400 uppercase">Tags</label>
+                            <div class="flex flex-wrap gap-1 mt-1" id="task-quick-tags">
+                                <!-- JS will populate tags here -->
+                            </div>
+                            <button onclick="toggleTagCreator()" class="text-xs text-emerald-600 hover:underline mt-1">+ Criar Tag</button>
+                            
+                            <!-- Tag Creator Inline -->
+                            <div id="tag-creator" class="hidden mt-2 p-2 bg-white rounded border border-emerald-200 shadow-sm">
+                                <input type="text" id="new-tag-name" placeholder="Nome da Tag" class="text-xs border p-1 rounded w-full mb-1">
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="new-tag-color" value="#10B981" class="color-swatch">
+                                    <button onclick="createNewTag()" class="text-xs bg-emerald-600 text-white px-2 py-1 rounded">Salvar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="addTask()" class="bg-stone-700 text-white w-full py-2 rounded text-sm font-bold hover:bg-stone-800">Adicionar Tarefa</button>
                     </div>
                 </div>
-                <div class="lg:col-span-2 card p-4">
-                    <div id="tasks-list" class="space-y-2"></div>
+                
+                <!-- NEW: Task List Container -->
+                <div class="lg:col-span-2 card p-4 overflow-hidden">
+                    <div id="tasks-list" class="space-y-4">
+                        <!-- Content injected by JS with Section Headers -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -461,7 +538,7 @@
             }
         };
 
-        let state = { budget: [], guests: [], tasks: [] };
+        let state = { budget: [], guests: [], tasks: [], customTags: [], settings: {} };
 
         function setupListeners() {
             const root = getUserRoot();
@@ -471,12 +548,16 @@
             onSnapshot(doc(db, root, 'settings', 'general'), (snap) => {
                 if(snap.exists()) {
                     const d = snap.data();
+                    state.settings = d; // Store settings in state
                     document.getElementById('wedding-date-input').value = d.date || '';
+                    document.getElementById('wedding-time-input').value = d.time || '';
                     document.getElementById('total-budget-input').value = d.budgetTotal || '';
                     updateUI(d);
+                    startCountdown(); // Start ticker
                 }
             }, (err) => console.warn("Read settings error", err));
 
+            // Collections
             onSnapshot(collection(db, root, 'expenses'), s => {
                 state.budget = []; s.forEach(d => state.budget.push({id: d.id, ...d.data()})); updateUI();
             });
@@ -486,6 +567,88 @@
             onSnapshot(collection(db, root, 'tasks'), s => {
                 state.tasks = []; s.forEach(d => state.tasks.push({id: d.id, ...d.data()})); updateUI();
             });
+            onSnapshot(collection(db, root, 'custom_tags'), s => {
+                state.customTags = []; 
+                s.forEach(d => state.customTags.push({id: d.id, ...d.data()})); 
+                renderTagSelectors(); 
+            });
+        }
+
+        // --- COUNTDOWN LOGIC (SEC UPDATER) ---
+        let timerInterval = null;
+        function startCountdown() {
+            if(timerInterval) clearInterval(timerInterval);
+            
+            const run = () => {
+                if(!state.settings.date) return;
+                
+                const [y, m, d] = state.settings.date.split('-');
+                let targetDate = new Date(y, m-1, d);
+                
+                // Add time if exists
+                if(state.settings.time) {
+                    const [th, tm] = state.settings.time.split(':');
+                    targetDate.setHours(th, tm, 0);
+                } else {
+                    targetDate.setHours(0,0,0);
+                }
+
+                const now = new Date();
+                let diff = targetDate - now;
+
+                if (diff < 0) diff = 0; // Don't show negative
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                const elD = document.getElementById('cd-days');
+                const elH = document.getElementById('cd-hours');
+                const elM = document.getElementById('cd-mins');
+                const elS = document.getElementById('cd-secs');
+
+                if(elD) elD.innerText = String(days).padStart(2, '0');
+                if(elH) elH.innerText = String(hours).padStart(2, '0');
+                if(elM) elM.innerText = String(minutes).padStart(2, '0');
+                if(elS) elS.innerText = String(seconds).padStart(2, '0');
+            };
+            
+            run(); // Immediate
+            timerInterval = setInterval(run, 1000);
+        }
+
+        // --- CUSTOM TAG LOGIC ---
+        window.toggleTagCreator = () => {
+            document.getElementById('tag-creator').classList.toggle('hidden');
+        }
+
+        window.createNewTag = async () => {
+            const name = document.getElementById('new-tag-name').value;
+            const color = document.getElementById('new-tag-color').value;
+            if(name) {
+                try {
+                    await addDoc(collection(db, getUserRoot(), 'custom_tags'), { name, color, timestamp: serverTimestamp() });
+                    document.getElementById('new-tag-name').value = '';
+                    document.getElementById('tag-creator').classList.add('hidden');
+                } catch(e) { handleDbError(e); }
+            }
+        }
+
+        function renderTagSelectors() {
+            const quickTags = document.getElementById('task-quick-tags');
+            if(quickTags) {
+                quickTags.innerHTML = '';
+                state.customTags.forEach(tag => {
+                    const el = document.createElement('span');
+                    el.className = 'tag-pill';
+                    el.innerText = tag.name;
+                    el.style.borderLeft = `3px solid ${tag.color}`;
+                    el.onclick = function() { this.classList.toggle('selected'); };
+                    el.dataset.tagObj = JSON.stringify(tag); 
+                    quickTags.appendChild(el);
+                });
+            }
         }
 
         // --- CRUD OPERATIONS ---
@@ -493,14 +656,15 @@
         window.saveGlobalSettings = async () => {
             if(!getUserRoot()) return;
             const date = document.getElementById('wedding-date-input').value;
+            const time = document.getElementById('wedding-time-input').value;
             const budgetTotal = parseFloat(document.getElementById('total-budget-input').value) || 0;
             try {
-                await setDoc(doc(db, getUserRoot(), 'settings', 'general'), { date, budgetTotal }, { merge: true });
+                await setDoc(doc(db, getUserRoot(), 'settings', 'general'), { date, time, budgetTotal }, { merge: true });
                 alert("Configurações salvas com sucesso!");
             } catch(e) { handleDbError(e); }
         };
 
-        // Generic Helpers
+        // Helpers
         async function addItem(coll, data) {
             try { await addDoc(collection(db, getUserRoot(), coll), { ...data, timestamp: serverTimestamp() }); } catch(e) { handleDbError(e); }
         }
@@ -539,9 +703,19 @@
             const text = document.getElementById('new-task-input').value;
             const cat = document.getElementById('new-task-cat').value;
             const date = document.getElementById('new-task-date').value;
+            const obs = document.getElementById('new-task-obs').value;
+            
+            // Collect selected tags
+            const selectedTags = [];
+            document.querySelectorAll('#task-quick-tags .tag-pill.selected').forEach(el => {
+                selectedTags.push(JSON.parse(el.dataset.tagObj));
+            });
+
             if(text) {
-                addItem('tasks', { text, category: cat, deadline: date, done: false });
+                addItem('tasks', { text, category: cat, deadline: date, done: false, observation: obs, tags: selectedTags });
                 document.getElementById('new-task-input').value = '';
+                document.getElementById('new-task-obs').value = '';
+                document.querySelectorAll('#task-quick-tags .tag-pill.selected').forEach(el => el.classList.remove('selected'));
             }
         };
         window.toggleTask = (id, current) => updateItem('tasks', id, { done: !current });
@@ -578,7 +752,6 @@
             } else if(coll === 'guests') {
                 const currentTags = item.tags || [];
                 const allTags = ['Padrinho','Madrinha','Família','Amigos','Fornecedor','Deu Presente'];
-                
                 let tagsHtml = `<div class="flex flex-wrap gap-2 mt-2" id="edit-guest-tags">`;
                 allTags.forEach(t => {
                     const isSel = currentTags.includes(t) ? 'selected' : '';
@@ -595,11 +768,32 @@
                     ${tagsHtml}
                 `;
             } else if(coll === 'tasks') {
+                let tagsHtml = `<div class="flex flex-wrap gap-1 mt-2" id="edit-task-tags">`;
+                state.customTags.forEach(tag => {
+                    const isSel = (item.tags || []).some(t => t.name === tag.name) ? 'selected' : '';
+                    tagsHtml += `<span class="tag-pill ${isSel}" onclick="this.classList.toggle('selected')" data-tag-obj='${JSON.stringify(tag)}' style="border-left: 3px solid ${tag.color}">${tag.name}</span>`;
+                });
+                tagsHtml += `</div>`;
+
                 content.innerHTML = `
                     <label class="text-xs font-bold text-stone-500">Descrição</label>
                     <input id="edit-text" type="text" class="input-elegant w-full mb-3" value="${item.text}">
+                    
+                    <label class="text-xs font-bold text-stone-500">Categoria</label>
+                    <select id="edit-cat" class="input-elegant w-full mb-3">
+                        <option value="${item.category}" selected>${item.category}</option>
+                        <option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option>
+                        <option value="Festa">Festa</option><option value="Roupa">Roupa</option>
+                    </select>
+
                     <label class="text-xs font-bold text-stone-500">Data Limite</label>
-                    <input id="edit-date" type="date" class="input-elegant w-full" value="${item.deadline}">
+                    <input id="edit-date" type="date" class="input-elegant w-full mb-3" value="${item.deadline}">
+                    
+                    <label class="text-xs font-bold text-stone-500">Observações</label>
+                    <textarea id="edit-obs" class="input-elegant w-full h-24 resize-none mb-3">${item.observation || ''}</textarea>
+                    
+                    <label class="text-xs font-bold text-stone-500">Tags</label>
+                    ${tagsHtml}
                 `;
             }
 
@@ -619,13 +813,19 @@
             } else if(coll === 'guests') {
                 data.name = document.getElementById('edit-name').value;
                 data.partners = parseInt(document.getElementById('edit-partners').value);
-                // Collect tags from modal
                 const tags = [];
                 document.querySelectorAll('#edit-guest-tags .tag-pill.selected').forEach(el => tags.push(el.innerText));
                 data.tags = tags;
             } else if(coll === 'tasks') {
                 data.text = document.getElementById('edit-text').value;
+                data.category = document.getElementById('edit-cat').value;
                 data.deadline = document.getElementById('edit-date').value;
+                data.observation = document.getElementById('edit-obs').value;
+                const tags = [];
+                document.querySelectorAll('#edit-task-tags .tag-pill.selected').forEach(el => {
+                    tags.push(JSON.parse(el.dataset.tagObj));
+                });
+                data.tags = tags;
             }
 
             await updateItem(coll, id, data);
@@ -635,18 +835,13 @@
 
         // --- UI UPDATERS ---
         function updateUI(settings) {
+            if(!settings && state.settings) settings = state.settings;
             if(!settings) {
-                const d = document.getElementById('wedding-date-input').value;
-                const b = parseFloat(document.getElementById('total-budget-input').value) || 0;
-                settings = { date: d, budgetTotal: b };
+                // Fallback default
+                settings = { date: '', budgetTotal: 0 };
             }
 
-            // Dashboard Stats
-            if(settings.date) {
-                const diff = Math.ceil((new Date(settings.date) - new Date())/(1000*60*60*24));
-                const daysEl = document.getElementById('days-count');
-                if (daysEl) daysEl.innerText = diff > 0 ? diff : 0;
-            }
+            // Budget
             const spent = state.budget.reduce((a,b) => a + b.amount, 0);
             const total = settings.budgetTotal || 0;
             const pct = total > 0 ? Math.min(100, Math.round((spent/total)*100)) : 0;
@@ -658,14 +853,13 @@
             const progEl = document.getElementById('dash-progress-bar');
             if(progEl) progEl.style.width = `${pct}%`;
 
-            // Guest Stats Logic (Updated)
-            let invitesCount = state.guests.length; // Number of rows/invitations
-            let totalPax = 0; // Sum of (1 + partners)
+            // Guest Stats
+            let invitesCount = state.guests.length; 
+            let totalPax = 0; 
             let guestsConf = 0;
 
             state.guests.forEach(g => {
                 const p = 1 + (parseInt(g.partners)||0);
-                // Only count active guests (not declined) for total capacity
                 if(g.status !== 'declined') {
                     totalPax += p;
                 }
@@ -676,12 +870,10 @@
             if(invEl) invEl.innerText = invitesCount;
             const paxEl = document.getElementById('dash-total-pax');
             if(paxEl) paxEl.innerText = totalPax;
-            const guestCountEl = document.getElementById('dash-guest-count');
-            if(guestCountEl) guestCountEl.innerText = totalPax; // This ID might not be in DOM anymore, but kept for safety
             const confEl = document.getElementById('dash-guest-confirmed');
             if(confEl) confEl.innerText = `${guestsConf} Confirmados`;
 
-            // Update Guests Section Stats if they exist
+            // Stats tab elements
             const statInvEl = document.getElementById('stats-invites');
             if(statInvEl) statInvEl.innerText = invitesCount;
             const statPaxEl = document.getElementById('stats-total-pax');
@@ -696,100 +888,201 @@
         function renderLists() {
             // Budget List
             const bl = document.getElementById('budget-list-body');
-            bl.innerHTML = '';
-            state.budget.forEach(e => {
-                bl.innerHTML += `
-                    <tr class="hover:bg-emerald-50 border-b border-stone-100 group">
-                        <td class="p-3 font-medium text-stone-700">${e.category}</td>
-                        <td class="p-3 text-right text-emerald-700 font-bold">R$ ${e.amount.toLocaleString('pt-BR')}</td>
-                        <td class="p-3 text-center flex justify-end gap-2">
-                            <button onclick="openEditModal('expenses', '${e.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
-                            <button onclick="deleteExpense('${e.id}')" class="text-stone-300 hover:text-red-500">✕</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            if(bl) {
+                bl.innerHTML = '';
+                state.budget.forEach(e => {
+                    bl.innerHTML += `
+                        <tr class="hover:bg-emerald-50 border-b border-stone-100 group">
+                            <td class="p-3 font-medium text-stone-700">${e.category}</td>
+                            <td class="p-3 text-right text-emerald-700 font-bold">R$ ${e.amount.toLocaleString('pt-BR')}</td>
+                            <td class="p-3 text-center flex justify-end gap-2">
+                                <button onclick="openEditModal('expenses', '${e.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
+                                <button onclick="deleteExpense('${e.id}')" class="text-stone-300 hover:text-red-500">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
 
-            // Guest List (Updated to show calculated Pax Total)
+            // Guest List
             const gl = document.getElementById('guest-list-body');
-            gl.innerHTML = '';
-            state.guests.forEach(g => {
-                const totalInParty = 1 + (parseInt(g.partners)||0);
-                let tags = (g.tags||[]).map(t => `<span class="bg-stone-100 text-stone-500 text-[9px] px-1 rounded border mr-1">${t}</span>`).join('');
-                
-                gl.innerHTML += `
-                    <tr class="hover:bg-emerald-50 border-b border-stone-100">
-                        <td class="p-3 font-bold text-stone-700">${g.name}</td>
-                        <td class="p-3 text-stone-500 font-mono">${totalInParty} <span class="text-[9px] text-stone-400">(1+${g.partners})</span></td>
-                        <td class="p-3">${tags}</td>
-                        <td class="p-3">
-                            <select onchange="updateGuestStatus('${g.id}', this.value)" class="bg-transparent text-xs font-bold ${g.status==='confirmed'?'text-emerald-600':(g.status==='declined'?'text-red-400':'text-yellow-600')}">
-                                <option value="pending" ${g.status==='pending'?'selected':''}>Pendente</option>
-                                <option value="confirmed" ${g.status==='confirmed'?'selected':''}>Confirmado</option>
-                                <option value="declined" ${g.status==='declined'?'selected':''}>Não Vai</option>
-                            </select>
-                        </td>
-                        <td class="p-3 text-right flex justify-end gap-2">
-                            <button onclick="openEditModal('guests', '${g.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
-                            <button onclick="deleteGuest('${g.id}')" class="text-stone-300 hover:text-red-500">✕</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            if(gl) {
+                gl.innerHTML = '';
+                state.guests.forEach(g => {
+                    const totalInParty = 1 + (parseInt(g.partners)||0);
+                    let tags = (g.tags||[]).map(t => `<span class="bg-stone-100 text-stone-500 text-[9px] px-1 rounded border mr-1">${t}</span>`).join('');
+                    
+                    gl.innerHTML += `
+                        <tr class="hover:bg-emerald-50 border-b border-stone-100">
+                            <td class="p-3 font-bold text-stone-700">${g.name}</td>
+                            <td class="p-3 text-stone-500 font-mono">${totalInParty} <span class="text-[9px] text-stone-400">(1+${g.partners})</span></td>
+                            <td class="p-3">${tags}</td>
+                            <td class="p-3">
+                                <select onchange="updateGuestStatus('${g.id}', this.value)" class="bg-transparent text-xs font-bold ${g.status==='confirmed'?'text-emerald-600':(g.status==='declined'?'text-red-400':'text-yellow-600')}">
+                                    <option value="pending" ${g.status==='pending'?'selected':''}>Pendente</option>
+                                    <option value="confirmed" ${g.status==='confirmed'?'selected':''}>Confirmado</option>
+                                    <option value="declined" ${g.status==='declined'?'selected':''}>Não Vai</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-right flex justify-end gap-2">
+                                <button onclick="openEditModal('guests', '${g.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
+                                <button onclick="deleteGuest('${g.id}')" class="text-stone-300 hover:text-red-500">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
 
-            // Tasks List
+            // NEW TASK RENDER LOGIC (GROUPED)
             const tl = document.getElementById('tasks-list');
-            tl.innerHTML = '';
-            state.tasks.forEach(t => {
-                const dateTxt = t.deadline ? new Date(t.deadline).toLocaleDateString('pt-BR') : '';
-                tl.innerHTML += `
-                    <div class="flex items-center justify-between p-3 bg-white border border-stone-100 rounded-lg shadow-sm mb-2">
-                        <div class="flex items-center gap-3">
-                            <div onclick="toggleTask('${t.id}', ${t.done})" class="w-5 h-5 rounded-full border-2 cursor-pointer flex items-center justify-center ${t.done?'bg-emerald-500 border-emerald-500':'border-stone-300'}">
-                                ${t.done ? '<span class="text-white text-[10px]">✓</span>' : ''}
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold text-stone-700 ${t.done?'line-through text-stone-400':''}">${t.text}</p>
-                                <div class="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex gap-2">
-                                    <span>${t.category}</span>
-                                    ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
-                                </div>
-                            </div>
+            if(tl) {
+                tl.innerHTML = '';
+                if(state.tasks.length === 0) {
+                    tl.innerHTML = '<p class="text-center text-stone-400 text-sm py-4">Nenhuma tarefa criada.</p>';
+                    return;
+                }
+
+                // Bucket containers
+                const buckets = {
+                    late: [],
+                    today: [],
+                    week: [],
+                    month: [],
+                    nextMonth: [],
+                    future: [],
+                    noDate: []
+                };
+
+                const today = new Date(); 
+                today.setHours(0,0,0,0);
+                
+                // Helper to check range
+                const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r; };
+                const endOfWeek = addDays(today, 7);
+                // End of current month
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                // Next month range
+                const startNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+                const endNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+
+                // Sort Pending tasks by date ASC
+                const pendingTasks = state.tasks.filter(t => !t.done).sort((a,b) => {
+                    if(!a.deadline) return 1; if(!b.deadline) return -1;
+                    return new Date(a.deadline) - new Date(b.deadline);
+                });
+                
+                // Done tasks separate? Or just bottom? Let's filter out done for these lists or put them at very end.
+                // Request was "Sequence of execution", usually implies pending.
+                // Let's create a "Concluídas" bucket at the end.
+                const doneTasks = state.tasks.filter(t => t.done);
+
+                pendingTasks.forEach(t => {
+                    if(!t.deadline) { buckets.noDate.push(t); return; }
+                    
+                    // Parse date string (YYYY-MM-DD) as local midnight
+                    const [y, m, d] = t.deadline.split('-');
+                    const taskDate = new Date(y, m-1, d);
+                    taskDate.setHours(0,0,0,0);
+
+                    if (taskDate < today) buckets.late.push(t);
+                    else if (taskDate.getTime() === today.getTime()) buckets.today.push(t);
+                    else if (taskDate <= endOfWeek) buckets.week.push(t);
+                    else if (taskDate <= endOfMonth) buckets.month.push(t); // Rest of month
+                    else if (taskDate >= startNextMonth && taskDate <= endNextMonth) buckets.nextMonth.push(t);
+                    else buckets.future.push(t);
+                });
+
+                // Render Function
+                const renderBucket = (title, items, className) => {
+                    if(items.length === 0) return;
+                    tl.innerHTML += `<div class="task-section-header ${className}">${title} (${items.length})</div>`;
+                    items.forEach(t => tl.innerHTML += createTaskHTML(t));
+                };
+
+                renderBucket('🚨 Atrasadas', buckets.late, 'urgent');
+                renderBucket('🔥 Hoje', buckets.today, 'today');
+                renderBucket('📅 Essa Semana', buckets.week, 'week');
+                renderBucket('🗓️ Esse Mês', buckets.month, '');
+                renderBucket('📆 Próximo Mês', buckets.nextMonth, '');
+                renderBucket('🔮 Futuro', buckets.future, '');
+                renderBucket('📝 Sem Data', buckets.noDate, '');
+                
+                if(doneTasks.length > 0) {
+                    tl.innerHTML += `<div class="task-section-header mt-6 border-t pt-4">✅ Concluídas (${doneTasks.length})</div>`;
+                    doneTasks.forEach(t => tl.innerHTML += createTaskHTML(t));
+                }
+            }
+        }
+
+        function createTaskHTML(t) {
+            let dateTxt = '';
+            if(t.deadline) {
+                const [y, m, d] = t.deadline.split('-');
+                dateTxt = `${d}/${m}/${y}`;
+            }
+            const hasObs = t.observation && t.observation.trim().length > 0;
+            let tagPills = '';
+            if(t.tags && Array.isArray(t.tags)) {
+                t.tags.forEach(tag => {
+                    tagPills += `<span class="text-[9px] px-2 py-0.5 rounded-full mr-1 font-bold text-white shadow-sm" style="background-color: ${tag.color || '#9ca3af'}">${tag.name}</span>`;
+                });
+            }
+
+            return `
+                <div class="flex items-start justify-between p-3 bg-white border border-stone-100 rounded-lg shadow-sm mb-2 hover:shadow-md transition ${t.done?'opacity-50 grayscale':''}">
+                    <div class="flex items-start gap-3 w-full">
+                        <div onclick="toggleTask('${t.id}', ${t.done})" class="w-5 h-5 mt-1 rounded-full border-2 cursor-pointer flex-shrink-0 flex items-center justify-center ${t.done?'bg-emerald-500 border-emerald-500':'border-stone-300'}">
+                            ${t.done ? '<span class="text-white text-[10px]">✓</span>' : ''}
                         </div>
-                        <div class="flex gap-3">
-                            <button onclick="openEditModal('tasks', '${t.id}')" class="text-stone-400 hover:text-blue-500 text-sm">✎</button>
-                            <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm">✕</button>
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-bold text-stone-700 ${t.done?'line-through text-stone-400':''}">${t.text}</p>
+                                ${hasObs ? '<i class="fa-regular fa-eye text-stone-400 text-xs" title="Tem observação"></i>' : ''}
+                            </div>
+                            
+                            <div class="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex flex-wrap gap-2 mt-1">
+                                <span>${t.category}</span>
+                                ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
+                            </div>
+                            <div class="mt-1">${tagPills}</div>
+                            ${hasObs ? `<p class="text-xs text-stone-500 mt-1 pl-2 border-l-2 border-stone-200 italic truncate max-w-xs">${t.observation}</p>` : ''}
                         </div>
                     </div>
-                `;
-            });
+                    <div class="flex gap-3 flex-shrink-0 ml-2">
+                        <button onclick="openEditModal('tasks', '${t.id}')" class="text-stone-400 hover:text-blue-500 text-sm">✎</button>
+                        <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm">✕</button>
+                    </div>
+                </div>
+            `;
         }
 
         let chart1 = null, chart2 = null;
         function renderCharts(spent, total, items, gConf, gTotal) {
             // Budget
             const ctx1 = document.getElementById('budgetChart');
-            if(chart1) chart1.destroy();
-            let cats = {}; items.forEach(i => cats[i.category] = (cats[i.category]||0)+i.amount);
-            const rem = Math.max(0, total - spent);
-            
-            chart1 = new Chart(ctx1, {
-                type: 'doughnut',
-                data: { labels: Object.keys(cats).concat(['Livre']), datasets: [{ data: Object.values(cats).concat([rem]), backgroundColor: ['#059669', '#0891B2', '#D97706', '#DB2777', '#7C3AED', '#E5E7EB'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            document.getElementById('budget-balance-display').innerText = "R$ " + rem.toLocaleString('pt-BR');
+            if(ctx1 && chart1) chart1.destroy();
+            if(ctx1) {
+                let cats = {}; items.forEach(i => cats[i.category] = (cats[i.category]||0)+i.amount);
+                const rem = Math.max(0, total - spent);
+                chart1 = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(cats).concat(['Livre']), datasets: [{ data: Object.values(cats).concat([rem]), backgroundColor: ['#059669', '#0891B2', '#D97706', '#DB2777', '#7C3AED', '#E5E7EB'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                document.getElementById('budget-balance-display').innerText = "R$ " + rem.toLocaleString('pt-BR');
+            }
 
             // Guests
             const ctx2 = document.getElementById('guestChart');
-            if(chart2) chart2.destroy();
-            const pending = gTotal - gConf; 
-            chart2 = new Chart(ctx2, {
-                type: 'doughnut',
-                data: { labels: ['Confirmados', 'Pendentes'], datasets: [{ data: [gConf, pending], backgroundColor: ['#10B981', '#FCD34D'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 8 } } } }
-            });
+            if(ctx2 && chart2) chart2.destroy();
+            if(ctx2) {
+                const pending = gTotal - gConf; 
+                chart2 = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: { labels: ['Confirmados', 'Pendentes'], datasets: [{ data: [gConf, pending], backgroundColor: ['#10B981', '#FCD34D'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 8 } } } }
+                });
+            }
         }
 
         window.calculateDrinks = () => {
