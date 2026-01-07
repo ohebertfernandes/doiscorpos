@@ -69,6 +69,15 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.15); margin-top: 4px; margin-right: 4px;
         }
 
+        /* VENDOR CATEGORY PILLS (REMOVABLE) */
+        .cat-pill-removable { 
+            font-size: 10px; padding: 4px 8px; border: 1px solid #E5E7EB; border-radius: 6px; 
+            background: #ECFDF5; color: #065F46; margin: 2px; display: inline-flex; align-items: center; gap: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px; border-color: #10B981;
+        }
+        .cat-pill-removable button { color: #047857; font-weight: bold; cursor: pointer; }
+        .cat-pill-removable button:hover { color: #EF4444; }
+
         .color-swatch { -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer; padding: 0; background: none; }
         .color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
         .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; border: 1px solid #ddd; }
@@ -96,10 +105,10 @@
         .score-med { border-color: #FBBF24; color: #92400E; background: #FFFBEB; }
         .score-low { border-color: #EF4444; color: #991B1B; background: #FEF2F2; }
         
-        .score-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
+        .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
         .score-item { text-align: center; border-radius: 4px; padding: 2px; background: #F9FAFB; }
-        .score-item span { display: block; font-size: 8px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score-item b { font-size: 11px; color: #374151; font-weight: 800; }
+        .score-item span { display: block; font-size: 7px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score-item b { font-size: 10px; color: #374151; font-weight: 800; }
         
         .price-badge { background-color: #F0FDFA; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; border: 1px solid #A7F3D0; }
         .vendor-category-header {
@@ -171,17 +180,16 @@
                         <input type="text" id="vend-name" placeholder="Ex: Espaço Villa Real" class="input-elegant w-full">
                     </div>
                     <div>
-                        <label class="text-[10px] uppercase font-bold text-stone-400">Categoria (Define Critérios)</label>
-                        <select id="vend-cat" class="input-elegant w-full" onchange="checkVendorTemplate()">
-                            <option value="" disabled selected>Selecione...</option>
-                            <option>Espaço</option><option>Buffet</option><option>Decoração</option><option>Som e música</option>
-                            <option>Iluminação</option><option>Taxas</option><option>Bolo</option><option>Extras</option>
-                            <option>Fotografia / Filmagem</option><option>Cerimonial</option><option>Convites</option><option>Doces</option>
-                            <option>Lembrancinhas</option><option>Noiva</option><option>Noivo</option><option>Beleza</option>
-                            <option>Beleza extra</option><option>Papelaria</option><option>Imprevistos</option><option>Cartório</option>
-                            <option>Aliança</option><option>Apartamento</option><option>Reserva Investimento</option><option>Primeira Compra</option>
-                            <option>Básico (Luz/Água...)</option><option>Viagem</option><option>Enxoval</option>
-                        </select>
+                        <label class="text-[10px] uppercase font-bold text-stone-400 mb-2 block">Categorias (Selecione Múltiplas)</label>
+                        <div class="flex gap-2 mb-2">
+                            <select id="vend-cat-select" class="input-elegant w-2/3 text-xs p-1">
+                                 <option value="" disabled selected>Selecionar Categoria...</option>
+                            </select>
+                            <button onclick="addVendorCategory()" class="bg-stone-700 text-white px-3 py-1 rounded text-xs hover:bg-stone-800">Adicionar</button>
+                        </div>
+                        <div id="vend-cat-pills" class="flex flex-wrap gap-1 min-h-[30px] p-1 bg-stone-50 border rounded">
+                            <p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -193,20 +201,20 @@
                     <div class="text-right max-w-[50%]">
                          <label class="text-[10px] uppercase font-bold text-stone-500 block mb-1">Copiar Critérios De:</label>
                          <select id="copy-criteria-select" class="input-elegant text-xs w-full" onchange="copyCriteriaFrom()">
-                             <option value="">-- Padrão da Categoria --</option>
-                             <!-- Populated JS -->
+                             <option value="">-- Outro Fornecedor --</option>
                          </select>
                     </div>
                 </div>
 
                 <div class="p-5 bg-stone-50 rounded-lg border border-stone-100">
                     <div class="flex justify-between items-center mb-3">
-                         <p class="text-xs font-bold text-stone-500 uppercase">Critérios de Avaliação (0 a 10)</p>
+                         <p class="text-xs font-bold text-stone-500 uppercase">Critérios (0 a 10) - Baseados na 1ª Categoria</p>
                          <button onclick="addCustomCriterion()" class="text-[10px] text-emerald-600 font-bold hover:underline">+ Adicionar Critério</button>
                     </div>
                     
-                    <div id="custom-criteria-list" class="space-y-2">
-                        <p class="text-xs text-stone-400 italic">Selecione uma categoria acima para carregar critérios.</p>
+                    <div id="custom-criteria-list" class="space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                        <!-- Populated Dynamic -->
+                        <p class="text-xs text-stone-400 italic col-span-full">Selecione uma categoria acima para carregar critérios.</p>
                     </div>
                 </div>
             </div>
@@ -420,6 +428,266 @@
         import { getAuth, onAuthStateChanged, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- DEFINIR FUNÇÕES DE UI PRIMEIRO ---
+
+        function updateUI(settings) {
+            if(!settings && state.settings) settings = state.settings;
+            if(!settings) { settings = { date: '', budgetTotal: 0 }; }
+
+            if(settings.date) {
+                const [y, m, d] = settings.date.split('-');
+                const eventDate = new Date(y, m-1, d);
+                const today = new Date(); today.setHours(0,0,0,0);
+                const diff = Math.ceil((eventDate - today)/(1000*60*60*24));
+                const daysEl = document.getElementById('days-count');
+                if (daysEl) daysEl.innerText = diff > 0 ? diff : 0;
+            }
+            const spent = state.budget.reduce((a,b) => a + b.amount, 0);
+            const total = settings.budgetTotal || 0;
+            const pct = total > 0 ? Math.min(100, Math.round((spent/total)*100)) : 0;
+            
+            const pctEl = document.getElementById('dash-budget-percent');
+            if(pctEl) pctEl.innerText = `${pct}%`;
+            const leftEl = document.getElementById('dash-budget-left');
+            if(leftEl) leftEl.innerText = `Livre: R$ ${(total-spent).toLocaleString('pt-BR')}`;
+            const progEl = document.getElementById('dash-progress-bar');
+            if(progEl) progEl.style.width = `${pct}%`;
+
+            let invitesCount = state.guests.length; 
+            let totalPax = 0; 
+            let guestsConf = 0;
+
+            let tagCounts = {};
+
+            state.guests.forEach(g => {
+                const p = 1 + (parseInt(g.partners)||0);
+                if(g.status !== 'declined') { totalPax += p; }
+                if(g.status === 'confirmed') guestsConf += p;
+
+                if(g.tags && Array.isArray(g.tags)) {
+                    g.tags.forEach(t => {
+                        tagCounts[t] = (tagCounts[t] || 0) + p;
+                    });
+                }
+            });
+
+            const reportEl = document.getElementById('guest-tags-report');
+            if(reportEl) {
+                reportEl.innerHTML = '';
+                if(Object.keys(tagCounts).length === 0) {
+                    reportEl.innerHTML = '<p class="text-stone-400 italic">Nenhuma tag atribuída.</p>';
+                } else {
+                    Object.keys(tagCounts).forEach(tag => {
+                        reportEl.innerHTML += `
+                            <div class="flex justify-between items-center border-b border-stone-50 pb-1">
+                                <span>${tag}</span>
+                                <span class="font-bold text-indigo-700">${tagCounts[tag]}</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
+
+            const invEl = document.getElementById('dash-invites-count');
+            if(invEl) invEl.innerText = invitesCount;
+            const paxEl = document.getElementById('dash-total-pax');
+            if(paxEl) paxEl.innerText = totalPax;
+            const confEl = document.getElementById('dash-guest-confirmed');
+            if(confEl) confEl.innerText = `${guestsConf} Confirmados`;
+
+            const statInvEl = document.getElementById('stats-invites');
+            if(statInvEl) statInvEl.innerText = invitesCount;
+            const statPaxEl = document.getElementById('stats-total-pax');
+            if(statPaxEl) statPaxEl.innerText = totalPax;
+            const statConfEl = document.getElementById('stats-confirmed');
+            if(statConfEl) statConfEl.innerText = guestsConf;
+
+            renderLists();
+            renderCharts(spent, total, state.budget, guestsConf, totalPax);
+        }
+
+        function renderLists() {
+            // Budget List
+            const bl = document.getElementById('budget-list-body');
+            if(bl) {
+                bl.innerHTML = '';
+                state.budget.forEach(e => {
+                    bl.innerHTML += `
+                        <tr class="hover:bg-emerald-50 border-b border-stone-100 group">
+                            <td class="p-3 font-medium text-stone-700">${e.category}</td>
+                            <td class="p-3 text-right text-emerald-700 font-bold">R$ ${e.amount.toLocaleString('pt-BR')}</td>
+                            <td class="p-3 text-center flex justify-end gap-2">
+                                <button onclick="openEditModal('expenses', '${e.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
+                                <button onclick="deleteExpense('${e.id}')" class="text-stone-300 hover:text-red-500">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Guest List
+            const gl = document.getElementById('guest-list-body');
+            if(gl) {
+                gl.innerHTML = '';
+                state.guests.forEach(g => {
+                    const totalInParty = 1 + (parseInt(g.partners)||0);
+                    let tags = (g.tags||[]).map(t => `<span class="bg-stone-100 text-stone-500 text-[9px] px-1 rounded border mr-1">${t}</span>`).join('');
+                    gl.innerHTML += `
+                        <tr class="hover:bg-emerald-50 border-b border-stone-100">
+                            <td class="p-3 font-bold text-stone-700">${g.name}</td>
+                            <td class="p-3 text-stone-500 font-mono">${totalInParty} <span class="text-[9px] text-stone-400">(1+${g.partners})</span></td>
+                            <td class="p-3">${tags}</td>
+                            <td class="p-3">
+                                <select onchange="updateGuestStatus('${g.id}', this.value)" class="bg-transparent text-xs font-bold ${g.status==='confirmed'?'text-emerald-600':(g.status==='declined'?'text-red-400':'text-yellow-600')}">
+                                    <option value="pending" ${g.status==='pending'?'selected':''}>Pendente</option>
+                                    <option value="confirmed" ${g.status==='confirmed'?'selected':''}>Confirmado</option>
+                                    <option value="declined" ${g.status==='declined'?'selected':''}>Não Vai</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-right flex justify-end gap-2">
+                                <button onclick="openEditModal('guests', '${g.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
+                                <button onclick="deleteGuest('${g.id}')" class="text-stone-300 hover:text-red-500">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Task List
+            const tl = document.getElementById('tasks-list');
+            if(tl) {
+                tl.innerHTML = '';
+                if(state.tasks.length === 0) {
+                    tl.innerHTML = '<p class="text-center text-stone-400 text-sm py-4">Nenhuma tarefa criada.</p>';
+                    return;
+                }
+
+                const buckets = { late: [], today: [], week: [], month: [], nextMonth: [], future: [], noDate: [] };
+                const today = new Date(); today.setHours(0,0,0,0);
+                
+                const dayOfWeek = today.getDay(); 
+                const distToSat = 6 - dayOfWeek;
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(today.getDate() + distToSat);
+                endOfWeek.setHours(23,59,59,999);
+
+                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                const startNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+                const endNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+
+                const pendingTasks = state.tasks.filter(t => !t.done).sort((a,b) => {
+                    if(!a.deadline) return 1; if(!b.deadline) return -1;
+                    return new Date(a.deadline) - new Date(b.deadline);
+                });
+                const doneTasks = state.tasks.filter(t => t.done);
+
+                pendingTasks.forEach(t => {
+                    if(!t.deadline) { buckets.noDate.push(t); return; }
+                    const [y, m, d] = t.deadline.split('-');
+                    const taskDate = new Date(y, m-1, d); 
+                    taskDate.setHours(0,0,0,0);
+
+                    if (taskDate < today) buckets.late.push(t);
+                    else if (taskDate.getTime() === today.getTime()) buckets.today.push(t);
+                    else if (taskDate <= endOfWeek) buckets.week.push(t);
+                    else if (taskDate <= endOfMonth) buckets.month.push(t); 
+                    else if (taskDate >= startNextMonth && taskDate <= endNextMonth) buckets.nextMonth.push(t);
+                    else buckets.future.push(t);
+                });
+
+                const renderBucket = (title, items, className) => {
+                    if(items.length === 0) return;
+                    tl.innerHTML += `<div class="task-section-header ${className}">${title} (${items.length})</div>`;
+                    items.forEach(t => tl.innerHTML += createTaskHTML(t));
+                };
+
+                renderBucket('🚨 Atrasadas', buckets.late, 'urgent');
+                renderBucket('🔥 Hoje', buckets.today, 'today');
+                renderBucket('📅 Essa Semana', buckets.week, 'week');
+                renderBucket('🗓️ Esse Mês', buckets.month, '');
+                renderBucket('📆 Próximo Mês', buckets.nextMonth, '');
+                renderBucket('🔮 Futuro', buckets.future, '');
+                renderBucket('📝 Sem Data', buckets.noDate, '');
+                
+                if(doneTasks.length > 0) {
+                    tl.innerHTML += `<div class="task-section-header mt-6 border-t pt-4">✅ Concluídas (${doneTasks.length})</div>`;
+                    doneTasks.forEach(t => tl.innerHTML += createTaskHTML(t));
+                }
+            }
+        }
+
+        function createTaskHTML(t) {
+            let dateTxt = '';
+            if(t.deadline) {
+                const [y, m, d] = t.deadline.split('-');
+                dateTxt = `${d}/${m}/${y}`;
+            }
+            const hasObs = t.observation && t.observation.trim().length > 0;
+            let tagPills = '';
+            if(t.tags && Array.isArray(t.tags) && t.tags.length > 0) {
+                tagPills = '<div class="mt-2 flex flex-wrap gap-1">';
+                t.tags.forEach(tag => {
+                    const bg = tag.color || '#10B981';
+                    tagPills += `<span class="task-tag-visible" style="background-color: ${bg};">${tag.name}</span>`;
+                });
+                tagPills += '</div>';
+            }
+
+            return `
+                <div class="flex items-start justify-between p-3 bg-white border border-stone-100 rounded-lg shadow-sm mb-2 hover:shadow-md transition ${t.done?'opacity-50 grayscale':''}">
+                    <div class="flex items-start gap-3 w-full">
+                        <div onclick="toggleTask('${t.id}', ${t.done})" class="w-5 h-5 mt-1 rounded-full border-2 cursor-pointer flex-shrink-0 flex items-center justify-center ${t.done?'bg-emerald-500 border-emerald-500':'border-stone-300'}">
+                            ${t.done ? '<span class="text-white text-[10px]">✓</span>' : ''}
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-bold text-stone-700 ${t.done?'line-through text-stone-400':''}">${t.text}</p>
+                                <button onclick="viewTask('${t.id}')" class="text-stone-400 hover:text-emerald-600 p-1" title="Ver Detalhes">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex flex-wrap gap-2 mt-1">
+                                <span>${t.category}</span>
+                                ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
+                            </div>
+                            ${tagPills}
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0 ml-1">
+                        <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm px-2">✕</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        let chart1 = null, chart2 = null;
+        function renderCharts(spent, total, items, gConf, gTotal) {
+            const ctx1 = document.getElementById('budgetChart');
+            if(ctx1 && chart1) chart1.destroy();
+            if(ctx1) {
+                let cats = {}; items.forEach(i => cats[i.category] = (cats[i.category]||0)+i.amount);
+                const rem = Math.max(0, total - spent);
+                chart1 = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: { labels: Object.keys(cats).concat(['Livre']), datasets: [{ data: Object.values(cats).concat([rem]), backgroundColor: ['#059669', '#0891B2', '#D97706', '#DB2777', '#7C3AED', '#E5E7EB'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+                document.getElementById('budget-balance-display').innerText = "R$ " + rem.toLocaleString('pt-BR');
+            }
+
+            const ctx2 = document.getElementById('guestChart');
+            if(ctx2 && chart2) chart2.destroy();
+            if(ctx2) {
+                const pending = gTotal - gConf; 
+                chart2 = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: { labels: ['Confirmados', 'Pendentes'], datasets: [{ data: [gConf, pending], backgroundColor: ['#10B981', '#FCD34D'], borderWidth: 0 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 8 } } } }
+                });
+            }
+        }
+
         function drawLogo(id) {
             const canvas = document.getElementById(id);
             if(!canvas) return;
@@ -518,6 +786,7 @@
         };
 
         let state = { budget: [], guests: [], tasks: [], customTags: [], vendors: [], settings: {} };
+        let activeVendorCats = [];
 
         function setupListeners() {
             const root = getUserRoot();
@@ -713,39 +982,35 @@
             "Reserva Investimento", "Primeira Compra", "Básico (Luz/Água...)", "Viagem", "Enxoval"
         ];
 
-        // Mapped Default Criteria for Standard Categories
-        const standardCriteria = {
-            "Espaço": ["Localização", "Capacidade", "Ar Condicionado", "Beleza", "Infraestrutura"],
-            "Buffet": ["Sabor", "Variedade", "Apresentação", "Bebidas", "Serviço"],
-            "Decoração": ["Criatividade", "Flores", "Acervo", "Projeto", "Preço"],
-            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação", "Preço"],
-            "Fotografia / Filmagem": ["Estilo", "Edição", "Prazos", "Equipe", "Álbuns"],
-            "Cerimonial": ["Organização", "Experiência", "Equipe", "Indicações", "Preço"]
+        const criteriaConfig = {
+            "Espaço": ["Localização", "Capacidade", "Ar Condicionado", "Beleza", "Infraestrutura", "Mobiliário", "Limpeza", "Horário"],
+            "Buffet": ["Sabor", "Apresentação", "Variedade", "Bebidas", "Serviço (Garçons)", "Quantidade", "Louças"],
+            "Decoração": ["Criatividade", "Flores (Qualidade)", "Acervo", "Iluminação Cênica", "Projeto", "Buquê", "Manutenção"],
+            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação Pista", "Profissionalismo", "Pontualidade", "Interação"],
+            "Iluminação": ["Cênica", "Pista", "Qualidade Equipamento", "Segurança", "Estética"],
+            "Bolo": ["Sabor", "Estética", "Recheio", "Durabilidade", "Tamanho", "Topo de Bolo"],
+            "Doces": ["Sabor", "Variedade", "Apresentação", "Tamanho", "Embalagem"],
+            "Fotografia / Filmagem": ["Olhar Artístico", "Edição", "Equipe", "Prazos", "Álbuns", "Drone", "Making Of", "Empatia", "Resolução"],
+            "Cerimonial": ["Organização", "Experiência", "Equipe", "Indicações", "Tranquilidade", "Cronograma"],
+            "Beleza": ["Teste", "Durabilidade", "Produtos", "Penteado", "Maquiagem", "Pontualidade"],
+            "default": ["Qualidade", "Atendimento", "Flexibilidade", "Prazos", "Custo-Benefício"]
         };
 
         window.openVendorModal = () => {
-            const container = document.getElementById('vend-cat-container');
-            // Check if element exists before modifying
-            if(container) {
-                // If using the old container for checkboxes (removed in this version)
-            }
-            
-            // Populate category select
-            const catSelect = document.getElementById('vend-cat');
-            if(catSelect && catSelect.options.length <= 1) {
-                // Keep default
-                vendorCategories.forEach(c => {
-                   const opt = document.createElement('option');
-                   opt.value = c; opt.innerText = c;
-                   catSelect.appendChild(opt);
-                });
-            }
+            const catSelect = document.getElementById('vend-cat-select');
+            catSelect.innerHTML = '<option value="" disabled selected>Selecionar Categoria...</option>';
+            vendorCategories.forEach(c => {
+               const opt = document.createElement('option');
+               opt.value = c; opt.innerText = c;
+               catSelect.appendChild(opt);
+            });
 
-            // Clear inputs
             document.getElementById('vend-name').value = '';
             document.getElementById('vend-value').value = '';
-            document.getElementById('vend-cat').value = '';
-            document.getElementById('custom-criteria-list').innerHTML = '<p class="text-xs text-stone-400 italic">Selecione uma categoria acima para carregar critérios.</p>';
+            
+            activeVendorCats = [];
+            document.getElementById('vend-cat-pills').innerHTML = '<p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>';
+            document.getElementById('custom-criteria-list').innerHTML = '<p class="text-xs text-stone-400 italic col-span-full">Selecione uma categoria acima para carregar critérios.</p>';
             
             updateCopyDropdown();
             document.getElementById('vendor-modal').classList.remove('hidden');
@@ -753,26 +1018,98 @@
 
         window.closeVendorModal = () => document.getElementById('vendor-modal').classList.add('hidden');
 
-        // Logic: When category selected in Dropdown
-        window.checkVendorTemplate = () => {
-            const cat = document.getElementById('vend-cat').value;
-            const list = document.getElementById('custom-criteria-list');
-            list.innerHTML = ''; // Clear always on new selection to show fresh template
+        window.addVendorCategory = () => {
+            const select = document.getElementById('vend-cat-select');
+            const cat = select.value;
+            if(!cat) return;
             
-            if (standardCriteria[cat]) {
-                standardCriteria[cat].forEach(cName => {
-                     addCustomCriterion(cName);
-                });
-            } else {
-                // Generic default
-                ["Qualidade", "Atendimento", "Preço", "Prazos", "Contrato"].forEach(c => addCustomCriterion(c));
+            if(!activeVendorCats.includes(cat)) {
+                activeVendorCats.push(cat);
+                
+                const container = document.getElementById('vend-cat-pills');
+                const emptyMsg = container.querySelector('.empty-msg');
+                if(emptyMsg) emptyMsg.remove();
+                
+                const pill = document.createElement('span');
+                pill.className = "cat-pill-removable";
+                pill.innerHTML = `${cat} <button onclick="removeVendorCat('${cat}')">✕</button>`;
+                container.appendChild(pill);
+                
+                const list = document.getElementById('custom-criteria-list');
+                const existing = list.querySelectorAll('.criterion-row').length;
+                
+                if (existing === 0) {
+                     let srcList = criteriaConfig['default'];
+                     if (criteriaConfig[cat]) srcList = criteriaConfig[cat];
+                     else if (cat.includes("Som")) srcList = criteriaConfig["Som e música"];
+                     else if (cat.includes("Foto")) srcList = criteriaConfig["Fotografia / Filmagem"];
+                     
+                     list.innerHTML = '';
+                     srcList.slice(0, 10).forEach(c => addCustomCriterion(c));
+                }
             }
+        };
+
+        window.removeVendorCat = (cat) => {
+            activeVendorCats = activeVendorCats.filter(c => c !== cat);
+            const container = document.getElementById('vend-cat-pills');
+            container.innerHTML = '';
+            if(activeVendorCats.length === 0) {
+                container.innerHTML = '<p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>';
+            } else {
+                activeVendorCats.forEach(c => {
+                    container.innerHTML += `<span class="cat-pill-removable">${c} <button onclick="removeVendorCat('${c}')">✕</button></span>`;
+                });
+            }
+        }
+
+        window.addCustomCriterion = (prefillName = '') => {
+             const list = document.getElementById('custom-criteria-list');
+             if(list.children.length > 0 && list.children[0].tagName === 'P') list.innerHTML = '';
+             
+             const div = document.createElement('div');
+             div.className = "flex gap-1 items-center mb-1 col-span-2 sm:col-span-1 criterion-row";
+             div.innerHTML = `
+                <input type="text" placeholder="Nome" class="input-elegant w-2/3 text-[10px] p-1 crit-name" value="${prefillName}">
+                <input type="number" placeholder="0-10" min="0" max="10" class="input-elegant w-1/3 text-center p-1 font-bold crit-score" onchange="limitInput(this)">
+                <button onclick="this.parentElement.remove()" class="text-stone-300 hover:text-red-500 text-[10px] px-1">✕</button>
+             `;
+             list.appendChild(div);
+        };
+
+        window.limitInput = (el) => {
+            if(el.value > 10) el.value = 10;
+            if(el.value < 0) el.value = 0;
+        }
+        
+        window.saveVendor = () => {
+            const name = document.getElementById('vend-name').value;
+            const val = parseFloat(document.getElementById('vend-value').value)||0;
+            
+            if(!name || activeVendorCats.length === 0) {
+                alert("Preencha o nome e adicione pelo menos uma categoria.");
+                return;
+            }
+
+            const rows = document.querySelectorAll('.criterion-row');
+            let scores = {};
+            
+            rows.forEach(row => {
+                const cName = row.querySelector('.crit-name').value;
+                const cScore = parseInt(row.querySelector('.crit-score').value) || 0;
+                if(cName) scores[cName] = cScore;
+            });
+            
+            addItem('vendors', { 
+                name, categories: activeVendorCats, monetaryValue: val, scores 
+            });
+            
+            closeVendorModal();
         };
         
         window.updateCopyDropdown = () => {
             const sel = document.getElementById('copy-criteria-select');
             if(!sel) return;
-            // Keep default option
             sel.innerHTML = '<option value="">-- Copiar de Outro --</option>';
             state.vendors.forEach(v => {
                 const opt = document.createElement('option');
@@ -790,57 +1127,11 @@
             const targetVendor = state.vendors.find(v => v.id === targetId);
             if(targetVendor && targetVendor.scores) {
                 const list = document.getElementById('custom-criteria-list');
-                list.innerHTML = ''; // Clear current
+                list.innerHTML = ''; 
                 Object.keys(targetVendor.scores).forEach(cName => {
                      addCustomCriterion(cName);
                 });
             }
-        };
-
-        window.addCustomCriterion = (prefillName = '') => {
-             const list = document.getElementById('custom-criteria-list');
-             // Remove placeholder text if exists
-             if(list.children.length > 0 && list.children[0].tagName === 'P') list.innerHTML = '';
-             
-             const div = document.createElement('div');
-             div.className = "flex gap-2 items-center mb-2 criterion-row";
-             div.innerHTML = `
-                <input type="text" placeholder="Nome do Critério" class="input-elegant w-2/3 text-xs p-1 crit-name" value="${prefillName}">
-                <input type="number" placeholder="Nota" min="0" max="10" class="input-elegant w-1/3 text-center p-1 font-bold crit-score" onchange="limitInput(this)">
-                <button onclick="this.parentElement.remove()" class="text-stone-300 hover:text-red-500 text-xs">✕</button>
-             `;
-             list.appendChild(div);
-        };
-
-        window.limitInput = (el) => {
-            if(el.value > 10) el.value = 10;
-            if(el.value < 0) el.value = 0;
-        }
-        
-        window.saveVendor = () => {
-            const name = document.getElementById('vend-name').value;
-            const cat = document.getElementById('vend-cat').value;
-            const val = parseFloat(document.getElementById('vend-value').value)||0;
-            
-            if(!name || !cat) {
-                alert("Preencha o nome e selecione a categoria.");
-                return;
-            }
-
-            const rows = document.querySelectorAll('.criterion-row');
-            let scores = {};
-            
-            rows.forEach(row => {
-                const cName = row.querySelector('.crit-name').value;
-                const cScore = parseInt(row.querySelector('.crit-score').value) || 0;
-                if(cName) scores[cName] = cScore;
-            });
-            
-            addItem('vendors', { 
-                name, category: cat, monetaryValue: val, scores 
-            });
-            
-            closeVendorModal();
         };
 
         window.deleteVendor = (id) => deleteItem('vendors', id);
@@ -855,14 +1146,15 @@
                 return;
             }
 
+            // Organize vendors by PRIMARY category
             const groups = {};
             state.vendors.forEach(v => {
-                // Single Category logic now
-                const primary = v.category || 'Outros';
+                const primary = (v.categories && v.categories.length > 0) ? v.categories[0] : 'Outros';
                 if(!groups[primary]) groups[primary] = [];
                 groups[primary].push(v);
             });
 
+            // Iterate categories
             Object.keys(groups).sort().forEach(catName => {
                 const group = groups[catName];
                 
@@ -881,7 +1173,6 @@
                     else if(maxP === minP) priceScore = 10;
                     else priceScore = 10 * (1 - ((v.monetaryValue - minP) / (maxP - minP)));
                     
-                    // Final Score
                     const totalItems = scoreValues.length + 1; // +1 for price
                     const finalScore = totalItems > 0 ? ((qualAvg * scoreValues.length) + priceScore) / totalItems : 0;
                     
@@ -910,17 +1201,20 @@
                     });
                     critHtml += `<div class="score-item bg-emerald-50"><span class="text-emerald-700 font-bold">Preço (Auto)</span><b class="text-emerald-700">${v.priceScore.toFixed(1)}</b></div>`;
 
+                    const catPills = (v.categories||[]).map(c => `<span class="text-[9px] bg-stone-100 px-1 rounded text-stone-500 border border-stone-200">${c}</span>`).join(' ');
+
                     grid.innerHTML += `
                         <div class="card p-5 relative group">
-                            <button onclick="deleteVendor('${v.id}')" class="absolute top-2 right-2 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">✕</button>
+                            <button onclick="deleteVendor('${v.id}')" class="absolute top-2 right-2 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition text-lg">✕</button>
                             
-                            <div class="flex justify-between items-start mb-2">
+                            <div class="flex justify-between items-start mb-2 pr-6">
                                 <div>
-                                    <h3 class="font-bold text-stone-800 text-lg leading-tight truncate" title="${v.name}">${v.name}</h3>
+                                    <h3 class="font-bold text-stone-800 text-lg leading-tight truncate w-32" title="${v.name}">${v.name}</h3>
+                                    <div class="flex flex-wrap gap-1 mt-1">${catPills}</div>
                                 </div>
-                                <div class="flex flex-col items-center ml-2">
+                                <div class="flex flex-col items-center ml-1">
                                     <div class="vendor-score-circle ${scoreClass}">${v.finalScore.toFixed(1)}</div>
-                                    <span class="text-[9px] text-stone-400 uppercase mt-1">Média</span>
+                                    <span class="text-[8px] text-stone-400 uppercase mt-1">Média</span>
                                 </div>
                             </div>
                             <div class="mb-4 bg-stone-50 p-2 rounded text-center">
@@ -1068,263 +1362,6 @@
             await updateItem(coll, id, data);
             closeModal();
         };
-
-        function updateUI(settings) {
-            if(!settings && state.settings) settings = state.settings;
-            if(!settings) { settings = { date: '', budgetTotal: 0 }; }
-
-            if(settings.date) {
-                const [y, m, d] = settings.date.split('-');
-                const eventDate = new Date(y, m-1, d);
-                const today = new Date(); today.setHours(0,0,0,0);
-                const diff = Math.ceil((eventDate - today)/(1000*60*60*24));
-                const daysEl = document.getElementById('days-count');
-                if (daysEl) daysEl.innerText = diff > 0 ? diff : 0;
-            }
-            const spent = state.budget.reduce((a,b) => a + b.amount, 0);
-            const total = settings.budgetTotal || 0;
-            const pct = total > 0 ? Math.min(100, Math.round((spent/total)*100)) : 0;
-            
-            const pctEl = document.getElementById('dash-budget-percent');
-            if(pctEl) pctEl.innerText = `${pct}%`;
-            const leftEl = document.getElementById('dash-budget-left');
-            if(leftEl) leftEl.innerText = `Livre: R$ ${(total-spent).toLocaleString('pt-BR')}`;
-            const progEl = document.getElementById('dash-progress-bar');
-            if(progEl) progEl.style.width = `${pct}%`;
-
-            let invitesCount = state.guests.length; 
-            let totalPax = 0; 
-            let guestsConf = 0;
-
-            // NEW: Aggregate Guest Tags Stats
-            let tagCounts = {};
-
-            state.guests.forEach(g => {
-                const p = 1 + (parseInt(g.partners)||0);
-                if(g.status !== 'declined') { totalPax += p; }
-                if(g.status === 'confirmed') guestsConf += p;
-
-                if(g.tags && Array.isArray(g.tags)) {
-                    g.tags.forEach(t => {
-                        tagCounts[t] = (tagCounts[t] || 0) + p;
-                    });
-                }
-            });
-
-            // Render Guest Tag Report
-            const reportEl = document.getElementById('guest-tags-report');
-            if(reportEl) {
-                reportEl.innerHTML = '';
-                if(Object.keys(tagCounts).length === 0) {
-                    reportEl.innerHTML = '<p class="text-stone-400 italic">Nenhuma tag atribuída.</p>';
-                } else {
-                    Object.keys(tagCounts).forEach(tag => {
-                        reportEl.innerHTML += `
-                            <div class="flex justify-between items-center border-b border-stone-50 pb-1">
-                                <span>${tag}</span>
-                                <span class="font-bold text-indigo-700">${tagCounts[tag]}</span>
-                            </div>
-                        `;
-                    });
-                }
-            }
-
-            const invEl = document.getElementById('dash-invites-count');
-            if(invEl) invEl.innerText = invitesCount;
-            const paxEl = document.getElementById('dash-total-pax');
-            if(paxEl) paxEl.innerText = totalPax;
-            const confEl = document.getElementById('dash-guest-confirmed');
-            if(confEl) confEl.innerText = `${guestsConf} Confirmados`;
-
-            const statInvEl = document.getElementById('stats-invites');
-            if(statInvEl) statInvEl.innerText = invitesCount;
-            const statPaxEl = document.getElementById('stats-total-pax');
-            if(statPaxEl) statPaxEl.innerText = totalPax;
-            const statConfEl = document.getElementById('stats-confirmed');
-            if(statConfEl) statConfEl.innerText = guestsConf;
-
-            renderLists();
-            renderCharts(spent, total, state.budget, guestsConf, totalPax);
-        }
-
-        function renderLists() {
-            const bl = document.getElementById('budget-list-body');
-            if(bl) {
-                bl.innerHTML = '';
-                state.budget.forEach(e => {
-                    bl.innerHTML += `
-                        <tr class="hover:bg-emerald-50 border-b border-stone-100 group">
-                            <td class="p-3 font-medium text-stone-700">${e.category}</td>
-                            <td class="p-3 text-right text-emerald-700 font-bold">R$ ${e.amount.toLocaleString('pt-BR')}</td>
-                            <td class="p-3 text-center flex justify-end gap-2">
-                                <button onclick="openEditModal('expenses', '${e.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
-                                <button onclick="deleteExpense('${e.id}')" class="text-stone-300 hover:text-red-500">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-
-            const gl = document.getElementById('guest-list-body');
-            if(gl) {
-                gl.innerHTML = '';
-                state.guests.forEach(g => {
-                    const totalInParty = 1 + (parseInt(g.partners)||0);
-                    let tags = (g.tags||[]).map(t => `<span class="bg-stone-100 text-stone-500 text-[9px] px-1 rounded border mr-1">${t}</span>`).join('');
-                    gl.innerHTML += `
-                        <tr class="hover:bg-emerald-50 border-b border-stone-100">
-                            <td class="p-3 font-bold text-stone-700">${g.name}</td>
-                            <td class="p-3 text-stone-500 font-mono">${totalInParty} <span class="text-[9px] text-stone-400">(1+${g.partners})</span></td>
-                            <td class="p-3">${tags}</td>
-                            <td class="p-3">
-                                <select onchange="updateGuestStatus('${g.id}', this.value)" class="bg-transparent text-xs font-bold ${g.status==='confirmed'?'text-emerald-600':(g.status==='declined'?'text-red-400':'text-yellow-600')}">
-                                    <option value="pending" ${g.status==='pending'?'selected':''}>Pendente</option>
-                                    <option value="confirmed" ${g.status==='confirmed'?'selected':''}>Confirmado</option>
-                                    <option value="declined" ${g.status==='declined'?'selected':''}>Não Vai</option>
-                                </select>
-                            </td>
-                            <td class="p-3 text-right flex justify-end gap-2">
-                                <button onclick="openEditModal('guests', '${g.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
-                                <button onclick="deleteGuest('${g.id}')" class="text-stone-300 hover:text-red-500">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-
-            const tl = document.getElementById('tasks-list');
-            if(tl) {
-                tl.innerHTML = '';
-                if(state.tasks.length === 0) {
-                    tl.innerHTML = '<p class="text-center text-stone-400 text-sm py-4">Nenhuma tarefa criada.</p>';
-                    return;
-                }
-
-                const buckets = { late: [], today: [], week: [], month: [], nextMonth: [], future: [], noDate: [] };
-                const today = new Date(); today.setHours(0,0,0,0);
-                
-                const dayOfWeek = today.getDay(); 
-                const distToSat = 6 - dayOfWeek;
-                const endOfWeek = new Date(today);
-                endOfWeek.setDate(today.getDate() + distToSat);
-                endOfWeek.setHours(23,59,59,999);
-
-                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                const startNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-                const endNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-
-                const pendingTasks = state.tasks.filter(t => !t.done).sort((a,b) => {
-                    if(!a.deadline) return 1; if(!b.deadline) return -1;
-                    return new Date(a.deadline) - new Date(b.deadline);
-                });
-                const doneTasks = state.tasks.filter(t => t.done);
-
-                pendingTasks.forEach(t => {
-                    if(!t.deadline) { buckets.noDate.push(t); return; }
-                    const [y, m, d] = t.deadline.split('-');
-                    const taskDate = new Date(y, m-1, d); 
-                    taskDate.setHours(0,0,0,0);
-
-                    if (taskDate < today) buckets.late.push(t);
-                    else if (taskDate.getTime() === today.getTime()) buckets.today.push(t);
-                    else if (taskDate <= endOfWeek) buckets.week.push(t);
-                    else if (taskDate <= endOfMonth) buckets.month.push(t); 
-                    else if (taskDate >= startNextMonth && taskDate <= endNextMonth) buckets.nextMonth.push(t);
-                    else buckets.future.push(t);
-                });
-
-                const renderBucket = (title, items, className) => {
-                    if(items.length === 0) return;
-                    tl.innerHTML += `<div class="task-section-header ${className}">${title} (${items.length})</div>`;
-                    items.forEach(t => tl.innerHTML += createTaskHTML(t));
-                };
-
-                renderBucket('🚨 Atrasadas', buckets.late, 'urgent');
-                renderBucket('🔥 Hoje', buckets.today, 'today');
-                renderBucket('📅 Essa Semana', buckets.week, 'week');
-                renderBucket('🗓️ Esse Mês', buckets.month, '');
-                renderBucket('📆 Próximo Mês', buckets.nextMonth, '');
-                renderBucket('🔮 Futuro', buckets.future, '');
-                renderBucket('📝 Sem Data', buckets.noDate, '');
-                
-                if(doneTasks.length > 0) {
-                    tl.innerHTML += `<div class="task-section-header mt-6 border-t pt-4">✅ Concluídas (${doneTasks.length})</div>`;
-                    doneTasks.forEach(t => tl.innerHTML += createTaskHTML(t));
-                }
-            }
-        }
-
-        function createTaskHTML(t) {
-            let dateTxt = '';
-            if(t.deadline) {
-                const [y, m, d] = t.deadline.split('-');
-                dateTxt = `${d}/${m}/${y}`;
-            }
-            const hasObs = t.observation && t.observation.trim().length > 0;
-            let tagPills = '';
-            if(t.tags && Array.isArray(t.tags) && t.tags.length > 0) {
-                tagPills = '<div class="mt-2 flex flex-wrap gap-1">';
-                t.tags.forEach(tag => {
-                    const bg = tag.color || '#10B981';
-                    tagPills += `<span class="task-tag-visible" style="background-color: ${bg};">${tag.name}</span>`;
-                });
-                tagPills += '</div>';
-            }
-
-            return `
-                <div class="flex items-start justify-between p-3 bg-white border border-stone-100 rounded-lg shadow-sm mb-2 hover:shadow-md transition ${t.done?'opacity-50 grayscale':''}">
-                    <div class="flex items-start gap-3 w-full">
-                        <div onclick="toggleTask('${t.id}', ${t.done})" class="w-5 h-5 mt-1 rounded-full border-2 cursor-pointer flex-shrink-0 flex items-center justify-center ${t.done?'bg-emerald-500 border-emerald-500':'border-stone-300'}">
-                            ${t.done ? '<span class="text-white text-[10px]">✓</span>' : ''}
-                        </div>
-                        <div class="flex-grow">
-                            <div class="flex items-center gap-2">
-                                <p class="text-sm font-bold text-stone-700 ${t.done?'line-through text-stone-400':''}">${t.text}</p>
-                                <button onclick="viewTask('${t.id}')" class="text-stone-400 hover:text-emerald-600 p-1" title="Ver Detalhes">
-                                    <i class="fa-regular fa-eye"></i>
-                                </button>
-                            </div>
-                            
-                            <div class="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex flex-wrap gap-2 mt-1">
-                                <span>${t.category}</span>
-                                ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
-                            </div>
-                            ${tagPills}
-                        </div>
-                    </div>
-                    <div class="flex gap-2 flex-shrink-0 ml-1">
-                        <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm px-2">✕</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        let chart1 = null, chart2 = null;
-        function renderCharts(spent, total, items, gConf, gTotal) {
-            const ctx1 = document.getElementById('budgetChart');
-            if(ctx1 && chart1) chart1.destroy();
-            if(ctx1) {
-                let cats = {}; items.forEach(i => cats[i.category] = (cats[i.category]||0)+i.amount);
-                const rem = Math.max(0, total - spent);
-                chart1 = new Chart(ctx1, {
-                    type: 'doughnut',
-                    data: { labels: Object.keys(cats).concat(['Livre']), datasets: [{ data: Object.values(cats).concat([rem]), backgroundColor: ['#059669', '#0891B2', '#D97706', '#DB2777', '#7C3AED', '#E5E7EB'], borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-                document.getElementById('budget-balance-display').innerText = "R$ " + rem.toLocaleString('pt-BR');
-            }
-
-            const ctx2 = document.getElementById('guestChart');
-            if(ctx2 && chart2) chart2.destroy();
-            if(ctx2) {
-                const pending = gTotal - gConf; 
-                chart2 = new Chart(ctx2, {
-                    type: 'doughnut',
-                    data: { labels: ['Confirmados', 'Pendentes'], datasets: [{ data: [gConf, pending], backgroundColor: ['#10B981', '#FCD34D'], borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 8 } } } }
-                });
-            }
-        }
 
         window.calculateDrinks = () => {
              const guests = parseInt(document.getElementById('calc-guests').value)||0;
