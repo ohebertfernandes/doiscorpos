@@ -6,7 +6,6 @@
     <title>Dois Corpos - Planejador de Casamento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
@@ -62,13 +61,21 @@
             background: white; color: #6B7280; display: inline-flex; items-center; margin-right: 4px; margin-bottom: 4px;
         }
         .tag-selector-pill:hover { border-color: var(--color-emerald-main); transform: translateY(-1px); }
-        .tag-selector-pill.selected { border-width: 2px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tag-selector-pill.selected { border-width: 2px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-color: #ECFDF5; color: #065F46; border-color: #10B981; }
 
-        .task-tag-display {
-            font-size: 10px; padding: 2px 8px; border-radius: 6px; color: white; font-weight: bold;
-            display: inline-block; margin-right: 4px; margin-bottom: 2px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3);
-            text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        .task-tag-visible {
+            display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; 
+            color: white; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15); margin-top: 4px; margin-right: 4px;
+        }
+
+        .category-checkbox { display: none; }
+        .category-label {
+            display: inline-block; padding: 6px 12px; border: 1px solid #E5E7EB; border-radius: 8px;
+            font-size: 11px; cursor: pointer; background: white; color: #6B7280; margin: 2px; transition: all 0.2s;
+        }
+        .category-checkbox:checked + .category-label {
+            background-color: #064E3B; color: white; border-color: #064E3B;
         }
 
         .color-swatch { -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer; padding: 0; background: none; }
@@ -88,8 +95,25 @@
         .task-section-header.today { color: #D97706; border-color: #FDE68A; }
         .task-section-header.week { color: #059669; border-color: #A7F3D0; }
 
+        /* --- VENDOR COMPARE STYLES --- */
+        .vendor-score-circle {
+            width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.4rem; border: 3px solid; font-family: 'Playfair Display', serif;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .score-high { border-color: #10B981; color: #065F46; background: #ECFDF5; }
+        .score-med { border-color: #FBBF24; color: #92400E; background: #FFFBEB; }
+        .score-low { border-color: #EF4444; color: #991B1B; background: #FEF2F2; }
+        
+        .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
+        .score-item { text-align: center; overflow: hidden; }
+        .score-item span { display: block; font-size: 7px; text-transform: uppercase; color: #9CA3AF; margin-bottom: 1px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score-item b { font-size: 10px; color: #4B5563; background: #F3F4F6; padding: 2px 4px; border-radius: 4px; display: inline-block; width: 100%; }
+        
+        .price-badge { background-color: #F0FDFA; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; border: 1px solid #A7F3D0; }
+        
         /* --- MODALS --- */
-        #edit-modal, #view-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        #edit-modal, #view-modal, #vendor-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
         #login-overlay { background-color: #F0FDFA; background-image: radial-gradient(#E0E7FF 1px, transparent 1px); background-size: 20px 20px; }
     </style>
 </head>
@@ -118,46 +142,73 @@
         </div>
     </div>
 
-    <!-- VIEW TASK MODAL (The Card) -->
+    <!-- VIEW TASK MODAL -->
     <div id="view-modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4">
         <div class="bg-white p-0 rounded-xl shadow-2xl w-full max-w-md border border-stone-100 overflow-hidden animate-fade-in relative">
             <div class="h-3 bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
             <button onclick="closeViewModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 bg-white rounded-full p-1"><i class="fa-solid fa-times"></i></button>
-            
             <div class="p-8">
                 <span id="view-category" class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded mb-2 inline-block">Categoria</span>
-                
-                <h3 id="view-title" class="text-2xl font-serif text-stone-800 mb-2 leading-tight">Título da Tarefa</h3>
-                
+                <h3 id="view-title" class="text-2xl font-serif text-stone-800 mb-2 leading-tight">Título</h3>
                 <div class="flex items-center text-stone-500 text-sm mb-4">
-                    <i class="fa-regular fa-calendar mr-2"></i>
-                    <span id="view-date">Data Limite</span>
+                    <i class="fa-regular fa-calendar mr-2"></i><span id="view-date">Data</span>
                 </div>
-
                 <div id="view-tags" class="flex flex-wrap gap-1 mb-6"></div>
-
                 <div class="bg-stone-50 p-4 rounded-lg border-l-4 border-emerald-200">
                     <h4 class="text-xs font-bold text-stone-400 uppercase mb-1">Observações</h4>
                     <p id="view-obs" class="text-sm text-stone-700 whitespace-pre-wrap italic">Nenhuma observação.</p>
                 </div>
-
                 <div class="mt-8 flex justify-end">
-                    <button id="view-edit-btn" class="text-xs font-bold text-stone-500 hover:text-emerald-700 flex items-center">
-                        <i class="fa-solid fa-pencil mr-1"></i> Editar Tarefa
-                    </button>
+                    <button id="view-edit-btn" class="text-xs font-bold text-stone-500 hover:text-emerald-700 flex items-center"><i class="fa-solid fa-pencil mr-1"></i> Editar Tarefa</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- EDIT MODAL -->
+    <!-- VENDOR COMPARE MODAL -->
+    <div id="vendor-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-serif text-emerald-900 mb-4">Adicionar Fornecedor</h3>
+            
+            <div class="space-y-4">
+                <input type="text" id="vend-name" placeholder="Nome da Empresa/Espaço" class="input-elegant w-full">
+                
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-stone-400 mb-2">Categorias (Selecione)</p>
+                    <div id="vend-cat-container" class="flex flex-wrap gap-1 max-h-32 overflow-y-auto border p-2 rounded">
+                        <!-- JS Generated -->
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                    <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
+                    <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
+                    <p class="text-[9px] text-emerald-600 mt-1 italic">* Nota de preço calculada comparando com a categoria.</p>
+                </div>
+
+                <div class="p-5 bg-stone-50 rounded-lg border border-stone-100">
+                    <p class="text-xs font-bold text-stone-500 mb-4 uppercase">Critérios de Qualidade (0 a 10)</p>
+                    <div id="dynamic-criteria-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <p class="col-span-full text-stone-400 text-xs italic">Selecione categorias acima para ver os critérios.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6 border-t pt-4">
+                <button onclick="closeVendorModal()" class="px-4 py-2 text-sm text-stone-500 hover:bg-stone-100 rounded">Cancelar</button>
+                <button onclick="saveVendor()" class="btn-primary px-6 py-2 rounded text-sm font-bold">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERIC EDIT MODAL -->
     <div id="edit-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-serif text-emerald-900">Editar / Detalhes</h3>
                 <button onclick="closeModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-times"></i></button>
             </div>
-            <div id="modal-content" class="space-y-4"></div> <!-- Dynamic Content -->
+            <div id="modal-content" class="space-y-4"></div>
             <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-stone-100">
                 <button onclick="closeModal()" class="px-4 py-2 text-sm text-stone-500 hover:bg-stone-100 rounded">Cancelar</button>
                 <button id="modal-save-btn" class="btn-primary px-6 py-2 rounded text-sm font-bold">Salvar Alterações</button>
@@ -179,6 +230,7 @@
                 <nav class="hidden md:flex space-x-6">
                     <button onclick="switchTab('dashboard')" class="nav-item active text-xs uppercase font-bold tracking-widest py-2">Visão Geral</button>
                     <button onclick="switchTab('budget')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Orçamento</button>
+                    <button onclick="switchTab('compare')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Comparador</button>
                     <button onclick="switchTab('guests')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Convidados</button>
                     <button onclick="switchTab('timeline')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Tarefas</button>
                 </nav>
@@ -225,25 +277,13 @@
                         <i class="fa-regular fa-heart text-rose-300"></i>
                     </div>
                     <div class="flex justify-center items-center gap-2">
-                        <div class="countdown-box">
-                            <span class="countdown-val" id="cd-days">00</span>
-                            <div class="countdown-label">Dias</div>
-                        </div>
+                        <div class="countdown-box"><span class="countdown-val" id="cd-days">00</span><div class="countdown-label">Dias</div></div>
                         <span class="text-stone-300 text-xl font-serif">:</span>
-                        <div class="countdown-box">
-                            <span class="countdown-val" id="cd-hours">00</span>
-                            <div class="countdown-label">Horas</div>
-                        </div>
+                        <div class="countdown-box"><span class="countdown-val" id="cd-hours">00</span><div class="countdown-label">Horas</div></div>
                         <span class="text-stone-300 text-xl font-serif">:</span>
-                        <div class="countdown-box">
-                            <span class="countdown-val" id="cd-mins">00</span>
-                            <div class="countdown-label">Min</div>
-                        </div>
+                        <div class="countdown-box"><span class="countdown-val" id="cd-mins">00</span><div class="countdown-label">Min</div></div>
                         <span class="text-stone-300 text-xl font-serif">:</span>
-                        <div class="countdown-box">
-                            <span class="countdown-val" id="cd-secs">00</span>
-                            <div class="countdown-label">Seg</div>
-                        </div>
+                        <div class="countdown-box"><span class="countdown-val" id="cd-secs">00</span><div class="countdown-label">Seg</div></div>
                     </div>
                 </div>
                 <!-- Budget -->
@@ -262,66 +302,54 @@
                     <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Resumo Convidados</h3>
                     <div class="mt-2 flex flex-col space-y-2">
                         <div class="flex items-baseline justify-between">
-                            <div>
-                                <span class="text-4xl serif-font text-blue-900 mr-2" id="dash-total-pax">0</span>
-                                <span class="text-stone-500 text-sm">pessoas (total)</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xl font-bold text-green-600 block leading-none" id="dash-guest-confirmed">0</span>
-                                <span class="text-[10px] text-stone-400 uppercase">Confirmados</span>
-                            </div>
+                            <div><span class="text-4xl serif-font text-blue-900 mr-2" id="dash-total-pax">0</span><span class="text-stone-500 text-sm">pessoas (total)</span></div>
+                            <div class="text-right"><span class="text-xl font-bold text-green-600 block leading-none" id="dash-guest-confirmed">0</span><span class="text-[10px] text-stone-400 uppercase">Confirmados</span></div>
                         </div>
                         <div class="flex items-baseline pt-2 border-t border-stone-100">
-                            <span class="text-lg font-bold text-stone-600 mr-2" id="dash-invites-count">0</span>
-                            <span class="text-stone-400 text-xs uppercase">Convites (Famílias/Grupos)</span>
+                            <span class="text-lg font-bold text-stone-600 mr-2" id="dash-invites-count">0</span><span class="text-stone-400 text-xs uppercase">Convites (Famílias/Grupos)</span>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- VENDOR COMPARE -->
+        <section id="compare" class="hidden space-y-6 animate-fade-in">
+            <div class="flex flex-col sm:flex-row justify-between items-end border-b border-stone-200 pb-2 gap-2">
+                <div><h2 class="text-2xl font-serif text-emerald-900">Comparador</h2><p class="text-xs text-stone-500 uppercase tracking-wider">Notas automáticas baseadas nas categorias</p></div>
+                <div class="flex gap-2">
+                    <select id="vendor-filter" class="input-elegant text-xs py-1" onchange="renderVendorList()">
+                        <option value="all">Todas as Categorias</option>
+                        <!-- Populated by JS -->
+                    </select>
+                    <button onclick="openVendorModal()" class="bg-stone-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-stone-800 shadow-sm">+ Avaliar</button>
+                </div>
+            </div>
+            
+            <div id="vendor-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
         <!-- BUDGET -->
         <section id="budget" class="hidden space-y-6 animate-fade-in">
             <h2 class="text-2xl font-serif text-emerald-900 border-b border-stone-200 pb-2">Controle Financeiro</h2>
-            
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- List & Add -->
                 <div class="lg:col-span-2 space-y-4">
                     <div class="card p-4 bg-emerald-50 border-emerald-100">
                         <h4 class="text-xs font-bold text-emerald-800 uppercase mb-2">Novo Gasto</h4>
                         <div class="flex gap-2">
                             <select id="new-exp-cat" class="input-elegant text-xs w-1/3">
-                                <option value="" disabled selected>Categoria</option>
-                                <option>Buffet & Comida</option><option>Local</option><option>Foto & Vídeo</option>
-                                <option>Decoração</option><option>Música/DJ</option><option>Vestido/Beleza</option>
-                                <option>Doces/Bolo</option><option>Assessoria</option><option>Outros</option>
+                                <option value="" disabled selected>Categoria</option><option>Buffet & Comida</option><option>Local</option><option>Foto & Vídeo</option><option>Decoração</option><option>Música/DJ</option><option>Vestido/Beleza</option><option>Doces/Bolo</option><option>Assessoria</option><option>Outros</option>
                             </select>
                             <input type="number" id="new-exp-val" placeholder="Valor R$" class="input-elegant text-xs flex-grow">
                             <button onclick="addExpense()" class="bg-emerald-600 text-white px-4 rounded text-xs font-bold hover:bg-emerald-700">Adicionar</button>
                         </div>
                     </div>
-
-                    <div class="card overflow-hidden">
-                        <table class="w-full text-left">
-                            <thead class="bg-stone-50 text-xs font-bold text-stone-500 uppercase">
-                                <tr>
-                                    <th class="p-3">Item</th>
-                                    <th class="p-3 text-right">Valor</th>
-                                    <th class="p-3 text-center">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="budget-list-body" class="text-sm divide-y divide-stone-100"></tbody>
-                        </table>
-                    </div>
+                    <div class="card overflow-hidden"><table class="w-full text-left"><thead class="bg-stone-50 text-xs font-bold text-stone-500 uppercase"><tr><th class="p-3">Item</th><th class="p-3 text-right">Valor</th><th class="p-3 text-center">Ações</th></tr></thead><tbody id="budget-list-body" class="text-sm divide-y divide-stone-100"></tbody></table></div>
                 </div>
-
-                <!-- Analysis -->
                 <div class="space-y-4">
-                    <div class="card p-6 text-center">
-                        <div class="chart-container h-40"><canvas id="budgetChart"></canvas></div>
-                        <p class="mt-4 text-xs font-bold text-stone-400 uppercase">Saldo Disponível</p>
-                        <p class="text-xl font-serif text-emerald-600 font-bold" id="budget-balance-display">R$ 0</p>
-                    </div>
+                    <div class="card p-6 text-center"><div class="chart-container h-40"><canvas id="budgetChart"></canvas></div><p class="mt-4 text-xs font-bold text-stone-400 uppercase">Saldo Disponível</p><p class="text-xl font-serif text-emerald-600 font-bold" id="budget-balance-display">R$ 0</p></div>
                     <div id="savings-tips" class="card p-4 bg-yellow-50 border-yellow-200 text-xs text-stone-700 space-y-2"></div>
                 </div>
             </div>
@@ -330,135 +358,39 @@
         <!-- GUESTS -->
         <section id="guests" class="hidden space-y-6 animate-fade-in">
             <h2 class="text-2xl font-serif text-emerald-900 border-b border-stone-200 pb-2">Convidados</h2>
-            
             <div class="card p-4 bg-white shadow-sm border border-emerald-100">
                 <div class="grid grid-cols-12 gap-3 items-end">
-                    <div class="col-span-12 sm:col-span-5">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase">Nome Principal</label>
-                        <input type="text" id="new-guest-name" class="input-elegant w-full text-sm">
-                    </div>
-                    <div class="col-span-6 sm:col-span-2">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase">+ Acomp.</label>
-                        <input type="number" id="new-guest-partners" value="0" min="0" class="input-elegant w-full text-sm">
-                    </div>
-                    <div class="col-span-6 sm:col-span-5">
-                        <label class="text-[10px] font-bold text-stone-400 uppercase mb-1 block">Tags (Selecione)</label>
-                        <div class="flex flex-wrap gap-1" id="guest-tags-selector">
-                            <span onclick="toggleTag(this)" class="tag-selector-pill">Padrinho</span>
-                            <span onclick="toggleTag(this)" class="tag-selector-pill">Madrinha</span>
-                            <span onclick="toggleTag(this)" class="tag-selector-pill">Família</span>
-                            <span onclick="toggleTag(this)" class="tag-selector-pill">Amigos</span>
-                            <span onclick="toggleTag(this)" class="tag-selector-pill">Fornecedor</span>
-                            <span onclick="toggleTag(this)" class="tag-selector-pill">Deu Presente</span>
-                        </div>
-                    </div>
-                    <div class="col-span-12 mt-2">
-                        <button onclick="addGuest()" class="btn-primary w-full py-2 rounded text-sm font-bold">Salvar Convidado</button>
-                    </div>
+                    <div class="col-span-12 sm:col-span-5"><label class="text-[10px] font-bold text-stone-400 uppercase">Nome Principal</label><input type="text" id="new-guest-name" class="input-elegant w-full text-sm"></div>
+                    <div class="col-span-6 sm:col-span-2"><label class="text-[10px] font-bold text-stone-400 uppercase">+ Acomp.</label><input type="number" id="new-guest-partners" value="0" min="0" class="input-elegant w-full text-sm"></div>
+                    <div class="col-span-6 sm:col-span-5"><label class="text-[10px] font-bold text-stone-400 uppercase mb-1 block">Tags (Selecione)</label><div class="flex flex-wrap gap-1" id="guest-tags-selector"><span onclick="toggleTag(this)" class="tag-selector-pill">Padrinho</span><span onclick="toggleTag(this)" class="tag-selector-pill">Madrinha</span><span onclick="toggleTag(this)" class="tag-selector-pill">Família</span><span onclick="toggleTag(this)" class="tag-selector-pill">Amigos</span><span onclick="toggleTag(this)" class="tag-selector-pill">Fornecedor</span><span onclick="toggleTag(this)" class="tag-selector-pill">Deu Presente</span></div></div>
+                    <div class="col-span-12 mt-2"><button onclick="addGuest()" class="btn-primary w-full py-2 rounded text-sm font-bold">Salvar Convidado</button></div>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-1 space-y-4">
-                    <div class="card p-4 h-fit">
-                        <h4 class="font-bold text-emerald-800 text-sm mb-3">Estatísticas</h4>
-                        <div class="space-y-3 text-sm text-stone-600">
-                            <div class="flex justify-between border-b border-stone-100 pb-1">
-                                <span>Convites:</span> 
-                                <b id="stats-invites">0</b>
-                            </div>
-                            <div class="flex justify-between border-b border-stone-100 pb-1">
-                                <span>Total de Pessoas:</span> 
-                                <b id="stats-total-pax" class="text-blue-800 text-lg">0</b>
-                            </div>
-                            <div class="flex justify-between text-green-600 pt-1">
-                                <span>Confirmados:</span> 
-                                <b id="stats-confirmed">0</b>
-                            </div>
-                        </div>
-                        <div class="mt-4 h-32"><canvas id="guestChart"></canvas></div>
-                    </div>
-
-                    <!-- NEW: Guest Tags Report -->
-                    <div class="card p-4 h-fit border-l-4 border-indigo-200">
-                        <h4 class="font-bold text-indigo-900 text-sm mb-3">Por Categoria (Pessoas)</h4>
-                        <div id="guest-tags-report" class="space-y-2 text-xs">
-                            <!-- Populated by JS -->
-                            <p class="text-stone-400 italic">Adicione tags para ver o relatório.</p>
-                        </div>
-                    </div>
+                    <div class="card p-4 h-fit"><h4 class="font-bold text-emerald-800 text-sm mb-3">Estatísticas</h4><div class="space-y-3 text-sm text-stone-600"><div class="flex justify-between border-b border-stone-100 pb-1"><span>Convites:</span> <b id="stats-invites">0</b></div><div class="flex justify-between border-b border-stone-100 pb-1"><span>Total de Pessoas:</span> <b id="stats-total-pax" class="text-blue-800 text-lg">0</b></div><div class="flex justify-between text-green-600 pt-1"><span>Confirmados:</span> <b id="stats-confirmed">0</b></div></div><div class="mt-4 h-32"><canvas id="guestChart"></canvas></div></div>
+                    <div class="card p-4 h-fit border-l-4 border-indigo-200"><h4 class="font-bold text-indigo-900 text-sm mb-3">Por Categoria (Pessoas)</h4><div id="guest-tags-report" class="space-y-2 text-xs"><p class="text-stone-400 italic">Adicione tags para ver o relatório.</p></div></div>
                 </div>
-
-                <div class="md:col-span-2 card overflow-hidden">
-                    <div class="overflow-y-auto max-h-[600px] custom-scroll">
-                        <table class="w-full text-left">
-                            <thead class="bg-stone-50 sticky top-0 text-xs font-bold text-stone-500 uppercase">
-                                <tr>
-                                    <th class="p-3">Nome</th>
-                                    <th class="p-3">Pax</th>
-                                    <th class="p-3">Tags</th>
-                                    <th class="p-3">Status</th>
-                                    <th class="p-3 text-right"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="guest-list-body" class="text-sm divide-y divide-stone-100"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="md:col-span-2 card overflow-hidden"><div class="overflow-y-auto max-h-[600px] custom-scroll"><table class="w-full text-left"><thead class="bg-stone-50 sticky top-0 text-xs font-bold text-stone-500 uppercase"><tr><th class="p-3">Nome</th><th class="p-3">Pax</th><th class="p-3">Tags</th><th class="p-3">Status</th><th class="p-3 text-right"></th></tr></thead><tbody id="guest-list-body" class="text-sm divide-y divide-stone-100"></tbody></table></div></div>
             </div>
         </section>
 
         <!-- TASKS -->
         <section id="timeline" class="hidden space-y-6 animate-fade-in">
             <h2 class="text-2xl font-serif text-emerald-900 border-b border-stone-200 pb-2">Tarefas</h2>
-            
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-1 h-fit sticky top-24">
                     <div class="card p-4 bg-stone-50">
                         <h4 class="text-xs font-bold text-stone-500 uppercase mb-3">Nova Tarefa</h4>
                         <input type="text" id="new-task-input" placeholder="Título da tarefa..." class="input-elegant w-full mb-2 text-sm">
-                        <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm">
-                            <option value="Geral">Geral</option>
-                            <option value="Cerimônia">Cerimônia</option>
-                            <option value="Festa/Buffet">Festa/Buffet</option>
-                            <option value="Burocracia">Burocracia</option>
-                            <option value="Trajes/Beleza">Trajes/Beleza</option>
-                            <option value="Lua de Mel">Lua de Mel</option>
-                            <option value="Buffet & Comida">Buffet & Comida</option>
-                            <option value="Local">Local</option>
-                            <option value="Foto & Vídeo">Foto & Vídeo</option>
-                            <option value="Decoração">Decoração</option>
-                            <option value="Música/DJ">Música/DJ</option>
-                            <option value="Doces/Bolo">Doces/Bolo</option>
-                            <option value="Assessoria">Assessoria</option>
-                        </select>
+                        <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm"><option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option><option value="Festa/Buffet">Festa/Buffet</option><option value="Burocracia">Burocracia</option><option value="Trajes/Beleza">Trajes/Beleza</option><option value="Lua de Mel">Lua de Mel</option><option value="Buffet & Comida">Buffet & Comida</option><option value="Local">Local</option><option value="Foto & Vídeo">Foto & Vídeo</option><option value="Decoração">Decoração</option><option value="Música/DJ">Música/DJ</option><option value="Doces/Bolo">Doces/Bolo</option><option value="Assessoria">Assessoria</option></select>
                         <input type="date" id="new-task-date" class="input-elegant w-full mb-2 text-sm">
-                        
                         <textarea id="new-task-obs" placeholder="Observações (opcional)..." class="input-elegant w-full mb-2 text-sm h-20 resize-none"></textarea>
-                        
-                        <div class="mb-3">
-                            <label class="text-[10px] font-bold text-stone-400 uppercase">Tags</label>
-                            <div class="flex flex-wrap gap-1 mt-1" id="task-quick-tags">
-                                <!-- JS will populate tags here -->
-                            </div>
-                            <button onclick="toggleTagCreator()" class="text-xs text-emerald-600 hover:underline mt-1">+ Criar Tag</button>
-                            
-                            <div id="tag-creator" class="hidden mt-2 p-2 bg-white rounded border border-emerald-200 shadow-sm">
-                                <input type="text" id="new-tag-name" placeholder="Nome da Tag" class="text-xs border p-1 rounded w-full mb-1">
-                                <div class="flex items-center gap-2">
-                                    <input type="color" id="new-tag-color" value="#10B981" class="color-swatch">
-                                    <button onclick="createNewTag()" class="text-xs bg-emerald-600 text-white px-2 py-1 rounded">Salvar</button>
-                                </div>
-                            </div>
-                        </div>
-
+                        <div class="mb-3"><label class="text-[10px] font-bold text-stone-400 uppercase">Tags</label><div class="flex flex-wrap gap-1 mt-1" id="task-quick-tags"></div><button onclick="toggleTagCreator()" class="text-xs text-emerald-600 hover:underline mt-1">+ Criar Tag</button><div id="tag-creator" class="hidden mt-2 p-2 bg-white rounded border border-emerald-200 shadow-sm"><input type="text" id="new-tag-name" placeholder="Nome da Tag" class="text-xs border p-1 rounded w-full mb-1"><div class="flex items-center gap-2"><input type="color" id="new-tag-color" value="#10B981" class="color-swatch"><button onclick="createNewTag()" class="text-xs bg-emerald-600 text-white px-2 py-1 rounded">Salvar</button></div></div></div>
                         <button onclick="addTask()" class="bg-stone-700 text-white w-full py-2 rounded text-sm font-bold hover:bg-stone-800">Adicionar Tarefa</button>
                     </div>
                 </div>
-                
-                <div class="lg:col-span-2 card p-4 overflow-hidden">
-                    <div id="tasks-list" class="space-y-4"></div>
-                </div>
+                <div class="lg:col-span-2 card p-4 overflow-hidden"><div id="tasks-list" class="space-y-4"></div></div>
             </div>
         </section>
 
@@ -467,20 +399,8 @@
             <h2 class="text-2xl font-serif text-emerald-900">Calculadora</h2>
             <div class="card p-6 border-t-4 border-yellow-400">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="space-y-4">
-                        <input type="number" id="calc-guests" value="100" class="input-elegant w-full" oninput="calculateDrinks()" placeholder="Qtd. Convidados">
-                        <select id="calc-profile" class="input-elegant w-full" onchange="calculateDrinks()">
-                            <option value="moderate">Cerveja + Refri</option>
-                            <option value="high">Cerveja + Destilados</option>
-                            <option value="low">Brunch/Leve</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-2 grid grid-cols-2 gap-4 text-center">
-                        <div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-beer">0</span><span class="text-[10px] uppercase">Latas Cerveja</span></div>
-                        <div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-water">0</span><span class="text-[10px] uppercase">Água</span></div>
-                        <div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-soda">0</span><span class="text-[10px] uppercase">Refri 2L</span></div>
-                        <div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-sparkling">0</span><span class="text-[10px] uppercase">Espumante</span></div>
-                    </div>
+                    <div class="space-y-4"><input type="number" id="calc-guests" value="100" class="input-elegant w-full" oninput="calculateDrinks()" placeholder="Qtd. Convidados"><select id="calc-profile" class="input-elegant w-full" onchange="calculateDrinks()"><option value="moderate">Cerveja + Refri</option><option value="high">Cerveja + Destilados</option><option value="low">Brunch/Leve</option></select></div>
+                    <div class="md:col-span-2 grid grid-cols-2 gap-4 text-center"><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-beer">0</span><span class="text-[10px] uppercase">Latas Cerveja</span></div><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-water">0</span><span class="text-[10px] uppercase">Água</span></div><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-soda">0</span><span class="text-[10px] uppercase">Refri 2L</span></div><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-sparkling">0</span><span class="text-[10px] uppercase">Espumante</span></div></div>
                 </div>
             </div>
         </section>
@@ -589,7 +509,7 @@
             }
         };
 
-        let state = { budget: [], guests: [], tasks: [], customTags: [], settings: {} };
+        let state = { budget: [], guests: [], tasks: [], customTags: [], vendors: [], settings: {} };
 
         function setupListeners() {
             const root = getUserRoot();
@@ -620,6 +540,11 @@
                 state.customTags = []; 
                 s.forEach(d => state.customTags.push({id: d.id, ...d.data()})); 
                 renderTagSelectors(); 
+            });
+            onSnapshot(collection(db, root, 'vendors'), s => {
+                state.vendors = [];
+                s.forEach(d => state.vendors.push({id: d.id, ...d.data()}));
+                renderVendorList();
             });
         }
 
@@ -770,6 +695,243 @@
             document.getElementById('view-modal').classList.remove('hidden');
         };
         window.closeViewModal = () => document.getElementById('view-modal').classList.add('hidden');
+
+        // VENDOR LOGIC
+        const vendorCategories = [
+            "Espaço", "Buffet", "Decoração", "Som e música", "Iluminação", "Taxas", "Bolo", "Extras",
+            "Fotografia / Filmagem", "Cerimonial", "Convites", "Doces", "Lembrancinhas", "Noiva", "Noivo",
+            "Beleza", "Beleza extra", "Papelaria", "Imprevistos", "Cartório", "Aliança", "Apartamento",
+            "Reserva Investimento", "Primeira Compra", "Básico (Luz/Água...)", "Viagem", "Enxoval"
+        ];
+
+        // Specific Criteria Maps
+        const criteriaConfig = {
+            "Espaço": ["Ambiente", "DJ", "Buffet", "Iluminação", "Bolo", "Sobremesa", "Totem", "Cascata", "Decoração"],
+            "Buffet": ["Sabor", "Apresentação", "Serviço (Garçons)", "Bebidas", "Variedade", "Quantidade", "Degustação", "Flexibilidade", "Contrato"],
+            "Decoração": ["Criatividade", "Flores (Qualidade)", "Acervo (Móveis)", "Iluminação Cênica", "Projeto", "Buquê", "Cerimônia", "Recepção", "Manutenção"],
+            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação Pista", "Profissionalismo", "Pontualidade", "Microfones", "Interação", "Estilo"],
+            "Fotografia / Filmagem": ["Olhar Artístico", "Edição", "Equipe", "Prazos", "Álbuns", "Drone", "Making Of", "Empatia", "Resolução"],
+            "default": ["Qualidade", "Atendimento", "Flexibilidade", "Prazos", "Contrato", "Profissionalismo", "Custo-Benefício", "Experiência", "Referências"]
+        };
+
+        window.openVendorModal = () => {
+            const container = document.getElementById('vend-cat-container');
+            container.innerHTML = '';
+            vendorCategories.forEach(cat => {
+                container.innerHTML += `
+                    <div class="inline-block">
+                        <input type="checkbox" id="cat-${cat}" value="${cat}" class="category-checkbox" onchange="renderCriteriaInputs()">
+                        <label for="cat-${cat}" class="category-label">${cat}</label>
+                    </div>
+                `;
+            });
+            renderCriteriaInputs(); // Initial render
+            document.getElementById('vendor-modal').classList.remove('hidden');
+        }
+
+        window.closeVendorModal = () => document.getElementById('vendor-modal').classList.add('hidden');
+
+        // Dynamic Inputs based on selection
+        window.renderCriteriaInputs = () => {
+            const container = document.getElementById('dynamic-criteria-container');
+            const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+            
+            let criteria = new Set();
+            
+            if(selectedCats.length === 0) {
+                criteriaConfig['default'].forEach(c => criteria.add(c));
+            } else {
+                selectedCats.forEach(cat => {
+                    // Try exact match, or specific keywords
+                    let list = criteriaConfig['default'];
+                    if (criteriaConfig[cat]) list = criteriaConfig[cat];
+                    else if (cat.includes("Som")) list = criteriaConfig["Som e música"];
+                    else if (cat.includes("Foto")) list = criteriaConfig["Fotografia / Filmagem"];
+                    
+                    list.forEach(c => criteria.add(c));
+                });
+            }
+
+            container.innerHTML = '';
+            criteria.forEach(c => {
+                // Ensure valid ID string
+                const safeId = "crit-" + c.replace(/[^a-zA-Z0-9]/g, '');
+                container.innerHTML += `
+                    <div>
+                        <label class="text-[9px] uppercase font-bold text-stone-400 block mb-1 truncate" title="${c}">${c}</label>
+                        <input type="number" id="${safeId}" data-name="${c}" min="0" max="10" class="input-elegant w-full text-center p-1 font-bold text-stone-600 criteria-input" onchange="limitInput(this)">
+                    </div>
+                `;
+            });
+        };
+
+        window.limitInput = (el) => {
+            if(el.value > 10) el.value = 10;
+            if(el.value < 0) el.value = 0;
+        }
+        
+        window.saveVendor = () => {
+            const name = document.getElementById('vend-name').value;
+            const val = parseFloat(document.getElementById('vend-value').value)||0;
+            const categories = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+            
+            if(!name || categories.length === 0) {
+                alert("Preencha o nome e selecione pelo menos uma categoria.");
+                return;
+            }
+
+            const inputs = document.querySelectorAll('.criteria-input');
+            let scores = {};
+            let sum = 0;
+            let count = 0;
+
+            inputs.forEach(input => {
+                const score = parseInt(input.value) || 0;
+                scores[input.dataset.name] = score;
+                sum += score;
+                count++;
+            });
+
+            // If price score is calculated externally, we store raw quality avg here
+            // But we need a price comparison score.
+            // We'll store the 'qualityAvg' and then compute final score dynamically in render
+            
+            addItem('vendors', { 
+                name, categories, monetaryValue: val, scores, criteriaList: Object.keys(scores)
+            });
+            
+            closeVendorModal();
+            // Reset form
+            document.getElementById('vend-name').value = '';
+            document.getElementById('vend-value').value = '';
+        };
+
+        window.deleteVendor = (id) => deleteItem('vendors', id);
+
+        function renderVendorList() {
+            const container = document.getElementById('vendor-list-container');
+            const filter = document.getElementById('vendor-filter');
+            
+            // Populate Filter if empty
+            if(filter.options.length <= 1) {
+                vendorCategories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c; opt.innerText = c;
+                    filter.appendChild(opt);
+                });
+            }
+
+            const selectedFilter = filter.value;
+            if(!container) return;
+            container.innerHTML = '';
+            
+            if(state.vendors.length === 0) {
+                container.innerHTML = `<p class="text-center text-stone-400 col-span-full py-8">Nenhum fornecedor comparado ainda.</p>`;
+                return;
+            }
+
+            // 1. Group vendors by their FIRST category (Primary) for display sections, OR filter
+            // Logic: If filter is active, only show vendors containing that category.
+            // If filter is 'all', show all sections? Or just a big list?
+            // User requested: "Separator of category inside comparator section"
+
+            let visibleVendors = state.vendors;
+            if(selectedFilter !== 'all') {
+                visibleVendors = state.vendors.filter(v => v.categories && v.categories.includes(selectedFilter));
+            }
+
+            // Organize by Categories for display headers
+            // Since a vendor has multiple cats, we can display them under their "Primary" (first selected)
+            // or duplicate them. Let's group by Primary Category for layout.
+            const groups = {};
+            visibleVendors.forEach(v => {
+                const primary = (v.categories && v.categories.length > 0) ? v.categories[0] : 'Outros';
+                if(!groups[primary]) groups[primary] = [];
+                groups[primary].push(v);
+            });
+
+            // Calculate Price Score Context
+            // We calculate price score relative to the FILTERED VIEW (or the Group?)
+            // "Price can only be evaluated among same categories". 
+            // So we calculate price score within the 'groups' (Primary Category).
+            
+            Object.keys(groups).forEach(catName => {
+                const group = groups[catName];
+                
+                // Calc min/max for this group
+                let minP = Infinity, maxP = -Infinity;
+                group.forEach(v => {
+                    if(v.monetaryValue < minP) minP = v.monetaryValue;
+                    if(v.monetaryValue > maxP) maxP = v.monetaryValue;
+                });
+
+                const processed = group.map(v => {
+                    const scoreValues = Object.values(v.scores || {});
+                    const qualAvg = scoreValues.length > 0 ? scoreValues.reduce((a,b)=>a+b,0)/scoreValues.length : 0;
+                    
+                    let priceScore = 0;
+                    if(maxP === minP) priceScore = 10;
+                    else priceScore = 10 * (1 - ((v.monetaryValue - minP) / (maxP - minP)));
+                    
+                    // Final Weight: 50% Quality, 50% Price? Or Average of all items?
+                    // Let's treat Price as just another item in the average
+                    const totalItems = scoreValues.length + 1;
+                    const finalScore = ((qualAvg * scoreValues.length) + priceScore) / totalItems;
+                    
+                    return { ...v, priceScore, finalScore, qualAvg };
+                });
+
+                processed.sort((a,b) => b.finalScore - a.finalScore);
+
+                // Render Section
+                const header = document.createElement('div');
+                header.className = "vendor-category-header";
+                header.innerText = catName;
+                container.appendChild(header);
+
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8";
+                
+                processed.forEach(v => {
+                    let scoreClass = 'score-low';
+                    if(v.finalScore >= 8) scoreClass = 'score-high'; else if(v.finalScore >= 5) scoreClass = 'score-med';
+                    const priceVal = v.monetaryValue.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+                    
+                    // Build criteria grid
+                    let critHtml = '';
+                    const entries = Object.entries(v.scores || {});
+                    entries.forEach(([key, val]) => {
+                        critHtml += `<div class="score-item"><span>${key}</span><b>${val}</b></div>`;
+                    });
+                    // Add Price Score
+                    critHtml += `<div class="score-item bg-emerald-50"><span class="text-emerald-700 font-bold">Preço</span><b class="text-emerald-700">${v.priceScore.toFixed(1)}</b></div>`;
+
+                    grid.innerHTML += `
+                        <div class="card p-5 relative group">
+                            <button onclick="deleteVendor('${v.id}')" class="absolute top-2 right-2 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">✕</button>
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-stone-800 text-lg leading-tight">${v.name}</h3>
+                                    <div class="flex flex-wrap gap-1 mt-1">
+                                        ${(v.categories||[]).map(c => `<span class="text-[9px] bg-stone-100 px-1 rounded text-stone-500">${c}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-center ml-2">
+                                    <div class="vendor-score-circle ${scoreClass}">${v.finalScore.toFixed(1)}</div>
+                                </div>
+                            </div>
+                            <div class="mb-4 bg-stone-50 p-2 rounded text-center">
+                                <span class="text-sm font-bold text-emerald-800">${priceVal}</span>
+                            </div>
+                            <div class="score-grid" style="grid-template-columns: repeat(4, 1fr);">
+                                ${critHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.appendChild(grid);
+            });
+        }
 
         let currentEditInfo = null; 
         window.createTagInModal = async () => {
@@ -1101,7 +1263,7 @@
                 tagPills = '<div class="mt-2 flex flex-wrap gap-1">';
                 t.tags.forEach(tag => {
                     const bg = tag.color || '#10B981';
-                    tagPills += `<span class="task-tag-display" style="background-color: ${bg};">${tag.name}</span>`;
+                    tagPills += `<span class="task-tag-visible" style="background-color: ${bg};">${tag.name}</span>`;
                 });
                 tagPills += '</div>';
             }
