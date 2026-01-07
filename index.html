@@ -69,10 +69,12 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.15); margin-top: 4px; margin-right: 4px;
         }
 
+        /* VENDOR CATEGORY CHECKBOX */
         .category-checkbox { display: none; }
         .category-label {
-            display: inline-block; padding: 6px 12px; border: 1px solid #E5E7EB; border-radius: 8px;
-            font-size: 11px; cursor: pointer; background: white; color: #6B7280; margin: 2px; transition: all 0.2s;
+            display: inline-block; padding: 4px 8px; border: 1px solid #E5E7EB; border-radius: 6px;
+            font-size: 10px; cursor: pointer; background: white; color: #6B7280; margin: 2px; transition: all 0.2s;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
         .category-checkbox:checked + .category-label {
             background-color: #064E3B; color: white; border-color: #064E3B;
@@ -97,8 +99,8 @@
 
         /* --- VENDOR COMPARE STYLES --- */
         .vendor-score-circle {
-            width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1.4rem; border: 3px solid; font-family: 'Playfair Display', serif;
+            width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 1.3rem; border: 3px solid; font-family: 'Playfair Display', serif;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
         .score-high { border-color: #10B981; color: #065F46; background: #ECFDF5; }
@@ -106,12 +108,15 @@
         .score-low { border-color: #EF4444; color: #991B1B; background: #FEF2F2; }
         
         .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
-        .score-item { text-align: center; overflow: hidden; }
-        .score-item span { display: block; font-size: 7px; text-transform: uppercase; color: #9CA3AF; margin-bottom: 1px; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score-item b { font-size: 10px; color: #4B5563; background: #F3F4F6; padding: 2px 4px; border-radius: 4px; display: inline-block; width: 100%; }
+        .score-item { text-align: center; border-radius: 4px; padding: 2px; background: #F9FAFB; }
+        .score-item span { display: block; font-size: 7px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score-item b { font-size: 10px; color: #374151; font-weight: 800; }
         
         .price-badge { background-color: #F0FDFA; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; border: 1px solid #A7F3D0; }
-        
+        .vendor-category-header {
+            font-family: 'Cinzel', serif; font-size: 1.1rem; color: #064E3B; border-bottom: 2px solid #D1FAE5; margin-bottom: 1rem; padding-bottom: 0.5rem; margin-top: 2rem;
+        }
+
         /* --- MODALS --- */
         #edit-modal, #view-modal, #vendor-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
         #login-overlay { background-color: #F0FDFA; background-image: radial-gradient(#E0E7FF 1px, transparent 1px); background-size: 20px 20px; }
@@ -167,29 +172,29 @@
 
     <!-- VENDOR COMPARE MODAL -->
     <div id="vendor-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
-            <h3 class="text-xl font-serif text-emerald-900 mb-4">Adicionar Fornecedor</h3>
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-serif text-emerald-900 mb-4">Novo Fornecedor</h3>
             
             <div class="space-y-4">
-                <input type="text" id="vend-name" placeholder="Nome da Empresa/Espaço" class="input-elegant w-full">
+                <input type="text" id="vend-name" placeholder="Nome da Empresa/Profissional" class="input-elegant w-full">
                 
                 <div>
-                    <p class="text-[10px] uppercase font-bold text-stone-400 mb-2">Categorias (Selecione)</p>
-                    <div id="vend-cat-container" class="flex flex-wrap gap-1 max-h-32 overflow-y-auto border p-2 rounded">
-                        <!-- JS Generated -->
+                    <p class="text-[10px] uppercase font-bold text-stone-400 mb-2">Categorias (Selecione Várias)</p>
+                    <div id="vend-cat-container" class="flex flex-wrap gap-1 max-h-32 overflow-y-auto border p-2 rounded bg-stone-50">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
 
                 <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
                     <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
                     <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
-                    <p class="text-[9px] text-emerald-600 mt-1 italic">* Nota de preço calculada comparando com a categoria.</p>
+                    <p class="text-[9px] text-emerald-600 mt-1 italic">* Nota de preço calculada automaticamente vs. concorrentes da categoria principal.</p>
                 </div>
 
                 <div class="p-5 bg-stone-50 rounded-lg border border-stone-100">
-                    <p class="text-xs font-bold text-stone-500 mb-4 uppercase">Critérios de Qualidade (0 a 10)</p>
+                    <p id="criteria-header" class="text-xs font-bold text-stone-500 mb-4 uppercase">Notas de Qualidade (0 a 10)</p>
                     <div id="dynamic-criteria-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <p class="col-span-full text-stone-400 text-xs italic">Selecione categorias acima para ver os critérios.</p>
+                        <p class="col-span-full text-stone-400 text-xs italic">Selecione uma categoria acima para ver os critérios.</p>
                     </div>
                 </div>
             </div>
@@ -315,20 +320,11 @@
 
         <!-- VENDOR COMPARE -->
         <section id="compare" class="hidden space-y-6 animate-fade-in">
-            <div class="flex flex-col sm:flex-row justify-between items-end border-b border-stone-200 pb-2 gap-2">
-                <div><h2 class="text-2xl font-serif text-emerald-900">Comparador</h2><p class="text-xs text-stone-500 uppercase tracking-wider">Notas automáticas baseadas nas categorias</p></div>
-                <div class="flex gap-2">
-                    <select id="vendor-filter" class="input-elegant text-xs py-1" onchange="renderVendorList()">
-                        <option value="all">Todas as Categorias</option>
-                        <!-- Populated by JS -->
-                    </select>
-                    <button onclick="openVendorModal()" class="bg-stone-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-stone-800 shadow-sm">+ Avaliar</button>
-                </div>
+            <div class="flex justify-between items-end border-b border-stone-200 pb-2">
+                <div><h2 class="text-2xl font-serif text-emerald-900">Comparador de Fornecedores</h2><p class="text-xs text-stone-500 uppercase tracking-wider">Categorias específicas + Nota de Preço relativa</p></div>
+                <button onclick="openVendorModal()" class="bg-stone-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-stone-800 shadow-sm">+ Avaliar Novo</button>
             </div>
-            
-            <div id="vendor-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Populated by JS -->
-            </div>
+            <div id="vendor-list-container"></div>
         </section>
 
         <!-- BUDGET -->
@@ -704,14 +700,20 @@
             "Reserva Investimento", "Primeira Compra", "Básico (Luz/Água...)", "Viagem", "Enxoval"
         ];
 
-        // Specific Criteria Maps
+        // Specific Criteria Maps (Restored fully as requested)
         const criteriaConfig = {
-            "Espaço": ["Ambiente", "DJ", "Buffet", "Iluminação", "Bolo", "Sobremesa", "Totem", "Cascata", "Decoração"],
-            "Buffet": ["Sabor", "Apresentação", "Serviço (Garçons)", "Bebidas", "Variedade", "Quantidade", "Degustação", "Flexibilidade", "Contrato"],
-            "Decoração": ["Criatividade", "Flores (Qualidade)", "Acervo (Móveis)", "Iluminação Cênica", "Projeto", "Buquê", "Cerimônia", "Recepção", "Manutenção"],
-            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação Pista", "Profissionalismo", "Pontualidade", "Microfones", "Interação", "Estilo"],
+            "Espaço": ["Localização", "Capacidade", "Beleza", "Infraestrutura", "Plano B", "Climatização", "Limpeza", "Horário", "Mobiliário"],
+            "Buffet": ["Sabor", "Apresentação", "Variedade", "Bebidas", "Serviço (Garçons)", "Quantidade", "Flexibilidade Menu", "Louças"],
+            "Decoração": ["Criatividade", "Flores (Qualidade)", "Acervo", "Iluminação Cênica", "Projeto", "Buquê", "Manutenção"],
+            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação Pista", "Profissionalismo", "Pontualidade", "Interação"],
+            "Iluminação": ["Cênica", "Pista", "Varal de Luzes", "Qualidade Equipamento", "Segurança", "Estética"],
+            "Bolo": ["Sabor", "Estética", "Recheio", "Durabilidade", "Tamanho", "Topo de Bolo"],
+            "Doces": ["Sabor", "Variedade", "Apresentação", "Tamanho", "Embalagem"],
             "Fotografia / Filmagem": ["Olhar Artístico", "Edição", "Equipe", "Prazos", "Álbuns", "Drone", "Making Of", "Empatia", "Resolução"],
-            "default": ["Qualidade", "Atendimento", "Flexibilidade", "Prazos", "Contrato", "Profissionalismo", "Custo-Benefício", "Experiência", "Referências"]
+            "Cerimonial": ["Organização", "Experiência", "Indicação Fornecedores", "Tranquilidade", "Equipe", "Cronograma", "Postura"],
+            "Beleza": ["Teste", "Durabilidade", "Produtos", "Penteado", "Maquiagem", "Pontualidade", "Atendimento no Local"],
+            "Trajes": ["Caimento", "Tecido", "Ajustes", "Conforto", "Estilo", "Preço", "Prazo"],
+            "default": ["Qualidade", "Atendimento", "Flexibilidade", "Prazos", "Contrato", "Profissionalismo", "Experiência", "Referências"]
         };
 
         window.openVendorModal = () => {
@@ -725,36 +727,42 @@
                     </div>
                 `;
             });
-            renderCriteriaInputs(); // Initial render
+            renderCriteriaInputs(); 
             document.getElementById('vendor-modal').classList.remove('hidden');
         }
 
         window.closeVendorModal = () => document.getElementById('vendor-modal').classList.add('hidden');
 
-        // Dynamic Inputs based on selection
+        // Dynamic Inputs logic based on "First Selected" rule
         window.renderCriteriaInputs = () => {
             const container = document.getElementById('dynamic-criteria-container');
             const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
             
-            let criteria = new Set();
+            let criteria = [];
+            const headerEl = document.getElementById('criteria-header');
             
             if(selectedCats.length === 0) {
-                criteriaConfig['default'].forEach(c => criteria.add(c));
+                criteria = criteriaConfig['default'];
+                headerEl.innerText = "Critérios Gerais";
             } else {
-                selectedCats.forEach(cat => {
-                    // Try exact match, or specific keywords
-                    let list = criteriaConfig['default'];
-                    if (criteriaConfig[cat]) list = criteriaConfig[cat];
-                    else if (cat.includes("Som")) list = criteriaConfig["Som e música"];
-                    else if (cat.includes("Foto")) list = criteriaConfig["Fotografia / Filmagem"];
-                    
-                    list.forEach(c => criteria.add(c));
-                });
+                // Rule: Use only first selected category criteria
+                const primaryCat = selectedCats[0];
+                headerEl.innerText = `Critérios de: ${primaryCat}`;
+                
+                if (criteriaConfig[primaryCat]) {
+                    criteria = criteriaConfig[primaryCat];
+                } else if (primaryCat.includes("Beleza") || primaryCat.includes("Noiva") || primaryCat.includes("Noivo")) {
+                     criteria = criteriaConfig["Beleza"]; // Fallback group
+                } else {
+                    criteria = criteriaConfig['default'];
+                }
             }
+            
+            // Limit to 10 max
+            criteria = criteria.slice(0, 10);
 
             container.innerHTML = '';
             criteria.forEach(c => {
-                // Ensure valid ID string
                 const safeId = "crit-" + c.replace(/[^a-zA-Z0-9]/g, '');
                 container.innerHTML += `
                     <div>
@@ -782,26 +790,16 @@
 
             const inputs = document.querySelectorAll('.criteria-input');
             let scores = {};
-            let sum = 0;
-            let count = 0;
-
             inputs.forEach(input => {
                 const score = parseInt(input.value) || 0;
                 scores[input.dataset.name] = score;
-                sum += score;
-                count++;
             });
-
-            // If price score is calculated externally, we store raw quality avg here
-            // But we need a price comparison score.
-            // We'll store the 'qualityAvg' and then compute final score dynamically in render
             
             addItem('vendors', { 
                 name, categories, monetaryValue: val, scores, criteriaList: Object.keys(scores)
             });
             
             closeVendorModal();
-            // Reset form
             document.getElementById('vend-name').value = '';
             document.getElementById('vend-value').value = '';
         };
@@ -809,56 +807,28 @@
         window.deleteVendor = (id) => deleteItem('vendors', id);
 
         function renderVendorList() {
-            const container = document.getElementById('vendor-list-container');
-            const filter = document.getElementById('vendor-filter');
-            
-            // Populate Filter if empty
-            if(filter.options.length <= 1) {
-                vendorCategories.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c; opt.innerText = c;
-                    filter.appendChild(opt);
-                });
-            }
-
-            const selectedFilter = filter.value;
-            if(!container) return;
-            container.innerHTML = '';
+            const list = document.getElementById('vendor-list-container');
+            if(!list) return;
+            list.innerHTML = '';
             
             if(state.vendors.length === 0) {
-                container.innerHTML = `<p class="text-center text-stone-400 col-span-full py-8">Nenhum fornecedor comparado ainda.</p>`;
+                list.innerHTML = `<p class="text-center text-stone-400 col-span-full py-8">Nenhum fornecedor comparado ainda.</p>`;
                 return;
             }
 
-            // 1. Group vendors by their FIRST category (Primary) for display sections, OR filter
-            // Logic: If filter is active, only show vendors containing that category.
-            // If filter is 'all', show all sections? Or just a big list?
-            // User requested: "Separator of category inside comparator section"
-
-            let visibleVendors = state.vendors;
-            if(selectedFilter !== 'all') {
-                visibleVendors = state.vendors.filter(v => v.categories && v.categories.includes(selectedFilter));
-            }
-
-            // Organize by Categories for display headers
-            // Since a vendor has multiple cats, we can display them under their "Primary" (first selected)
-            // or duplicate them. Let's group by Primary Category for layout.
+            // Organize vendors by PRIMARY category
             const groups = {};
-            visibleVendors.forEach(v => {
+            state.vendors.forEach(v => {
                 const primary = (v.categories && v.categories.length > 0) ? v.categories[0] : 'Outros';
                 if(!groups[primary]) groups[primary] = [];
                 groups[primary].push(v);
             });
 
-            // Calculate Price Score Context
-            // We calculate price score relative to the FILTERED VIEW (or the Group?)
-            // "Price can only be evaluated among same categories". 
-            // So we calculate price score within the 'groups' (Primary Category).
-            
-            Object.keys(groups).forEach(catName => {
+            // Iterate categories
+            Object.keys(groups).sort().forEach(catName => {
                 const group = groups[catName];
                 
-                // Calc min/max for this group
+                // Calc Price Score within this specific category group
                 let minP = Infinity, maxP = -Infinity;
                 group.forEach(v => {
                     if(v.monetaryValue < minP) minP = v.monetaryValue;
@@ -870,11 +840,14 @@
                     const qualAvg = scoreValues.length > 0 ? scoreValues.reduce((a,b)=>a+b,0)/scoreValues.length : 0;
                     
                     let priceScore = 0;
-                    if(maxP === minP) priceScore = 10;
+                    if(v.monetaryValue === 0) priceScore = 0;
+                    else if(maxP === minP) priceScore = 10;
                     else priceScore = 10 * (1 - ((v.monetaryValue - minP) / (maxP - minP)));
                     
-                    // Final Weight: 50% Quality, 50% Price? Or Average of all items?
-                    // Let's treat Price as just another item in the average
+                    // Final Score: Average of (Quality Average AND Price Score)
+                    // (QualityAvg + PriceScore) / 2 -> Simple approach
+                    // Or treat Price as just 1 more item? 
+                    // Let's do a weighted average where price counts as much as 1 quality item
                     const totalItems = scoreValues.length + 1;
                     const finalScore = ((qualAvg * scoreValues.length) + priceScore) / totalItems;
                     
@@ -883,12 +856,13 @@
 
                 processed.sort((a,b) => b.finalScore - a.finalScore);
 
-                // Render Section
+                // Render Section Header
                 const header = document.createElement('div');
                 header.className = "vendor-category-header";
                 header.innerText = catName;
-                container.appendChild(header);
+                list.appendChild(header);
 
+                // Render Grid
                 const grid = document.createElement('div');
                 grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8";
                 
@@ -897,18 +871,18 @@
                     if(v.finalScore >= 8) scoreClass = 'score-high'; else if(v.finalScore >= 5) scoreClass = 'score-med';
                     const priceVal = v.monetaryValue.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
                     
-                    // Build criteria grid
                     let critHtml = '';
                     const entries = Object.entries(v.scores || {});
                     entries.forEach(([key, val]) => {
                         critHtml += `<div class="score-item"><span>${key}</span><b>${val}</b></div>`;
                     });
-                    // Add Price Score
-                    critHtml += `<div class="score-item bg-emerald-50"><span class="text-emerald-700 font-bold">Preço</span><b class="text-emerald-700">${v.priceScore.toFixed(1)}</b></div>`;
+                    // Add Price Score visual
+                    critHtml += `<div class="score-item bg-emerald-50"><span class="text-emerald-700 font-bold">Preço (Auto)</span><b class="text-emerald-700">${v.priceScore.toFixed(1)}</b></div>`;
 
                     grid.innerHTML += `
                         <div class="card p-5 relative group">
                             <button onclick="deleteVendor('${v.id}')" class="absolute top-2 right-2 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">✕</button>
+                            
                             <div class="flex justify-between items-start mb-2">
                                 <div>
                                     <h3 class="font-bold text-stone-800 text-lg leading-tight">${v.name}</h3>
@@ -918,6 +892,7 @@
                                 </div>
                                 <div class="flex flex-col items-center ml-2">
                                     <div class="vendor-score-circle ${scoreClass}">${v.finalScore.toFixed(1)}</div>
+                                    <span class="text-[9px] text-stone-400 uppercase mt-1">Nota Final</span>
                                 </div>
                             </div>
                             <div class="mb-4 bg-stone-50 p-2 rounded text-center">
@@ -929,7 +904,7 @@
                         </div>
                     `;
                 });
-                container.appendChild(grid);
+                list.appendChild(grid);
             });
         }
 
