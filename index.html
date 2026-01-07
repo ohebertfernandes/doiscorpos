@@ -69,17 +69,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.15); margin-top: 4px; margin-right: 4px;
         }
 
-        /* VENDOR CATEGORY CHECKBOX */
-        .category-checkbox { display: none; }
-        .category-label {
-            display: inline-block; padding: 4px 8px; border: 1px solid #E5E7EB; border-radius: 6px;
-            font-size: 10px; cursor: pointer; background: white; color: #6B7280; margin: 2px; transition: all 0.2s;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .category-checkbox:checked + .category-label {
-            background-color: #064E3B; color: white; border-color: #064E3B;
-        }
-
         .color-swatch { -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer; padding: 0; background: none; }
         .color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
         .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; border: 1px solid #ddd; }
@@ -107,10 +96,10 @@
         .score-med { border-color: #FBBF24; color: #92400E; background: #FFFBEB; }
         .score-low { border-color: #EF4444; color: #991B1B; background: #FEF2F2; }
         
-        .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
+        .score-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
         .score-item { text-align: center; border-radius: 4px; padding: 2px; background: #F9FAFB; }
-        .score-item span { display: block; font-size: 7px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score-item b { font-size: 10px; color: #374151; font-weight: 800; }
+        .score-item span { display: block; font-size: 8px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score-item b { font-size: 11px; color: #374151; font-weight: 800; }
         
         .price-badge { background-color: #F0FDFA; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; border: 1px solid #A7F3D0; }
         .vendor-category-header {
@@ -172,29 +161,52 @@
 
     <!-- VENDOR COMPARE MODAL -->
     <div id="vendor-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-2xl border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-serif text-emerald-900 mb-4">Novo Fornecedor</h3>
             
             <div class="space-y-4">
-                <input type="text" id="vend-name" placeholder="Nome da Empresa/Profissional" class="input-elegant w-full">
-                
-                <div>
-                    <p class="text-[10px] uppercase font-bold text-stone-400 mb-2">Categorias (Selecione Várias)</p>
-                    <div id="vend-cat-container" class="flex flex-wrap gap-1 max-h-32 overflow-y-auto border p-2 rounded bg-stone-50">
-                        <!-- Populated by JS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-stone-400">Nome do Fornecedor</label>
+                        <input type="text" id="vend-name" placeholder="Ex: Espaço Villa Real" class="input-elegant w-full">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-stone-400">Categoria (Define Critérios)</label>
+                        <select id="vend-cat" class="input-elegant w-full" onchange="checkVendorTemplate()">
+                            <option value="" disabled selected>Selecione...</option>
+                            <option>Espaço</option><option>Buffet</option><option>Decoração</option><option>Som e música</option>
+                            <option>Iluminação</option><option>Taxas</option><option>Bolo</option><option>Extras</option>
+                            <option>Fotografia / Filmagem</option><option>Cerimonial</option><option>Convites</option><option>Doces</option>
+                            <option>Lembrancinhas</option><option>Noiva</option><option>Noivo</option><option>Beleza</option>
+                            <option>Beleza extra</option><option>Papelaria</option><option>Imprevistos</option><option>Cartório</option>
+                            <option>Aliança</option><option>Apartamento</option><option>Reserva Investimento</option><option>Primeira Compra</option>
+                            <option>Básico (Luz/Água...)</option><option>Viagem</option><option>Enxoval</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
-                    <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
-                    <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
-                    <p class="text-[9px] text-emerald-600 mt-1 italic">* Nota de preço calculada automaticamente vs. concorrentes da categoria principal.</p>
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 flex items-center justify-between">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
+                        <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
+                    </div>
+                    <div class="text-right max-w-[50%]">
+                         <label class="text-[10px] uppercase font-bold text-stone-500 block mb-1">Copiar Critérios De:</label>
+                         <select id="copy-criteria-select" class="input-elegant text-xs w-full" onchange="copyCriteriaFrom()">
+                             <option value="">-- Padrão da Categoria --</option>
+                             <!-- Populated JS -->
+                         </select>
+                    </div>
                 </div>
 
                 <div class="p-5 bg-stone-50 rounded-lg border border-stone-100">
-                    <p id="criteria-header" class="text-xs font-bold text-stone-500 mb-4 uppercase">Notas de Qualidade (0 a 10)</p>
-                    <div id="dynamic-criteria-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <p class="col-span-full text-stone-400 text-xs italic">Selecione uma categoria acima para ver os critérios.</p>
+                    <div class="flex justify-between items-center mb-3">
+                         <p class="text-xs font-bold text-stone-500 uppercase">Critérios de Avaliação (0 a 10)</p>
+                         <button onclick="addCustomCriterion()" class="text-[10px] text-emerald-600 font-bold hover:underline">+ Adicionar Critério</button>
+                    </div>
+                    
+                    <div id="custom-criteria-list" class="space-y-2">
+                        <p class="text-xs text-stone-400 italic">Selecione uma categoria acima para carregar critérios.</p>
                     </div>
                 </div>
             </div>
@@ -321,7 +333,7 @@
         <!-- VENDOR COMPARE -->
         <section id="compare" class="hidden space-y-6 animate-fade-in">
             <div class="flex justify-between items-end border-b border-stone-200 pb-2">
-                <div><h2 class="text-2xl font-serif text-emerald-900">Comparador de Fornecedores</h2><p class="text-xs text-stone-500 uppercase tracking-wider">Categorias específicas + Nota de Preço relativa</p></div>
+                <div><h2 class="text-2xl font-serif text-emerald-900">Comparador de Fornecedores</h2><p class="text-xs text-stone-500 uppercase tracking-wider">Use os padrões ou copie de outros</p></div>
                 <button onclick="openVendorModal()" class="bg-stone-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-stone-800 shadow-sm">+ Avaliar Novo</button>
             </div>
             <div id="vendor-list-container"></div>
@@ -541,6 +553,7 @@
                 state.vendors = [];
                 s.forEach(d => state.vendors.push({id: d.id, ...d.data()}));
                 renderVendorList();
+                updateCopyDropdown();
             });
         }
 
@@ -700,77 +713,103 @@
             "Reserva Investimento", "Primeira Compra", "Básico (Luz/Água...)", "Viagem", "Enxoval"
         ];
 
-        // Specific Criteria Maps (Restored fully as requested)
-        const criteriaConfig = {
-            "Espaço": ["Localização", "Capacidade", "Beleza", "Infraestrutura", "Plano B", "Climatização", "Limpeza", "Horário", "Mobiliário"],
-            "Buffet": ["Sabor", "Apresentação", "Variedade", "Bebidas", "Serviço (Garçons)", "Quantidade", "Flexibilidade Menu", "Louças"],
-            "Decoração": ["Criatividade", "Flores (Qualidade)", "Acervo", "Iluminação Cênica", "Projeto", "Buquê", "Manutenção"],
-            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação Pista", "Profissionalismo", "Pontualidade", "Interação"],
-            "Iluminação": ["Cênica", "Pista", "Varal de Luzes", "Qualidade Equipamento", "Segurança", "Estética"],
-            "Bolo": ["Sabor", "Estética", "Recheio", "Durabilidade", "Tamanho", "Topo de Bolo"],
-            "Doces": ["Sabor", "Variedade", "Apresentação", "Tamanho", "Embalagem"],
-            "Fotografia / Filmagem": ["Olhar Artístico", "Edição", "Equipe", "Prazos", "Álbuns", "Drone", "Making Of", "Empatia", "Resolução"],
-            "Cerimonial": ["Organização", "Experiência", "Indicação Fornecedores", "Tranquilidade", "Equipe", "Cronograma", "Postura"],
-            "Beleza": ["Teste", "Durabilidade", "Produtos", "Penteado", "Maquiagem", "Pontualidade", "Atendimento no Local"],
-            "Trajes": ["Caimento", "Tecido", "Ajustes", "Conforto", "Estilo", "Preço", "Prazo"],
-            "default": ["Qualidade", "Atendimento", "Flexibilidade", "Prazos", "Contrato", "Profissionalismo", "Experiência", "Referências"]
+        // Mapped Default Criteria for Standard Categories
+        const standardCriteria = {
+            "Espaço": ["Localização", "Capacidade", "Ar Condicionado", "Beleza", "Infraestrutura"],
+            "Buffet": ["Sabor", "Variedade", "Apresentação", "Bebidas", "Serviço"],
+            "Decoração": ["Criatividade", "Flores", "Acervo", "Projeto", "Preço"],
+            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação", "Preço"],
+            "Fotografia / Filmagem": ["Estilo", "Edição", "Prazos", "Equipe", "Álbuns"],
+            "Cerimonial": ["Organização", "Experiência", "Equipe", "Indicações", "Preço"]
         };
 
         window.openVendorModal = () => {
             const container = document.getElementById('vend-cat-container');
-            container.innerHTML = '';
-            vendorCategories.forEach(cat => {
-                container.innerHTML += `
-                    <div class="inline-block">
-                        <input type="checkbox" id="cat-${cat}" value="${cat}" class="category-checkbox" onchange="renderCriteriaInputs()">
-                        <label for="cat-${cat}" class="category-label">${cat}</label>
-                    </div>
-                `;
-            });
-            renderCriteriaInputs(); 
+            // Check if element exists before modifying
+            if(container) {
+                // If using the old container for checkboxes (removed in this version)
+            }
+            
+            // Populate category select
+            const catSelect = document.getElementById('vend-cat');
+            if(catSelect && catSelect.options.length <= 1) {
+                // Keep default
+                vendorCategories.forEach(c => {
+                   const opt = document.createElement('option');
+                   opt.value = c; opt.innerText = c;
+                   catSelect.appendChild(opt);
+                });
+            }
+
+            // Clear inputs
+            document.getElementById('vend-name').value = '';
+            document.getElementById('vend-value').value = '';
+            document.getElementById('vend-cat').value = '';
+            document.getElementById('custom-criteria-list').innerHTML = '<p class="text-xs text-stone-400 italic">Selecione uma categoria acima para carregar critérios.</p>';
+            
+            updateCopyDropdown();
             document.getElementById('vendor-modal').classList.remove('hidden');
         }
 
         window.closeVendorModal = () => document.getElementById('vendor-modal').classList.add('hidden');
 
-        // Dynamic Inputs logic based on "First Selected" rule
-        window.renderCriteriaInputs = () => {
-            const container = document.getElementById('dynamic-criteria-container');
-            const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+        // Logic: When category selected in Dropdown
+        window.checkVendorTemplate = () => {
+            const cat = document.getElementById('vend-cat').value;
+            const list = document.getElementById('custom-criteria-list');
+            list.innerHTML = ''; // Clear always on new selection to show fresh template
             
-            let criteria = [];
-            const headerEl = document.getElementById('criteria-header');
-            
-            if(selectedCats.length === 0) {
-                criteria = criteriaConfig['default'];
-                headerEl.innerText = "Critérios Gerais";
+            if (standardCriteria[cat]) {
+                standardCriteria[cat].forEach(cName => {
+                     addCustomCriterion(cName);
+                });
             } else {
-                // Rule: Use only first selected category criteria
-                const primaryCat = selectedCats[0];
-                headerEl.innerText = `Critérios de: ${primaryCat}`;
-                
-                if (criteriaConfig[primaryCat]) {
-                    criteria = criteriaConfig[primaryCat];
-                } else if (primaryCat.includes("Beleza") || primaryCat.includes("Noiva") || primaryCat.includes("Noivo")) {
-                     criteria = criteriaConfig["Beleza"]; // Fallback group
-                } else {
-                    criteria = criteriaConfig['default'];
-                }
+                // Generic default
+                ["Qualidade", "Atendimento", "Preço", "Prazos", "Contrato"].forEach(c => addCustomCriterion(c));
             }
-            
-            // Limit to 10 max
-            criteria = criteria.slice(0, 10);
-
-            container.innerHTML = '';
-            criteria.forEach(c => {
-                const safeId = "crit-" + c.replace(/[^a-zA-Z0-9]/g, '');
-                container.innerHTML += `
-                    <div>
-                        <label class="text-[9px] uppercase font-bold text-stone-400 block mb-1 truncate" title="${c}">${c}</label>
-                        <input type="number" id="${safeId}" data-name="${c}" min="0" max="10" class="input-elegant w-full text-center p-1 font-bold text-stone-600 criteria-input" onchange="limitInput(this)">
-                    </div>
-                `;
+        };
+        
+        window.updateCopyDropdown = () => {
+            const sel = document.getElementById('copy-criteria-select');
+            if(!sel) return;
+            // Keep default option
+            sel.innerHTML = '<option value="">-- Copiar de Outro --</option>';
+            state.vendors.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.innerText = v.name;
+                sel.appendChild(opt);
             });
+        };
+
+        window.copyCriteriaFrom = () => {
+            const sel = document.getElementById('copy-criteria-select');
+            const targetId = sel.value;
+            if(!targetId) return;
+            
+            const targetVendor = state.vendors.find(v => v.id === targetId);
+            if(targetVendor && targetVendor.scores) {
+                const list = document.getElementById('custom-criteria-list');
+                list.innerHTML = ''; // Clear current
+                Object.keys(targetVendor.scores).forEach(cName => {
+                     addCustomCriterion(cName);
+                });
+            }
+        };
+
+        window.addCustomCriterion = (prefillName = '') => {
+             const list = document.getElementById('custom-criteria-list');
+             // Remove placeholder text if exists
+             if(list.children.length > 0 && list.children[0].tagName === 'P') list.innerHTML = '';
+             
+             const div = document.createElement('div');
+             div.className = "flex gap-2 items-center mb-2 criterion-row";
+             div.innerHTML = `
+                <input type="text" placeholder="Nome do Critério" class="input-elegant w-2/3 text-xs p-1 crit-name" value="${prefillName}">
+                <input type="number" placeholder="Nota" min="0" max="10" class="input-elegant w-1/3 text-center p-1 font-bold crit-score" onchange="limitInput(this)">
+                <button onclick="this.parentElement.remove()" class="text-stone-300 hover:text-red-500 text-xs">✕</button>
+             `;
+             list.appendChild(div);
         };
 
         window.limitInput = (el) => {
@@ -780,28 +819,28 @@
         
         window.saveVendor = () => {
             const name = document.getElementById('vend-name').value;
+            const cat = document.getElementById('vend-cat').value;
             const val = parseFloat(document.getElementById('vend-value').value)||0;
-            const categories = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
             
-            if(!name || categories.length === 0) {
-                alert("Preencha o nome e selecione pelo menos uma categoria.");
+            if(!name || !cat) {
+                alert("Preencha o nome e selecione a categoria.");
                 return;
             }
 
-            const inputs = document.querySelectorAll('.criteria-input');
+            const rows = document.querySelectorAll('.criterion-row');
             let scores = {};
-            inputs.forEach(input => {
-                const score = parseInt(input.value) || 0;
-                scores[input.dataset.name] = score;
+            
+            rows.forEach(row => {
+                const cName = row.querySelector('.crit-name').value;
+                const cScore = parseInt(row.querySelector('.crit-score').value) || 0;
+                if(cName) scores[cName] = cScore;
             });
             
             addItem('vendors', { 
-                name, categories, monetaryValue: val, scores, criteriaList: Object.keys(scores)
+                name, category: cat, monetaryValue: val, scores 
             });
             
             closeVendorModal();
-            document.getElementById('vend-name').value = '';
-            document.getElementById('vend-value').value = '';
         };
 
         window.deleteVendor = (id) => deleteItem('vendors', id);
@@ -816,19 +855,17 @@
                 return;
             }
 
-            // Organize vendors by PRIMARY category
             const groups = {};
             state.vendors.forEach(v => {
-                const primary = (v.categories && v.categories.length > 0) ? v.categories[0] : 'Outros';
+                // Single Category logic now
+                const primary = v.category || 'Outros';
                 if(!groups[primary]) groups[primary] = [];
                 groups[primary].push(v);
             });
 
-            // Iterate categories
             Object.keys(groups).sort().forEach(catName => {
                 const group = groups[catName];
                 
-                // Calc Price Score within this specific category group
                 let minP = Infinity, maxP = -Infinity;
                 group.forEach(v => {
                     if(v.monetaryValue < minP) minP = v.monetaryValue;
@@ -844,25 +881,20 @@
                     else if(maxP === minP) priceScore = 10;
                     else priceScore = 10 * (1 - ((v.monetaryValue - minP) / (maxP - minP)));
                     
-                    // Final Score: Average of (Quality Average AND Price Score)
-                    // (QualityAvg + PriceScore) / 2 -> Simple approach
-                    // Or treat Price as just 1 more item? 
-                    // Let's do a weighted average where price counts as much as 1 quality item
-                    const totalItems = scoreValues.length + 1;
-                    const finalScore = ((qualAvg * scoreValues.length) + priceScore) / totalItems;
+                    // Final Score
+                    const totalItems = scoreValues.length + 1; // +1 for price
+                    const finalScore = totalItems > 0 ? ((qualAvg * scoreValues.length) + priceScore) / totalItems : 0;
                     
                     return { ...v, priceScore, finalScore, qualAvg };
                 });
 
                 processed.sort((a,b) => b.finalScore - a.finalScore);
 
-                // Render Section Header
                 const header = document.createElement('div');
                 header.className = "vendor-category-header";
                 header.innerText = catName;
                 list.appendChild(header);
 
-                // Render Grid
                 const grid = document.createElement('div');
                 grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8";
                 
@@ -876,7 +908,6 @@
                     entries.forEach(([key, val]) => {
                         critHtml += `<div class="score-item"><span>${key}</span><b>${val}</b></div>`;
                     });
-                    // Add Price Score visual
                     critHtml += `<div class="score-item bg-emerald-50"><span class="text-emerald-700 font-bold">Preço (Auto)</span><b class="text-emerald-700">${v.priceScore.toFixed(1)}</b></div>`;
 
                     grid.innerHTML += `
@@ -885,20 +916,17 @@
                             
                             <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <h3 class="font-bold text-stone-800 text-lg leading-tight">${v.name}</h3>
-                                    <div class="flex flex-wrap gap-1 mt-1">
-                                        ${(v.categories||[]).map(c => `<span class="text-[9px] bg-stone-100 px-1 rounded text-stone-500">${c}</span>`).join('')}
-                                    </div>
+                                    <h3 class="font-bold text-stone-800 text-lg leading-tight truncate" title="${v.name}">${v.name}</h3>
                                 </div>
                                 <div class="flex flex-col items-center ml-2">
                                     <div class="vendor-score-circle ${scoreClass}">${v.finalScore.toFixed(1)}</div>
-                                    <span class="text-[9px] text-stone-400 uppercase mt-1">Nota Final</span>
+                                    <span class="text-[9px] text-stone-400 uppercase mt-1">Média</span>
                                 </div>
                             </div>
                             <div class="mb-4 bg-stone-50 p-2 rounded text-center">
                                 <span class="text-sm font-bold text-emerald-800">${priceVal}</span>
                             </div>
-                            <div class="score-grid" style="grid-template-columns: repeat(4, 1fr);">
+                            <div class="score-grid" style="grid-template-columns: repeat(3, 1fr);">
                                 ${critHtml}
                             </div>
                         </div>
