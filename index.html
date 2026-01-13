@@ -6,6 +6,7 @@
     <title>Dois Corpos - Planejador de Casamento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
@@ -153,10 +154,20 @@
             <div class="p-8">
                 <span id="view-category" class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded mb-2 inline-block">Categoria</span>
                 <h3 id="view-title" class="text-2xl font-serif text-stone-800 mb-2 leading-tight">Título</h3>
+                
                 <div class="flex items-center text-stone-500 text-sm mb-4">
                     <i class="fa-regular fa-calendar mr-2"></i><span id="view-date">Data</span>
                 </div>
+
+                <div id="view-address-container" class="hidden mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                    <a id="view-address-link" href="#" target="_blank" class="flex items-center text-blue-700 hover:underline">
+                        <i class="fa-solid fa-location-dot mr-2 text-blue-500"></i>
+                        <span id="view-address-text" class="text-xs font-bold">Endereço</span>
+                    </a>
+                </div>
+
                 <div id="view-tags" class="flex flex-wrap gap-1 mb-6"></div>
+                
                 <div class="bg-stone-50 p-4 rounded-lg border-l-4 border-emerald-200">
                     <h4 class="text-xs font-bold text-stone-400 uppercase mb-1">Observações</h4>
                     <p id="view-obs" class="text-sm text-stone-700 whitespace-pre-wrap italic">Nenhuma observação.</p>
@@ -174,47 +185,36 @@
             <h3 class="text-xl font-serif text-emerald-900 mb-4">Novo Fornecedor</h3>
             
             <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[10px] uppercase font-bold text-stone-400">Nome do Fornecedor</label>
-                        <input type="text" id="vend-name" placeholder="Ex: Espaço Villa Real" class="input-elegant w-full">
+                <input type="text" id="vend-name" placeholder="Nome da Empresa/Profissional" class="input-elegant w-full">
+                
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-stone-400 mb-2">Categorias Atendidas (Adicione/Remova)</p>
+                    <div class="flex gap-2 mb-2">
+                        <select id="vend-cat-select" class="input-elegant w-2/3 text-xs p-1">
+                             <option value="" disabled selected>Selecionar Categoria...</option>
+                        </select>
+                        <button onclick="addVendorCategory()" class="bg-stone-700 text-white px-3 py-1 rounded text-xs hover:bg-stone-800">Adicionar</button>
                     </div>
-                    <div>
-                        <label class="text-[10px] uppercase font-bold text-stone-400 mb-2 block">Categorias (Selecione Múltiplas)</label>
-                        <div class="flex gap-2 mb-2">
-                            <select id="vend-cat-select" class="input-elegant w-2/3 text-xs p-1">
-                                 <option value="" disabled selected>Selecionar Categoria...</option>
-                            </select>
-                            <button onclick="addVendorCategory()" class="bg-stone-700 text-white px-3 py-1 rounded text-xs hover:bg-stone-800">Adicionar</button>
-                        </div>
-                        <div id="vend-cat-pills" class="flex flex-wrap gap-1 min-h-[30px] p-1 bg-stone-50 border rounded">
-                            <p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>
-                        </div>
+                    <div id="vend-cat-pills" class="flex flex-wrap gap-1 min-h-[30px] p-1 bg-stone-50 border rounded">
+                        <p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>
                     </div>
                 </div>
 
-                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100 flex items-center justify-between">
-                    <div>
-                        <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
-                        <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
-                    </div>
-                    <div class="text-right max-w-[50%]">
-                         <label class="text-[10px] uppercase font-bold text-stone-500 block mb-1">Copiar Critérios De:</label>
-                         <select id="copy-criteria-select" class="input-elegant text-xs w-full" onchange="copyCriteriaFrom()">
-                             <option value="">-- Outro Fornecedor --</option>
-                         </select>
-                    </div>
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                    <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
+                    <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
+                    <p class="text-[9px] text-emerald-600 mt-1 italic">* Nota de preço calculada automaticamente vs. concorrentes da categoria principal.</p>
                 </div>
 
                 <div class="p-5 bg-stone-50 rounded-lg border border-stone-100">
                     <div class="flex justify-between items-center mb-3">
-                         <p class="text-xs font-bold text-stone-500 uppercase">Critérios (0 a 10) - Baseados na 1ª Categoria</p>
-                         <button onclick="addCustomCriterion()" class="text-[10px] text-emerald-600 font-bold hover:underline">+ Adicionar Critério</button>
+                         <p class="text-xs font-bold text-stone-500 uppercase">Critérios de Avaliação (0 a 10)</p>
+                         <button onclick="addCustomCriterion()" class="text-[10px] text-emerald-600 font-bold hover:underline">+ Adicionar Critério Extra</button>
                     </div>
                     
-                    <div id="custom-criteria-list" class="space-y-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    <div id="custom-criteria-list" class="space-y-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <!-- Populated Dynamic -->
-                        <p class="text-xs text-stone-400 italic col-span-full">Selecione uma categoria acima para carregar critérios.</p>
+                        <p class="text-xs text-stone-400 italic col-span-full">Selecione categorias para gerar critérios automaticamente.</p>
                     </div>
                 </div>
             </div>
@@ -401,6 +401,7 @@
                         <input type="text" id="new-task-input" placeholder="Título da tarefa..." class="input-elegant w-full mb-2 text-sm">
                         <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm"><option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option><option value="Festa/Buffet">Festa/Buffet</option><option value="Burocracia">Burocracia</option><option value="Trajes/Beleza">Trajes/Beleza</option><option value="Lua de Mel">Lua de Mel</option><option value="Buffet & Comida">Buffet & Comida</option><option value="Local">Local</option><option value="Foto & Vídeo">Foto & Vídeo</option><option value="Decoração">Decoração</option><option value="Música/DJ">Música/DJ</option><option value="Doces/Bolo">Doces/Bolo</option><option value="Assessoria">Assessoria</option></select>
                         <input type="date" id="new-task-date" class="input-elegant w-full mb-2 text-sm">
+                        <input type="text" id="new-task-address" placeholder="Endereço / Local (opcional)" class="input-elegant w-full mb-2 text-sm">
                         <textarea id="new-task-obs" placeholder="Observações (opcional)..." class="input-elegant w-full mb-2 text-sm h-20 resize-none"></textarea>
                         <div class="mb-3"><label class="text-[10px] font-bold text-stone-400 uppercase">Tags</label><div class="flex flex-wrap gap-1 mt-1" id="task-quick-tags"></div><button onclick="toggleTagCreator()" class="text-xs text-emerald-600 hover:underline mt-1">+ Criar Tag</button><div id="tag-creator" class="hidden mt-2 p-2 bg-white rounded border border-emerald-200 shadow-sm"><input type="text" id="new-tag-name" placeholder="Nome da Tag" class="text-xs border p-1 rounded w-full mb-1"><div class="flex items-center gap-2"><input type="color" id="new-tag-color" value="#10B981" class="color-swatch"><button onclick="createNewTag()" class="text-xs bg-emerald-600 text-white px-2 py-1 rounded">Salvar</button></div></div></div>
                         <button onclick="addTask()" class="bg-stone-700 text-white w-full py-2 rounded text-sm font-bold hover:bg-stone-800">Adicionar Tarefa</button>
@@ -623,6 +624,18 @@
                 dateTxt = `${d}/${m}/${y}`;
             }
             const hasObs = t.observation && t.observation.trim().length > 0;
+            
+            // Address Link Logic
+            let addressHtml = '';
+            if(t.address) {
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.address)}`;
+                addressHtml = `
+                    <a href="${mapUrl}" target="_blank" class="text-[10px] text-blue-500 hover:underline flex items-center mt-1" title="Ver no Mapa">
+                        <i class="fa-solid fa-location-dot mr-1"></i> ${t.address}
+                    </a>
+                `;
+            }
+
             let tagPills = '';
             if(t.tags && Array.isArray(t.tags) && t.tags.length > 0) {
                 tagPills = '<div class="mt-2 flex flex-wrap gap-1">';
@@ -651,6 +664,7 @@
                                 <span>${t.category}</span>
                                 ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
                             </div>
+                            ${addressHtml}
                             ${tagPills}
                         </div>
                     </div>
@@ -932,15 +946,17 @@
             const cat = document.getElementById('new-task-cat').value;
             const date = document.getElementById('new-task-date').value;
             const obs = document.getElementById('new-task-obs').value;
+            const address = document.getElementById('new-task-address').value;
             const selectedTags = [];
             document.querySelectorAll('#task-quick-tags .tag-selector-pill.selected').forEach(el => {
                 selectedTags.push(JSON.parse(el.dataset.tagObj));
             });
 
             if(text) {
-                addItem('tasks', { text, category: cat, deadline: date, done: false, observation: obs, tags: selectedTags });
+                addItem('tasks', { text, category: cat, deadline: date, done: false, observation: obs, address: address, tags: selectedTags });
                 document.getElementById('new-task-input').value = '';
                 document.getElementById('new-task-obs').value = '';
+                document.getElementById('new-task-address').value = '';
                 document.querySelectorAll('#task-quick-tags .tag-selector-pill.selected').forEach(el => el.classList.remove('selected'));
             }
         };
@@ -956,6 +972,16 @@
                 const [y, m, d] = task.deadline.split('-');
                 document.getElementById('view-date').innerText = `${d}/${m}/${y}`;
             } else { document.getElementById('view-date').innerText = 'Sem data'; }
+
+            // View Address
+            const addrContainer = document.getElementById('view-address-container');
+            if(task.address) {
+                addrContainer.classList.remove('hidden');
+                document.getElementById('view-address-text').innerText = task.address;
+                document.getElementById('view-address-link').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.address)}`;
+            } else {
+                addrContainer.classList.add('hidden');
+            }
             
             const tagContainer = document.getElementById('view-tags');
             tagContainer.innerHTML = '';
@@ -1146,7 +1172,6 @@
                 return;
             }
 
-            // Organize vendors by PRIMARY category
             const groups = {};
             state.vendors.forEach(v => {
                 const primary = (v.categories && v.categories.length > 0) ? v.categories[0] : 'Outros';
@@ -1154,7 +1179,6 @@
                 groups[primary].push(v);
             });
 
-            // Iterate categories
             Object.keys(groups).sort().forEach(catName => {
                 const group = groups[catName];
                 
@@ -1173,7 +1197,7 @@
                     else if(maxP === minP) priceScore = 10;
                     else priceScore = 10 * (1 - ((v.monetaryValue - minP) / (maxP - minP)));
                     
-                    const totalItems = scoreValues.length + 1; // +1 for price
+                    const totalItems = scoreValues.length + 1; 
                     const finalScore = totalItems > 0 ? ((qualAvg * scoreValues.length) + priceScore) / totalItems : 0;
                     
                     return { ...v, priceScore, finalScore, qualAvg };
