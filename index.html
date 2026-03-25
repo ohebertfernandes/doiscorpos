@@ -1,1411 +1,811 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dois Corpos - Planejador de Casamento</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1" />
+  <title>Manual da Marca — FYCash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-dark:#0f1112; /* slightly softer than pure black */
+      --black-fy:#1A1A1A;
+      --gray-fy:#4F4F4F;
+      --silver:#D9D9D9;
+      --white:#FFFFFF;
+      --violet:#8D5AE4;
+      --teal:#21E9CA;
+      --w:1920px;
+      --h:1080px;
+      --gutter:72px;
+    }
 
-        /* --- THEME --- */
-        :root {
-            --color-emerald-dark: #064E3B;
-            --color-emerald-main: #10B981;
-            --color-gold: #D4AF37;
-            --color-bg: #F9FAFB;
-        }
+    /* Basic reset */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:var(--white);font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    .deck{
+      width:100%;
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:48px;
+      padding:40px 24px;
+      background:linear-gradient(180deg,var(--white),#f6f7f8);
+    }
 
-        body { font-family: 'Lato', sans-serif; background-color: var(--color-bg); color: #374151; }
-        h1, h2, h3, h4, .serif-font { font-family: 'Playfair Display', serif; }
-        .decorative-font { font-family: 'Cinzel', serif; }
+    /* Slide container sized to widescreen */
+    .slide{
+      width:calc(var(--w) * 0.9);
+      max-width:100%;
+      aspect-ratio: 16 / 9;
+      background:var(--bg-dark);
+      color:var(--white);
+      border-radius:14px;
+      box-shadow:0 12px 40px rgba(12,13,14,0.45);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns: 1fr 520px;
+      grid-template-rows: auto 1fr auto;
+      padding:48px;
+      position:relative;
+    }
 
-        /* --- ANIMATIONS --- */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    /* For slides that want full-bleed single column */
+    .slide.full{ grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
 
-        /* --- COMPONENTS --- */
-        .btn-primary {
-            background: linear-gradient(135deg, #065f46 0%, #047857 100%);
-            color: white; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(6, 78, 59, 0.3);
-        }
-        .btn-primary:hover {
-            transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(6, 78, 59, 0.4);
-        }
-        
-        .nav-item { position: relative; color: #6B7280; transition: color 0.3s; }
-        .nav-item.active { color: #065f46; font-weight: 700; }
-        .nav-item.active::after {
-            content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background-color: var(--color-gold);
-        }
+    header.slide-header{
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+    }
+    .brand-block{display:flex;align-items:center;gap:18px}
+    .brand-block h1{font-size:36px;letter-spacing:0.6px;margin:0;font-weight:800}
+    .brand-block p{margin:0;font-size:14px;color:rgba(255,255,255,0.72)}
 
-        .card { 
-            background-color: white; border: 1px solid #E5E7EB; border-radius: 12px; 
-            box-shadow: 0 2px 4px -1px rgba(0,0,0,0.02); transition: transform 0.2s, box-shadow 0.2s; 
-        }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border-color: #D1D5DB; }
+    /* Logo box */
+    .logo-wrap{width:160px;height:64px;display:flex;align-items:center;justify-content:center}
+    /* Content columns */
+    .content{padding-right:24px; overflow:auto}
+    .sidebar{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+      border-left:1px solid rgba(255,255,255,0.03);
+      padding:28px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
 
-        .input-elegant { 
-            border: 1px solid #E5E7EB; border-radius: 8px; padding: 0.6rem; background-color: #F9FAFB; transition: all 0.2s;
-        }
-        .input-elegant:focus { 
-            outline: none; border-color: var(--color-gold); background-color: white; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1); 
-        }
+    h2{font-size:28px;margin-bottom:10px;color:var(--white);font-weight:700}
+    h3{font-size:18px;margin:0 0 8px 0;color:var(--silver);font-weight:600}
+    p.lead{font-size:18px;color:rgba(255,255,255,0.92);line-height:1.45}
+    p.small{font-size:14px;color:rgba(255,255,255,0.76)}
 
-        /* --- TAGS STYLING --- */
-        .tag-selector-pill { 
-            font-size: 11px; padding: 4px 10px; border-radius: 999px; border: 1px solid #E5E7EB; 
-            cursor: pointer; user-select: none; transition: all 0.2s; 
-            background: white; color: #6B7280; display: inline-flex; items-center; margin-right: 4px; margin-bottom: 4px;
-        }
-        .tag-selector-pill:hover { border-color: var(--color-emerald-main); transform: translateY(-1px); }
-        .tag-selector-pill.selected { border-width: 2px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-color: #ECFDF5; color: #065F46; border-color: #10B981; }
+    /* Palette row */
+    .palette{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+    .swatch{width:120px;height:80px;border-radius:8px;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;color:#fff;font-weight:700;box-shadow:inset 0 -6px 12px rgba(0,0,0,0.18)}
+    .swatch .hex{font-size:12px;font-weight:600;opacity:0.9}
 
-        .task-tag-visible {
-            display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; 
-            color: white; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15); margin-top: 4px; margin-right: 4px;
-        }
+    /* Examples grid */
+    .examples{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:18px}
+    .card{background:rgba(255,255,255,0.03);border-radius:10px;padding:16px;min-height:120px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;}
+    .mockup{width:100%;height:220px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);font-weight:700}
 
-        /* VENDOR CATEGORY PILLS (REMOVABLE) */
-        .cat-pill-removable { 
-            font-size: 10px; padding: 4px 8px; border: 1px solid #E5E7EB; border-radius: 6px; 
-            background: #ECFDF5; color: #065F46; margin: 2px; display: inline-flex; align-items: center; gap: 4px;
-            text-transform: uppercase; letter-spacing: 0.5px; border-color: #10B981;
-        }
-        .cat-pill-removable button { color: #047857; font-weight: bold; cursor: pointer; }
-        .cat-pill-removable button:hover { color: #EF4444; }
+    /* Logo big render */
+    .hero-logo { width:420px;height:auto; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.65)); }
 
-        .color-swatch { -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer; padding: 0; background: none; }
-        .color-swatch::-webkit-color-swatch-wrapper { padding: 0; }
-        .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; border: 1px solid #ddd; }
+    /* area de proteção visual */
+    .protection-visual{display:flex;gap:18px;align-items:center}
+    .prot-rect{width:180px;height:180px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center}
 
-        .countdown-box { background: rgba(6, 78, 59, 0.03); border-radius: 8px; padding: 8px 4px; min-width: 50px; text-align: center; }
-        .countdown-val { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--color-emerald-dark); }
-        .countdown-label { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; color: #9CA3AF; margin-top: 2px; }
+    /* usage dos tipos */
+    .type-sample{display:flex;flex-direction:column;gap:8px}
+    .type-sample .t1{font-size:36px;font-weight:800}
+    .type-sample .t2{font-size:20px;font-weight:600;color:var(--silver)}
 
-        .task-section-header { 
-            font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; 
-            margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.25rem; border-bottom: 1px solid #E5E7EB;
-            color: #9CA3AF; display: flex; justify-content: space-between; align-items: center;
-        }
-        .task-section-header.urgent { color: #EF4444; border-color: #FECACA; }
-        .task-section-header.today { color: #D97706; border-color: #FDE68A; }
-        .task-section-header.week { color: #059669; border-color: #A7F3D0; }
+    /* Footer for each slide */
+    footer.slide-foot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.03)}
+    footer.slide-foot .foot-left{font-size:13px;color:rgba(255,255,255,0.55)} 
+    footer.slide-foot .foot-right{font-size:13px;color:rgba(255,255,255,0.45)}
 
-        /* --- VENDOR COMPARE STYLES --- */
-        .vendor-score-circle {
-            width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 1.3rem; border: 3px solid; font-family: 'Playfair Display', serif;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-        .score-high { border-color: #10B981; color: #065F46; background: #ECFDF5; }
-        .score-med { border-color: #FBBF24; color: #92400E; background: #FFFBEB; }
-        .score-low { border-color: #EF4444; color: #991B1B; background: #FEF2F2; }
-        
-        .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-top: 1px solid #E5E7EB; padding-top: 8px; margin-top: 8px; }
-        .score-item { text-align: center; border-radius: 4px; padding: 2px; background: #F9FAFB; }
-        .score-item span { display: block; font-size: 7px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score-item b { font-size: 10px; color: #374151; font-weight: 800; }
-        
-        .price-badge { background-color: #F0FDFA; color: #047857; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; border: 1px solid #A7F3D0; }
-        .vendor-category-header {
-            font-family: 'Cinzel', serif; font-size: 1.1rem; color: #064E3B; border-bottom: 2px solid #D1FAE5; margin-bottom: 1rem; padding-bottom: 0.5rem; margin-top: 2rem;
-        }
+    /* Utility */
+    .muted{color:rgba(255,255,255,0.6)}
+    .accent-v{color:var(--violet);font-weight:700}
+    .accent-t{color:var(--teal);font-weight:700}
 
-        /* --- MODALS --- */
-        #edit-modal, #view-modal, #vendor-modal { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
-        #login-overlay { background-color: #F0FDFA; background-image: radial-gradient(#E0E7FF 1px, transparent 1px); background-size: 20px 20px; }
-    </style>
+    /* Print friendly adjustments */
+    @media print {
+      body{background:white}
+      .deck{padding:0}
+      .slide{box-shadow:none;border-radius:0; page-break-after:always; width:1920px;height:1080px;transform:scale(1);display:block}
+      .slide{overflow:visible}
+    }
+
+    /* Responsive smaller screens — scale slides */
+    @media (max-width:1600px){
+      .slide{transform:scale(0.9)}
+    }
+    @media (max-width:1200px){
+      .slide{transform:scale(0.65)}
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
+  <div class="deck">
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-overlay" class="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 transition-opacity duration-500">
-        <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-2xl text-center border-t-4 border-emerald-800 relative">
-            <div class="mb-6">
-                <canvas id="logo-login" width="100" height="70" class="mx-auto mb-4"></canvas>
-                <h1 class="text-3xl decorative-font text-emerald-900 mb-1">Dois Corpos</h1>
-                <div class="h-0.5 w-12 bg-yellow-400 mx-auto mb-2"></div>
-                <p class="text-stone-500 text-xs uppercase tracking-widest">Gestão de Casamento</p>
-            </div>
-            
-            <div id="auth-form" class="space-y-4 text-left">
-                <input type="email" id="email" class="input-elegant w-full" placeholder="Email">
-                <input type="password" id="password" class="input-elegant w-full" placeholder="Senha">
-                <p id="auth-error" class="text-red-500 text-xs h-4 text-center font-bold"></p>
-                <button onclick="handleAuth()" id="btn-auth" class="btn-primary w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wide">Entrar</button>
-                <div class="text-center mt-4 pt-3 border-t border-stone-100">
-                    <button onclick="toggleAuthMode()" class="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline" id="toggle-btn">Criar conta nova</button>
-                </div>
-            </div>
-            <div id="auth-loading" class="hidden py-6"><p class="text-emerald-800 text-sm animate-pulse">Conectando...</p></div>
+    <!-- Slide 1 — Capa -->
+    <section class="slide full" id="capa" aria-label="Capa">
+      <header class="slide-header" style="justify-content:flex-start;">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true">
+            <!-- SVG logotipo vetorial (recriado com fidelidade ao traço original) -->
+            <svg class="hero-logo" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FYCash logo">
+              <!-- wing-F simplified vector preserving original shape -->
+              <defs>
+                <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#D9D9D9" stop-opacity="1"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Symbol -->
+              <g transform="translate(30,20) scale(0.9)">
+                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g1)" />
+                <!-- top wing lines -->
+                <path d="M52 42 C88 26 132 24 170 34" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.98"/>
+                <path d="M76 72 C114 60 160 56 198 68" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+                <path d="M102 104 C146 94 188 88 224 98" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+              </g>
+
+              <!-- Wordmark FYCash (vector text-like shapes) -->
+              <g transform="translate(320,64) scale(1)">
+                <text x="0" y="48" font-family="Montserrat, Arial" font-weight="800" font-size="66" fill="#FFFFFF">FYCash</text>
+              </g>
+            </svg>
+          </div>
+          <div>
+            <h1>FYCash</h1>
+            <p class="muted">Não é software. É tempo de vida de volta.</p>
+          </div>
         </div>
-    </div>
 
-    <!-- VIEW TASK MODAL -->
-    <div id="view-modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-0 rounded-xl shadow-2xl w-full max-w-md border border-stone-100 overflow-hidden animate-fade-in relative">
-            <div class="h-3 bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
-            <button onclick="closeViewModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 bg-white rounded-full p-1"><i class="fa-solid fa-times"></i></button>
-            <div class="p-8">
-                <span id="view-category" class="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded mb-2 inline-block">Categoria</span>
-                <h3 id="view-title" class="text-2xl font-serif text-stone-800 mb-2 leading-tight">Título</h3>
-                
-                <div class="flex items-center text-stone-500 text-sm mb-4">
-                    <i class="fa-regular fa-calendar mr-2"></i><span id="view-date">Data</span>
-                </div>
-
-                <div id="view-address-container" class="hidden mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                    <a id="view-address-link" href="#" target="_blank" class="flex items-center text-blue-700 hover:underline">
-                        <i class="fa-solid fa-location-dot mr-2 text-blue-500"></i>
-                        <span id="view-address-text" class="text-xs font-bold">Endereço</span>
-                    </a>
-                </div>
-
-                <div id="view-tags" class="flex flex-wrap gap-1 mb-6"></div>
-                
-                <div class="bg-stone-50 p-4 rounded-lg border-l-4 border-emerald-200">
-                    <h4 class="text-xs font-bold text-stone-400 uppercase mb-1">Observações</h4>
-                    <p id="view-obs" class="text-sm text-stone-700 whitespace-pre-wrap italic">Nenhuma observação.</p>
-                </div>
-                <div class="mt-8 flex justify-end">
-                    <button id="view-edit-btn" class="text-xs font-bold text-stone-500 hover:text-emerald-700 flex items-center"><i class="fa-solid fa-pencil mr-1"></i> Editar Tarefa</button>
-                </div>
-            </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;">
+          <p class="muted" style="font-size:13px;">Manual da Marca — Widescreen 1920×1080</p>
+          <p class="muted" style="font-size:12px;margin-top:4px;">Versão: 1.0 • Hebert</p>
         </div>
-    </div>
+      </header>
 
-    <!-- VENDOR COMPARE MODAL -->
-    <div id="vendor-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-3xl border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
-            <h3 class="text-xl font-serif text-emerald-900 mb-4">Novo Fornecedor</h3>
-            
-            <div class="space-y-4">
-                <input type="text" id="vend-name" placeholder="Nome da Empresa/Profissional" class="input-elegant w-full">
-                
-                <div>
-                    <p class="text-[10px] uppercase font-bold text-stone-400 mb-2">Categorias Atendidas (Adicione/Remova)</p>
-                    <div class="flex gap-2 mb-2">
-                        <select id="vend-cat-select" class="input-elegant w-2/3 text-xs p-1">
-                             <option value="" disabled selected>Selecionar Categoria...</option>
-                        </select>
-                        <button onclick="addVendorCategory()" class="bg-stone-700 text-white px-3 py-1 rounded text-xs hover:bg-stone-800">Adicionar</button>
-                    </div>
-                    <div id="vend-cat-pills" class="flex flex-wrap gap-1 min-h-[30px] p-1 bg-stone-50 border rounded">
-                        <p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>
-                    </div>
-                </div>
+      <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;height:calc(100% - 160px);">
+        <div style="display:flex;gap:36px;align-items:center;justify-content:center">
+          <div style="max-width:680px">
+            <h2 style="font-size:52px;margin-bottom:8px">Manual da Marca — FYCash</h2>
+            <p class="lead">Transformar o complexo em simples. Dar controle, clareza, velocidade e liberdade. <span class="accent-v">#8D5AE4</span> • <span class="accent-t">#21E9CA</span></p>
+            <p class="small" style="margin-top:18px;color:rgba(255,255,255,0.74)">Formato: Widescreen • Mockups conceituais • Clean. Este documento contém diretrizes de uso, paleta, tipografia e aplicações da marca.</p>
+          </div>
 
-                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
-                    <label class="text-[10px] uppercase font-bold text-emerald-700">Valor Total (R$)</label>
-                    <input type="number" id="vend-value" placeholder="0,00" class="input-elegant w-full font-bold text-emerald-800 text-lg border-emerald-300">
-                    <p class="text-[9px] text-emerald-600 mt-1 italic">* Nota de preço calculada automaticamente vs. concorrentes da categoria principal.</p>
-                </div>
-
-                <div class="p-5 bg-stone-50 rounded-lg border border-stone-100">
-                    <div class="flex justify-between items-center mb-3">
-                         <p class="text-xs font-bold text-stone-500 uppercase">Critérios de Avaliação (0 a 10)</p>
-                         <button onclick="addCustomCriterion()" class="text-[10px] text-emerald-600 font-bold hover:underline">+ Adicionar Critério Extra</button>
-                    </div>
-                    
-                    <div id="custom-criteria-list" class="space-y-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <!-- Populated Dynamic -->
-                        <p class="text-xs text-stone-400 italic col-span-full">Selecione categorias para gerar critérios automaticamente.</p>
-                    </div>
-                </div>
+          <div style="width:340px;height:240px;border-radius:12px;background:linear-gradient(180deg,var(--violet),var(--teal));display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px rgba(141,90,228,0.18);padding:18px;">
+            <div style="text-align:center;color:white;">
+              <div style="font-weight:800;font-size:20px">Paleta Destaque</div>
+              <div style="margin-top:12px;font-weight:700">#8D5AE4 — #21E9CA</div>
             </div>
-
-            <div class="flex justify-end gap-2 mt-6 border-t pt-4">
-                <button onclick="closeVendorModal()" class="px-4 py-2 text-sm text-stone-500 hover:bg-stone-100 rounded">Cancelar</button>
-                <button onclick="saveVendor()" class="btn-primary px-6 py-2 rounded text-sm font-bold">Salvar</button>
-            </div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- GENERIC EDIT MODAL -->
-    <div id="edit-modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-lg border-t-4 border-emerald-600 animate-fade-in max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-serif text-emerald-900">Editar / Detalhes</h3>
-                <button onclick="closeModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-times"></i></button>
-            </div>
-            <div id="modal-content" class="space-y-4"></div>
-            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-stone-100">
-                <button onclick="closeModal()" class="px-4 py-2 text-sm text-stone-500 hover:bg-stone-100 rounded">Cancelar</button>
-                <button id="modal-save-btn" class="btn-primary px-6 py-2 rounded text-sm font-bold">Salvar Alterações</button>
-            </div>
+      <footer class="slide-foot">
+        <div class="foot-left">FYCash • Manual da Marca</div>
+        <div class="foot-right">www.fycash.example • contato@fycash.example</div>
+      </footer>
+    </section>
+
+    <!-- Slide 2 — História / Manifesto -->
+    <section class="slide" id="historia" aria-label="História">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true">
+            <!-- small svg -->
+            <svg viewBox="0 0 240 90" width="160" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="g2" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#FFFFFF"/>
+                  <stop offset="100%" stop-color="#D9D9D9"/>
+                </linearGradient>
+              </defs>
+              <g transform="translate(8,4) scale(0.6)">
+                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g2)" />
+              </g>
+              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="36" fill="#fff">FYCash</text>
+            </svg>
+          </div>
+          <div>
+            <h1 style="font-size:22px">História & Manifesto</h1>
+            <p class="muted" style="font-size:13px">A origem da FYCash — propósito e narrativa.</p>
+          </div>
         </div>
-    </div>
-
-    <!-- APP HEADER -->
-    <header class="bg-white border-b border-stone-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-3">
-                    <canvas id="logo-header" width="40" height="30"></canvas>
-                    <div>
-                        <span class="text-lg text-emerald-900 font-bold decorative-font block leading-none">Dois Corpos</span>
-                        <span id="connection-status" class="text-[9px] uppercase font-bold text-stone-400">Offline</span>
-                    </div>
-                </div>
-                <nav class="hidden md:flex space-x-6">
-                    <button onclick="switchTab('dashboard')" class="nav-item active text-xs uppercase font-bold tracking-widest py-2">Visão Geral</button>
-                    <button onclick="switchTab('budget')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Orçamento</button>
-                    <button onclick="switchTab('compare')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Comparador</button>
-                    <button onclick="switchTab('guests')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Convidados</button>
-                    <button onclick="switchTab('timeline')" class="nav-item text-xs uppercase font-bold tracking-widest py-2">Tarefas</button>
-                </nav>
-                <button onclick="handleLogout()" class="text-xs text-stone-400 hover:text-red-500"><i class="fa-solid fa-sign-out-alt"></i> Sair</button>
-            </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="padding:8px 14px;background:rgba(255,255,255,0.04);border-radius:8px;font-weight:700">Manifesto</div>
         </div>
-    </header>
+      </header>
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="content">
+        <h2>Desde o começo, a humanidade sempre buscou a mesma coisa</h2>
+        <p class="lead" style="margin-top:12px;">
+          Viver melhor gastando menos energia. Foi assim que nasceu a roda, o fogo, as máquinas, a internet e a inteligência artificial.
+        </p>
+        <p class="small" style="margin-top:14px;color:rgba(255,255,255,0.8)">
+          Não por preguiça, mas por inteligência. Evoluímos quando paramos de desperdiçar força com o que pode ser simplificado.
+          É daí que nasce a FYCash — de pessoas que perguntaram: “Por que isso precisa ser tão complicado?”.
+        </p>
 
-        <!-- DASHBOARD -->
-        <section id="dashboard" class="space-y-8 animate-fade-in">
-            <div class="text-center">
-                <h2 class="text-3xl text-emerald-900 serif-font italic">Painel do Casal</h2>
+        <div style="margin-top:22px;padding:18px;border-left:4px solid var(--violet);background:rgba(141,90,228,0.06);border-radius:8px">
+          <p class="small" style="color:var(--white)"><strong>Visão:</strong> Construir um hub — um ecossistema onde tecnologia, inteligência e estratégia se unem para simplificar a vida de quem quer crescer.</p>
+        </div>
+
+        <div style="margin-top:20px;">
+          <h3>Fragmentos do Manifesto</h3>
+          <ul style="margin-top:8px;color:rgba(255,255,255,0.78);line-height:1.6">
+            <li>Enquanto o mercado romantiza o esforço, nós romantizamos a clareza.</li>
+            <li>Não criamos tecnologia por vaidade. Criamos por propósito.</li>
+            <li>Não vendemos software. Vendemos tempo de vida de volta.</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div>
+          <h3>Promessa</h3>
+          <p class="small">Transformar o complexo em simples, o confuso em claro e o pesado em leve, devolvendo controle total sobre números, decisões e operações.</p>
+        </div>
+
+        <div>
+          <h3>Slogan</h3>
+          <p class="small">Não é software. É tempo de vida de volta.</p>
+        </div>
+
+        <div>
+          <h3>O que queremos transmitir</h3>
+          <p class="small">Leveza • Facilidade • Interatividade • Confiança • Humanização</p>
+        </div>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Manifesto e promessa</div>
+        <div class="foot-right">FYCash • Identidade</div>
+      </footer>
+    </section>
+
+    <!-- Slide 3 — Essência e Arquétipos -->
+    <section class="slide" id="essencia" aria-label="Essência">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true">
+            <!-- tiny svg -->
+            <svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <g transform="translate(8,4) scale(0.5)">
+                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" />
+              </g>
+              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text>
+            </svg>
+          </div>
+          <div>
+            <h1 style="font-size:20px">Essência & Arquétipos</h1>
+            <p class="muted" style="font-size:13px">Sábio + Rebelde</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="padding:8px 14px;background:rgba(255,255,255,0.02);border-radius:8px;font-weight:700">Arquetipos</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <h2>Arquétipos</h2>
+        <p class="lead" style="margin-top:12px">A FYCash combina a autoridade refletida pelo Sábio com a ousadia do Rebelde. Educamos, questionamos e reformulamos o status quo.</p>
+
+        <div class="examples" style="margin-top:18px">
+          <div class="card">
+            <h3>Sábio</h3>
+            <p class="small">Posicionamento: Orientação por conhecimento. A FYCash ensina, organiza e transforma informação em compreensão.</p>
+            <div class="mockup">Guias, insights e dashboards claros</div>
+          </div>
+
+          <div class="card">
+            <h3>Rebelde</h3>
+            <p class="small">Posicionamento: Provocador inteligente. Questionamos práticas que travam empresas e libertamos por design.</p>
+            <div class="mockup">Soluções que rompem com o complicado</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div>
+          <h3>Valores</h3>
+          <p class="small">Clareza • Eficiência • Liberdade • Confiança</p>
+        </div>
+
+        <div>
+          <h3>Tom de Voz</h3>
+          <p class="small">Claro, confiante, objetivo. Linguagem que ensina sem esnobar; provoca sem agredir.</p>
+        </div>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Arquétipos e tom de voz</div>
+        <div class="foot-right">FYCash — Sábio + Rebelde</div>
+      </footer>
+    </section>
+
+    <!-- Slide 4 — Identidade Visual / Logo -->
+    <section class="slide" id="identidade" aria-label="Identidade Visual">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true">
+            <!-- svg miniature -->
+            <svg viewBox="0 0 240 90" width="140" height="46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <g transform="translate(8,4) scale(0.6)">
+                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" />
+              </g>
+              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="28" fill="#fff">FYCash</text>
+            </svg>
+          </div>
+          <div>
+            <h1 style="font-size:20px">Identidade Visual</h1>
+            <p class="muted" style="font-size:13px">Logotipo, símbolo isolado e variações oficiais</p>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Versão Principal</div>
+        </div>
+      </header>
+
+      <div style="display:flex;gap:36px;align-items:flex-start;padding-top:6px">
+        <div style="flex:1;padding-right:12px" class="content">
+          <h2>Logo</h2>
+          <p class="lead" style="margin-top:8px">O logotipo é composto pelo símbolo “F alado” e a palavra FYCash. Nunca altere proporção, ângulo ou traço.</p>
+
+          <div style="margin-top:22px;display:flex;gap:18px;align-items:center">
+            <div style="background:rgba(255,255,255,0.03);padding:18px;border-radius:12px">
+              <!-- large symbol -->
+              <svg viewBox="0 0 600 200" width="360" height="160" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+                <defs>
+                  <linearGradient id="g3" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#FFFFFF"/>
+                    <stop offset="100%" stop-color="#D9D9D9"/>
+                  </linearGradient>
+                </defs>
+                <g transform="translate(10,10) scale(0.9)">
+                  <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g3)" />
+                  <path d="M52 42 C88 26 132 24 170 34" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.98"/>
+                  <path d="M76 72 C114 60 160 56 198 68" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+                  <path d="M102 104 C146 94 188 88 224 98" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+                </g>
+                <g transform="translate(320,64) scale(1)">
+                  <text x="0" y="48" font-family="Montserrat, Arial" font-weight="800" font-size="66" fill="#FFFFFF">FYCash</text>
+                </g>
+              </svg>
             </div>
 
-            <!-- Global Settings -->
-            <div class="flex justify-center">
-                 <div class="bg-white p-3 rounded-lg shadow border border-stone-100 flex flex-col md:flex-row items-center gap-3">
-                     <div class="flex items-center gap-2 px-2">
-                         <span class="text-xs font-bold text-emerald-800 uppercase"><i class="fa-regular fa-calendar mr-1"></i> Data:</span>
-                         <input type="date" id="wedding-date-input" class="bg-stone-50 border border-stone-200 rounded p-1.5 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
-                     </div>
-                     <div class="flex items-center gap-2 px-2">
-                         <span class="text-xs font-bold text-emerald-800 uppercase"><i class="fa-regular fa-clock mr-1"></i> Hora:</span>
-                         <input type="time" id="wedding-time-input" class="bg-stone-50 border border-stone-200 rounded p-1.5 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
-                     </div>
-                     <div class="flex items-center gap-2 px-2 border-l border-stone-100">
-                         <span class="text-xs font-bold text-emerald-800 uppercase">Orçamento R$:</span>
-                         <input type="number" id="total-budget-input" class="bg-stone-50 border border-stone-200 rounded p-1.5 w-28 text-sm text-stone-700 focus:outline-none focus:border-emerald-500">
-                     </div>
-                     <button onclick="saveGlobalSettings()" class="bg-emerald-800 text-white text-xs font-bold px-4 py-2 rounded hover:bg-emerald-700 transition ml-2 shadow-sm">
-                         <i class="fa-solid fa-save mr-1"></i> Salvar
-                     </button>
-                 </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <p class="small">Versões oficiais:</p>
+              <ul style="color:rgba(255,255,255,0.82);line-height:1.6">
+                <li>Logotipo completo (símbolo + wordmark) — uso preferencial.</li>
+                <li>Símbolo isolado — para ícones, favicons, app icons e espaços reduzidos.</li>
+                <li>Contraste: branco ou prata em fundos escuros; cinza escuro ou preto em fundos claros.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidebar" style="width:520px">
+          <h3>Área de proteção</h3>
+          <div class="protection-visual">
+            <div class="prot-rect">
+              <!-- simplified visual for safe area -->
+              <svg viewBox="0 0 180 180" width="140" height="140" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="180" height="180" rx="12" fill="rgba(255,255,255,0.02)"/>
+                <rect x="24" y="24" width="132" height="132" rx="8" fill="rgba(255,255,255,0.04)"/>
+                <g transform="translate(36,36)"><path d="M0 40 C30 20 60 16 80 26 C90 32 96 40 86 46 C70 56 40 52 10 48 Z" fill="#fff" opacity="0.9"/></g>
+              </svg>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Count -->
-                <div class="card p-6 border-t-4 border-rose-300">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Contagem Regressiva</h3>
-                        <i class="fa-regular fa-heart text-rose-300"></i>
-                    </div>
-                    <div class="flex justify-center items-center gap-2">
-                        <div class="countdown-box"><span class="countdown-val" id="cd-days">00</span><div class="countdown-label">Dias</div></div>
-                        <span class="text-stone-300 text-xl font-serif">:</span>
-                        <div class="countdown-box"><span class="countdown-val" id="cd-hours">00</span><div class="countdown-label">Horas</div></div>
-                        <span class="text-stone-300 text-xl font-serif">:</span>
-                        <div class="countdown-box"><span class="countdown-val" id="cd-mins">00</span><div class="countdown-label">Min</div></div>
-                        <span class="text-stone-300 text-xl font-serif">:</span>
-                        <div class="countdown-box"><span class="countdown-val" id="cd-secs">00</span><div class="countdown-label">Seg</div></div>
-                    </div>
-                </div>
-                <!-- Budget -->
-                <div class="card p-6 border-t-4 border-emerald-400">
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Orçamento Gasto</h3>
-                    <div class="mt-2 flex items-baseline justify-between">
-                        <span class="text-3xl serif-font text-emerald-700" id="dash-budget-percent">0%</span>
-                        <span class="text-stone-500 text-xs" id="dash-budget-left">Disponível: R$ 0</span>
-                    </div>
-                    <div class="w-full bg-stone-100 h-1.5 mt-4 rounded-full overflow-hidden">
-                        <div id="dash-progress-bar" class="bg-emerald-500 h-full w-0 transition-all duration-1000"></div>
-                    </div>
-                </div>
-                <!-- Guests -->
-                <div class="card p-6 border-t-4 border-blue-300">
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest">Resumo Convidados</h3>
-                    <div class="mt-2 flex flex-col space-y-2">
-                        <div class="flex items-baseline justify-between">
-                            <div><span class="text-4xl serif-font text-blue-900 mr-2" id="dash-total-pax">0</span><span class="text-stone-500 text-sm">pessoas (total)</span></div>
-                            <div class="text-right"><span class="text-xl font-bold text-green-600 block leading-none" id="dash-guest-confirmed">0</span><span class="text-[10px] text-stone-400 uppercase">Confirmados</span></div>
-                        </div>
-                        <div class="flex items-baseline pt-2 border-t border-stone-100">
-                            <span class="text-lg font-bold text-stone-600 mr-2" id="dash-invites-count">0</span><span class="text-stone-400 text-xs uppercase">Convites (Famílias/Grupos)</span>
-                        </div>
-                    </div>
-                </div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.8)">
+              A área mínima de respiro é igual à altura da letra “F” do símbolo. Nenhum elemento pode invadir essa área.
             </div>
-        </section>
+          </div>
 
-        <!-- VENDOR COMPARE -->
-        <section id="compare" class="hidden space-y-6 animate-fade-in">
-            <div class="flex justify-between items-end border-b border-stone-200 pb-2">
-                <div><h2 class="text-2xl font-serif text-emerald-900">Comparador de Fornecedores</h2><p class="text-xs text-stone-500 uppercase tracking-wider">Use os padrões ou copie de outros</p></div>
-                <button onclick="openVendorModal()" class="bg-stone-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-stone-800 shadow-sm">+ Avaliar Novo</button>
+          <div style="margin-top:18px">
+            <h3>Tamanho mínimo</h3>
+            <p class="small">Impressão: 25mm largura. Digital: 120px largura. Evite reduções além desses valores.</p>
+          </div>
+
+        </aside>
+      </div>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Logo — versões e regras</div>
+        <div class="foot-right">Não altere nenhum elemento.</div>
+      </footer>
+    </section>
+
+    <!-- Slide 5 — Paleta de Cores -->
+    <section class="slide" id="cores" aria-label="Cores">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true">
+            <svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <g transform="translate(8,4) scale(0.5)">
+                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" />
+              </g>
+              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text>
+            </svg>
+          </div>
+          <div>
+            <h1 style="font-size:20px">Paleta de Cores</h1>
+            <p class="muted" style="font-size:13px">Principais e complementares</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Cores</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <h2>Paleta Oficial</h2>
+        <p class="small" style="margin-top:8px;color:rgba(255,255,255,0.84)">Cores principais usadas em todas as aplicações</p>
+
+        <div class="palette" style="margin-top:14px">
+          <div class="swatch" style="background:var(--black-fy)"><div class="hex">Preto FY</div><div class="hex" style="opacity:0.85">#1A1A1A</div></div>
+          <div class="swatch" style="background:var(--gray-fy)"><div class="hex">Cinza FY</div><div class="hex" style="opacity:0.85">#4F4F4F</div></div>
+          <div class="swatch" style="background:var(--silver)"><div class="hex" style="color:#111">Prata FY</div><div class="hex" style="color:#111;opacity:0.85">#D9D9D9</div></div>
+          <div class="swatch" style="background:var(--white);color:#111"><div class="hex" style="color:#111">Branco</div><div class="hex" style="color:#111;opacity:0.85">#FFFFFF</div></div>
+          <div class="swatch" style="background:var(--violet)"><div class="hex">Roxo FY</div><div class="hex">#8D5AE4</div></div>
+          <div class="swatch" style="background:var(--teal)"><div class="hex">Turquesa FY</div><div class="hex">#21E9CA</div></div>
+        </div>
+
+        <div style="margin-top:18px">
+          <h3>Regras de aplicação</h3>
+          <ul style="color:rgba(255,255,255,0.82);line-height:1.6">
+            <li>Fundo principal: Preto FY (#1A1A1A) para materiais institucionais.</li>
+            <li>Roxo (#8D5AE4) e Turquesa (#21E9CA) como cores de destaque e chamadas à ação.</li>
+            <li>Evitar fundos muito saturados que comprometam contraste com o logotipo.</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Notas técnicas</h3>
+        <p class="small">Fornecer valores em CMYK/RGB e Pantone quando necessário para impressão. Ex.: Roxo FY — RGB(141,90,228).</p>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Paleta e regras</div>
+        <div class="foot-right">Cores: primárias e de destaque</div>
+      </footer>
+    </section>
+
+    <!-- Slide 6 — Tipografia -->
+    <section class="slide" id="tipografia" aria-label="Tipografia">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true">
+            <svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg>
+          </div>
+          <div>
+            <h1 style="font-size:20px">Tipografia</h1>
+            <p class="muted" style="font-size:13px">Famílias recomendadas e usos</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Fonts</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <h2>Famílias Tipográficas</h2>
+        <p class="lead" style="margin-top:8px">A recomendação primária é Montserrat (Bold para títulos, Regular para corpo). Poppins pode ser alternativa.</p>
+
+        <div style="margin-top:18px" class="type-sample">
+          <div class="t1">Montserrat Bold • Título — 48px</div>
+          <div class="t2">Montserrat Regular • Texto corrido — 18px</div>
+          <p class="small" style="margin-top:8px">Usos: títulos, CTAs, labels e textos informativos. Manter hierarquia clara e espaçamento generoso.</p>
+        </div>
+
+        <div style="margin-top:20px">
+          <h3>Exemplos rápidos</h3>
+          <p class="small" style="line-height:1.6">Título: Controle em tempo real — <strong>Montserrat Bold</strong> • Corpo: Nossa plataforma centraliza tudo, revela o que estava escondido e traz transparência absoluta. — <strong>Montserrat Regular</strong></p>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Contraste e legibilidade</h3>
+        <p class="small">Evitar pesos muito finos em fundos escuros. 1.4–1.6 de line-height recomendado para leitura digital.</p>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Tipografia e uso</div>
+        <div class="foot-right">Montserrat — títulos e corpo</div>
+      </footer>
+    </section>
+
+    <!-- Slide 7 — Regras de Uso / Proibições -->
+    <section class="slide" id="usos" aria-label="Usos">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
+          <div>
+            <h1 style="font-size:20px">Regras de Uso</h1>
+            <p class="muted" style="font-size:13px">O que não fazer com o logo</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;"><div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Proibições</div></div>
+      </header>
+
+      <div class="content">
+        <h2>Usos Indevidos</h2>
+        <ul style="color:rgba(255,255,255,0.87);margin-top:10px;line-height:1.7">
+          <li>Não alterar cores do logotipo.</li>
+          <li>Não distorcer, girar ou espelhar o símbolo.</li>
+          <li>Não aplicar efeitos de sombra/artifício além do padrão do manual.</li>
+          <li>Não sobrepor o logo em fundos com baixo contraste.</li>
+        </ul>
+
+        <div style="margin-top:18px;display:flex;gap:14px;">
+          <div style="flex:1" class="card">
+            <div style="font-weight:700">Exemplo errado</div>
+            <div class="mockup">Logo sobre imagem muito contrastada (evitar)</div>
+          </div>
+          <div style="flex:1" class="card">
+            <div style="font-weight:700">Exemplo correto</div>
+            <div class="mockup">Logo em caixa de contraste ou sobre fundo sólido</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Checklist</h3>
+        <p class="small">Sempre validar: proporção, respiro, contraste, cor e clareza.</p>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Regras e proibições</div>
+        <div class="foot-right">Preserve a integridade do signo</div>
+      </footer>
+    </section>
+
+    <!-- Slide 8 — Tamanhos e Área de Proteção (detalhado) -->
+    <section class="slide" id="tamanhos" aria-label="Tamanhos">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
+          <div>
+            <h1 style="font-size:20px">Tamanhos & Respiros</h1>
+            <p class="muted" style="font-size:13px">Dimensões mínimas e espaçamento</p>
+          </div>
+        </div>
+        <div></div>
+      </header>
+
+      <div class="content">
+        <h2>Tamanhos mínimos</h2>
+        <ul style="color:rgba(255,255,255,0.86);margin-top:10px;line-height:1.6">
+          <li>Impressão: largura mínima 25 mm.</li>
+          <li>Digital: largura mínima 120 px.</li>
+          <li>Ícone (app): usar símbolo isolado com margens adequadas.</li>
+        </ul>
+
+        <div style="margin-top:16px">
+          <h3>Área de proteção (visual)</h3>
+          <p class="small">A distância mínima entre o logotipo e qualquer outro elemento deve ser igual à altura do “F” do símbolo no arquivo final.</p>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Exportação</h3>
+        <p class="small">Exportar SVG para web e PDF em vetorial para manter qualidade. Para impressão, exportar em CMYK com 300 DPI.</p>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Tamanhos e exportação</div>
+        <div class="foot-right">Manter vetorial sempre que possível</div>
+      </footer>
+    </section>
+
+    <!-- Slide 9 — Aplicações Conceituais (cartão + capa) -->
+    <section class="slide" id="aplicacoes" aria-label="Aplicações">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
+          <div>
+            <h1 style="font-size:20px">Aplicações Conceituais</h1>
+            <p class="muted" style="font-size:13px">Cartão de visita • Capa • Post digital • Dashboard</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <h2>Modelos conceituais</h2>
+        <p class="small" style="margin-top:8px">Layouts vetoriais e limpos para aplicações básicas da marca.</p>
+
+        <div style="display:flex;flex-direction:column;gap:18px;margin-top:16px">
+          <div style="display:flex;gap:18px">
+            <div style="flex:1" class="card">
+              <div style="font-weight:800">Cartão de Visita — Versão Dark</div>
+              <div class="mockup" style="height:120px">
+                <div style="text-align:center">
+                  <div style="font-weight:800;font-size:18px">FYCash</div>
+                  <div style="font-size:12px;margin-top:6px;color:rgba(255,255,255,0.7)">Nome • Cargo</div>
+                </div>
+              </div>
+              <p class="small">Fundo: Preto FY; Elementos: Roxo/Turquesa para destaque.</p>
             </div>
-            <div id="vendor-list-container"></div>
-        </section>
 
-        <!-- BUDGET -->
-        <section id="budget" class="hidden space-y-6 animate-fade-in">
-            <h2 class="text-2xl font-serif text-emerald-900 border-b border-stone-200 pb-2">Controle Financeiro</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-4">
-                    <div class="card p-4 bg-emerald-50 border-emerald-100">
-                        <h4 class="text-xs font-bold text-emerald-800 uppercase mb-2">Novo Gasto</h4>
-                        <div class="flex gap-2">
-                            <select id="new-exp-cat" class="input-elegant text-xs w-1/3">
-                                <option value="" disabled selected>Categoria</option><option>Buffet & Comida</option><option>Local</option><option>Foto & Vídeo</option><option>Decoração</option><option>Música/DJ</option><option>Vestido/Beleza</option><option>Doces/Bolo</option><option>Assessoria</option><option>Outros</option>
-                            </select>
-                            <input type="number" id="new-exp-val" placeholder="Valor R$" class="input-elegant text-xs flex-grow">
-                            <button onclick="addExpense()" class="bg-emerald-600 text-white px-4 rounded text-xs font-bold hover:bg-emerald-700">Adicionar</button>
-                        </div>
-                    </div>
-                    <div class="card overflow-hidden"><table class="w-full text-left"><thead class="bg-stone-50 text-xs font-bold text-stone-500 uppercase"><tr><th class="p-3">Item</th><th class="p-3 text-right">Valor</th><th class="p-3 text-center">Ações</th></tr></thead><tbody id="budget-list-body" class="text-sm divide-y divide-stone-100"></tbody></table></div>
-                </div>
-                <div class="space-y-4">
-                    <div class="card p-6 text-center"><div class="chart-container h-40"><canvas id="budgetChart"></canvas></div><p class="mt-4 text-xs font-bold text-stone-400 uppercase">Saldo Disponível</p><p class="text-xl font-serif text-emerald-600 font-bold" id="budget-balance-display">R$ 0</p></div>
-                    <div id="savings-tips" class="card p-4 bg-yellow-50 border-yellow-200 text-xs text-stone-700 space-y-2"></div>
-                </div>
+            <div style="flex:1" class="card">
+              <div style="font-weight:800">Capa de Apresentação</div>
+              <div class="mockup" style="height:120px">Logo central + slogan</div>
+              <p class="small">Formato widescreen, bom contraste e fundo escuro com detalhe gradiente.</p>
             </div>
-        </section>
+          </div>
 
-        <!-- GUESTS -->
-        <section id="guests" class="hidden space-y-6 animate-fade-in">
-            <h2 class="text-2xl font-serif text-emerald-900 border-b border-stone-200 pb-2">Convidados</h2>
-            <div class="card p-4 bg-white shadow-sm border border-emerald-100">
-                <div class="grid grid-cols-12 gap-3 items-end">
-                    <div class="col-span-12 sm:col-span-5"><label class="text-[10px] font-bold text-stone-400 uppercase">Nome Principal</label><input type="text" id="new-guest-name" class="input-elegant w-full text-sm"></div>
-                    <div class="col-span-6 sm:col-span-2"><label class="text-[10px] font-bold text-stone-400 uppercase">+ Acomp.</label><input type="number" id="new-guest-partners" value="0" min="0" class="input-elegant w-full text-sm"></div>
-                    <div class="col-span-6 sm:col-span-5"><label class="text-[10px] font-bold text-stone-400 uppercase mb-1 block">Tags (Selecione)</label><div class="flex flex-wrap gap-1" id="guest-tags-selector"><span onclick="toggleTag(this)" class="tag-selector-pill">Padrinho</span><span onclick="toggleTag(this)" class="tag-selector-pill">Madrinha</span><span onclick="toggleTag(this)" class="tag-selector-pill">Família</span><span onclick="toggleTag(this)" class="tag-selector-pill">Amigos</span><span onclick="toggleTag(this)" class="tag-selector-pill">Fornecedor</span><span onclick="toggleTag(this)" class="tag-selector-pill">Deu Presente</span></div></div>
-                    <div class="col-span-12 mt-2"><button onclick="addGuest()" class="btn-primary w-full py-2 rounded text-sm font-bold">Salvar Convidado</button></div>
-                </div>
+          <div style="display:flex;gap:18px">
+            <div style="flex:1" class="card">
+              <div style="font-weight:800">Post Digital (Feed)</div>
+              <div class="mockup" style="height:120px">Texto curto, CTA em Turquesa</div>
+              <p class="small">Manter margem segura e foco em clareza.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-1 space-y-4">
-                    <div class="card p-4 h-fit"><h4 class="font-bold text-emerald-800 text-sm mb-3">Estatísticas</h4><div class="space-y-3 text-sm text-stone-600"><div class="flex justify-between border-b border-stone-100 pb-1"><span>Convites:</span> <b id="stats-invites">0</b></div><div class="flex justify-between border-b border-stone-100 pb-1"><span>Total de Pessoas:</span> <b id="stats-total-pax" class="text-blue-800 text-lg">0</b></div><div class="flex justify-between text-green-600 pt-1"><span>Confirmados:</span> <b id="stats-confirmed">0</b></div></div><div class="mt-4 h-32"><canvas id="guestChart"></canvas></div></div>
-                    <div class="card p-4 h-fit border-l-4 border-indigo-200"><h4 class="font-bold text-indigo-900 text-sm mb-3">Por Categoria (Pessoas)</h4><div id="guest-tags-report" class="space-y-2 text-xs"><p class="text-stone-400 italic">Adicione tags para ver o relatório.</p></div></div>
-                </div>
-                <div class="md:col-span-2 card overflow-hidden"><div class="overflow-y-auto max-h-[600px] custom-scroll"><table class="w-full text-left"><thead class="bg-stone-50 sticky top-0 text-xs font-bold text-stone-500 uppercase"><tr><th class="p-3">Nome</th><th class="p-3">Pax</th><th class="p-3">Tags</th><th class="p-3">Status</th><th class="p-3 text-right"></th></tr></thead><tbody id="guest-list-body" class="text-sm divide-y divide-stone-100"></tbody></table></div></div>
+
+            <div style="flex:1" class="card">
+              <div style="font-weight:800">Tela de Dashboard</div>
+              <div class="mockup" style="height:120px">Componentes claros, ícones simples, foco em informação</div>
+              <p class="small">Usar Roxo para destaques e Turquesa para estados positivos.</p>
             </div>
-        </section>
-
-        <!-- TASKS -->
-        <section id="timeline" class="hidden space-y-6 animate-fade-in">
-            <h2 class="text-2xl font-serif text-emerald-900 border-b border-stone-200 pb-2">Tarefas</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-1 h-fit sticky top-24">
-                    <div class="card p-4 bg-stone-50">
-                        <h4 class="text-xs font-bold text-stone-500 uppercase mb-3">Nova Tarefa</h4>
-                        <input type="text" id="new-task-input" placeholder="Título da tarefa..." class="input-elegant w-full mb-2 text-sm">
-                        <select id="new-task-cat" class="input-elegant w-full mb-2 text-sm"><option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option><option value="Festa/Buffet">Festa/Buffet</option><option value="Burocracia">Burocracia</option><option value="Trajes/Beleza">Trajes/Beleza</option><option value="Lua de Mel">Lua de Mel</option><option value="Buffet & Comida">Buffet & Comida</option><option value="Local">Local</option><option value="Foto & Vídeo">Foto & Vídeo</option><option value="Decoração">Decoração</option><option value="Música/DJ">Música/DJ</option><option value="Doces/Bolo">Doces/Bolo</option><option value="Assessoria">Assessoria</option></select>
-                        <input type="date" id="new-task-date" class="input-elegant w-full mb-2 text-sm">
-                        <input type="text" id="new-task-address" placeholder="Endereço / Local (opcional)" class="input-elegant w-full mb-2 text-sm">
-                        <textarea id="new-task-obs" placeholder="Observações (opcional)..." class="input-elegant w-full mb-2 text-sm h-20 resize-none"></textarea>
-                        <div class="mb-3"><label class="text-[10px] font-bold text-stone-400 uppercase">Tags</label><div class="flex flex-wrap gap-1 mt-1" id="task-quick-tags"></div><button onclick="toggleTagCreator()" class="text-xs text-emerald-600 hover:underline mt-1">+ Criar Tag</button><div id="tag-creator" class="hidden mt-2 p-2 bg-white rounded border border-emerald-200 shadow-sm"><input type="text" id="new-tag-name" placeholder="Nome da Tag" class="text-xs border p-1 rounded w-full mb-1"><div class="flex items-center gap-2"><input type="color" id="new-tag-color" value="#10B981" class="color-swatch"><button onclick="createNewTag()" class="text-xs bg-emerald-600 text-white px-2 py-1 rounded">Salvar</button></div></div></div>
-                        <button onclick="addTask()" class="bg-stone-700 text-white w-full py-2 rounded text-sm font-bold hover:bg-stone-800">Adicionar Tarefa</button>
-                    </div>
-                </div>
-                <div class="lg:col-span-2 card p-4 overflow-hidden"><div id="tasks-list" class="space-y-4"></div></div>
-            </div>
-        </section>
-
-        <!-- TOOLS -->
-        <section id="tools" class="hidden space-y-6 animate-fade-in">
-            <h2 class="text-2xl font-serif text-emerald-900">Calculadora</h2>
-            <div class="card p-6 border-t-4 border-yellow-400">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="space-y-4"><input type="number" id="calc-guests" value="100" class="input-elegant w-full" oninput="calculateDrinks()" placeholder="Qtd. Convidados"><select id="calc-profile" class="input-elegant w-full" onchange="calculateDrinks()"><option value="moderate">Cerveja + Refri</option><option value="high">Cerveja + Destilados</option><option value="low">Brunch/Leve</option></select></div>
-                    <div class="md:col-span-2 grid grid-cols-2 gap-4 text-center"><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-beer">0</span><span class="text-[10px] uppercase">Latas Cerveja</span></div><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-water">0</span><span class="text-[10px] uppercase">Água</span></div><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-soda">0</span><span class="text-[10px] uppercase">Refri 2L</span></div><div class="p-3 bg-stone-50 rounded border"><span class="text-2xl font-bold block" id="res-sparkling">0</span><span class="text-[10px] uppercase">Espumante</span></div></div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- DEFINIR FUNÇÕES DE UI PRIMEIRO ---
-
-        function updateUI(settings) {
-            if(!settings && state.settings) settings = state.settings;
-            if(!settings) { settings = { date: '', budgetTotal: 0 }; }
-
-            if(settings.date) {
-                const [y, m, d] = settings.date.split('-');
-                const eventDate = new Date(y, m-1, d);
-                const today = new Date(); today.setHours(0,0,0,0);
-                const diff = Math.ceil((eventDate - today)/(1000*60*60*24));
-                const daysEl = document.getElementById('days-count');
-                if (daysEl) daysEl.innerText = diff > 0 ? diff : 0;
-            }
-            const spent = state.budget.reduce((a,b) => a + b.amount, 0);
-            const total = settings.budgetTotal || 0;
-            const pct = total > 0 ? Math.min(100, Math.round((spent/total)*100)) : 0;
-            
-            const pctEl = document.getElementById('dash-budget-percent');
-            if(pctEl) pctEl.innerText = `${pct}%`;
-            const leftEl = document.getElementById('dash-budget-left');
-            if(leftEl) leftEl.innerText = `Livre: R$ ${(total-spent).toLocaleString('pt-BR')}`;
-            const progEl = document.getElementById('dash-progress-bar');
-            if(progEl) progEl.style.width = `${pct}%`;
-
-            let invitesCount = state.guests.length; 
-            let totalPax = 0; 
-            let guestsConf = 0;
-
-            let tagCounts = {};
-
-            state.guests.forEach(g => {
-                const p = 1 + (parseInt(g.partners)||0);
-                if(g.status !== 'declined') { totalPax += p; }
-                if(g.status === 'confirmed') guestsConf += p;
-
-                if(g.tags && Array.isArray(g.tags)) {
-                    g.tags.forEach(t => {
-                        tagCounts[t] = (tagCounts[t] || 0) + p;
-                    });
-                }
-            });
-
-            const reportEl = document.getElementById('guest-tags-report');
-            if(reportEl) {
-                reportEl.innerHTML = '';
-                if(Object.keys(tagCounts).length === 0) {
-                    reportEl.innerHTML = '<p class="text-stone-400 italic">Nenhuma tag atribuída.</p>';
-                } else {
-                    Object.keys(tagCounts).forEach(tag => {
-                        reportEl.innerHTML += `
-                            <div class="flex justify-between items-center border-b border-stone-50 pb-1">
-                                <span>${tag}</span>
-                                <span class="font-bold text-indigo-700">${tagCounts[tag]}</span>
-                            </div>
-                        `;
-                    });
-                }
-            }
-
-            const invEl = document.getElementById('dash-invites-count');
-            if(invEl) invEl.innerText = invitesCount;
-            const paxEl = document.getElementById('dash-total-pax');
-            if(paxEl) paxEl.innerText = totalPax;
-            const confEl = document.getElementById('dash-guest-confirmed');
-            if(confEl) confEl.innerText = `${guestsConf} Confirmados`;
-
-            const statInvEl = document.getElementById('stats-invites');
-            if(statInvEl) statInvEl.innerText = invitesCount;
-            const statPaxEl = document.getElementById('stats-total-pax');
-            if(statPaxEl) statPaxEl.innerText = totalPax;
-            const statConfEl = document.getElementById('stats-confirmed');
-            if(statConfEl) statConfEl.innerText = guestsConf;
-
-            renderLists();
-            renderCharts(spent, total, state.budget, guestsConf, totalPax);
-        }
-
-        function renderLists() {
-            // Budget List
-            const bl = document.getElementById('budget-list-body');
-            if(bl) {
-                bl.innerHTML = '';
-                state.budget.forEach(e => {
-                    bl.innerHTML += `
-                        <tr class="hover:bg-emerald-50 border-b border-stone-100 group">
-                            <td class="p-3 font-medium text-stone-700">${e.category}</td>
-                            <td class="p-3 text-right text-emerald-700 font-bold">R$ ${e.amount.toLocaleString('pt-BR')}</td>
-                            <td class="p-3 text-center flex justify-end gap-2">
-                                <button onclick="openEditModal('expenses', '${e.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
-                                <button onclick="deleteExpense('${e.id}')" class="text-stone-300 hover:text-red-500">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-
-            // Guest List
-            const gl = document.getElementById('guest-list-body');
-            if(gl) {
-                gl.innerHTML = '';
-                state.guests.forEach(g => {
-                    const totalInParty = 1 + (parseInt(g.partners)||0);
-                    let tags = (g.tags||[]).map(t => `<span class="bg-stone-100 text-stone-500 text-[9px] px-1 rounded border mr-1">${t}</span>`).join('');
-                    gl.innerHTML += `
-                        <tr class="hover:bg-emerald-50 border-b border-stone-100">
-                            <td class="p-3 font-bold text-stone-700">${g.name}</td>
-                            <td class="p-3 text-stone-500 font-mono">${totalInParty} <span class="text-[9px] text-stone-400">(1+${g.partners})</span></td>
-                            <td class="p-3">${tags}</td>
-                            <td class="p-3">
-                                <select onchange="updateGuestStatus('${g.id}', this.value)" class="bg-transparent text-xs font-bold ${g.status==='confirmed'?'text-emerald-600':(g.status==='declined'?'text-red-400':'text-yellow-600')}">
-                                    <option value="pending" ${g.status==='pending'?'selected':''}>Pendente</option>
-                                    <option value="confirmed" ${g.status==='confirmed'?'selected':''}>Confirmado</option>
-                                    <option value="declined" ${g.status==='declined'?'selected':''}>Não Vai</option>
-                                </select>
-                            </td>
-                            <td class="p-3 text-right flex justify-end gap-2">
-                                <button onclick="openEditModal('guests', '${g.id}')" class="text-stone-400 hover:text-blue-500">✎</button>
-                                <button onclick="deleteGuest('${g.id}')" class="text-stone-300 hover:text-red-500">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-
-            // Task List
-            const tl = document.getElementById('tasks-list');
-            if(tl) {
-                tl.innerHTML = '';
-                if(state.tasks.length === 0) {
-                    tl.innerHTML = '<p class="text-center text-stone-400 text-sm py-4">Nenhuma tarefa criada.</p>';
-                    return;
-                }
-
-                const buckets = { late: [], today: [], week: [], month: [], nextMonth: [], future: [], noDate: [] };
-                const today = new Date(); today.setHours(0,0,0,0);
-                
-                const dayOfWeek = today.getDay(); 
-                const distToSat = 6 - dayOfWeek;
-                const endOfWeek = new Date(today);
-                endOfWeek.setDate(today.getDate() + distToSat);
-                endOfWeek.setHours(23,59,59,999);
-
-                const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                const startNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-                const endNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-
-                const pendingTasks = state.tasks.filter(t => !t.done).sort((a,b) => {
-                    if(!a.deadline) return 1; if(!b.deadline) return -1;
-                    return new Date(a.deadline) - new Date(b.deadline);
-                });
-                const doneTasks = state.tasks.filter(t => t.done);
-
-                pendingTasks.forEach(t => {
-                    if(!t.deadline) { buckets.noDate.push(t); return; }
-                    const [y, m, d] = t.deadline.split('-');
-                    const taskDate = new Date(y, m-1, d); 
-                    taskDate.setHours(0,0,0,0);
-
-                    if (taskDate < today) buckets.late.push(t);
-                    else if (taskDate.getTime() === today.getTime()) buckets.today.push(t);
-                    else if (taskDate <= endOfWeek) buckets.week.push(t);
-                    else if (taskDate <= endOfMonth) buckets.month.push(t); 
-                    else if (taskDate >= startNextMonth && taskDate <= endNextMonth) buckets.nextMonth.push(t);
-                    else buckets.future.push(t);
-                });
-
-                const renderBucket = (title, items, className) => {
-                    if(items.length === 0) return;
-                    tl.innerHTML += `<div class="task-section-header ${className}">${title} (${items.length})</div>`;
-                    items.forEach(t => tl.innerHTML += createTaskHTML(t));
-                };
-
-                renderBucket('🚨 Atrasadas', buckets.late, 'urgent');
-                renderBucket('🔥 Hoje', buckets.today, 'today');
-                renderBucket('📅 Essa Semana', buckets.week, 'week');
-                renderBucket('🗓️ Esse Mês', buckets.month, '');
-                renderBucket('📆 Próximo Mês', buckets.nextMonth, '');
-                renderBucket('🔮 Futuro', buckets.future, '');
-                renderBucket('📝 Sem Data', buckets.noDate, '');
-                
-                if(doneTasks.length > 0) {
-                    tl.innerHTML += `<div class="task-section-header mt-6 border-t pt-4">✅ Concluídas (${doneTasks.length})</div>`;
-                    doneTasks.forEach(t => tl.innerHTML += createTaskHTML(t));
-                }
-            }
-        }
-
-        function createTaskHTML(t) {
-            let dateTxt = '';
-            if(t.deadline) {
-                const [y, m, d] = t.deadline.split('-');
-                dateTxt = `${d}/${m}/${y}`;
-            }
-            const hasObs = t.observation && t.observation.trim().length > 0;
-            
-            // Address Link Logic
-            let addressHtml = '';
-            if(t.address) {
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.address)}`;
-                addressHtml = `
-                    <a href="${mapUrl}" target="_blank" class="text-[10px] text-blue-500 hover:underline flex items-center mt-1" title="Ver no Mapa">
-                        <i class="fa-solid fa-location-dot mr-1"></i> ${t.address}
-                    </a>
-                `;
-            }
-
-            let tagPills = '';
-            if(t.tags && Array.isArray(t.tags) && t.tags.length > 0) {
-                tagPills = '<div class="mt-2 flex flex-wrap gap-1">';
-                t.tags.forEach(tag => {
-                    const bg = tag.color || '#10B981';
-                    tagPills += `<span class="task-tag-visible" style="background-color: ${bg};">${tag.name}</span>`;
-                });
-                tagPills += '</div>';
-            }
-
-            return `
-                <div class="flex items-start justify-between p-3 bg-white border border-stone-100 rounded-lg shadow-sm mb-2 hover:shadow-md transition ${t.done?'opacity-50 grayscale':''}">
-                    <div class="flex items-start gap-3 w-full">
-                        <div onclick="toggleTask('${t.id}', ${t.done})" class="w-5 h-5 mt-1 rounded-full border-2 cursor-pointer flex-shrink-0 flex items-center justify-center ${t.done?'bg-emerald-500 border-emerald-500':'border-stone-300'}">
-                            ${t.done ? '<span class="text-white text-[10px]">✓</span>' : ''}
-                        </div>
-                        <div class="flex-grow">
-                            <div class="flex items-center gap-2">
-                                <p class="text-sm font-bold text-stone-700 ${t.done?'line-through text-stone-400':''}">${t.text}</p>
-                                <button onclick="viewTask('${t.id}')" class="text-stone-400 hover:text-emerald-600 p-1" title="Ver Detalhes">
-                                    <i class="fa-regular fa-eye"></i>
-                                </button>
-                            </div>
-                            
-                            <div class="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex flex-wrap gap-2 mt-1">
-                                <span>${t.category}</span>
-                                ${dateTxt ? `<span>📅 ${dateTxt}</span>` : ''}
-                            </div>
-                            ${addressHtml}
-                            ${tagPills}
-                        </div>
-                    </div>
-                    <div class="flex gap-2 flex-shrink-0 ml-1">
-                        <button onclick="deleteTask('${t.id}')" class="text-stone-300 hover:text-red-500 text-sm px-2">✕</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        let chart1 = null, chart2 = null;
-        function renderCharts(spent, total, items, gConf, gTotal) {
-            const ctx1 = document.getElementById('budgetChart');
-            if(ctx1 && chart1) chart1.destroy();
-            if(ctx1) {
-                let cats = {}; items.forEach(i => cats[i.category] = (cats[i.category]||0)+i.amount);
-                const rem = Math.max(0, total - spent);
-                chart1 = new Chart(ctx1, {
-                    type: 'doughnut',
-                    data: { labels: Object.keys(cats).concat(['Livre']), datasets: [{ data: Object.values(cats).concat([rem]), backgroundColor: ['#059669', '#0891B2', '#D97706', '#DB2777', '#7C3AED', '#E5E7EB'], borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-                document.getElementById('budget-balance-display').innerText = "R$ " + rem.toLocaleString('pt-BR');
-            }
-
-            const ctx2 = document.getElementById('guestChart');
-            if(ctx2 && chart2) chart2.destroy();
-            if(ctx2) {
-                const pending = gTotal - gConf; 
-                chart2 = new Chart(ctx2, {
-                    type: 'doughnut',
-                    data: { labels: ['Confirmados', 'Pendentes'], datasets: [{ data: [gConf, pending], backgroundColor: ['#10B981', '#FCD34D'], borderWidth: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 8 } } } }
-                });
-            }
-        }
-
-        function drawLogo(id) {
-            const canvas = document.getElementById(id);
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width, h = canvas.height;
-            ctx.clearRect(0,0,w,h);
-            ctx.lineWidth = 2.5; ctx.strokeStyle = '#D4AF37'; // Gold
-            ctx.beginPath(); ctx.arc(w/2 - 8, h/2, 12, 0, Math.PI*2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(w/2 + 8, h/2, 12, 0, Math.PI*2); ctx.stroke();
-        }
-        window.addEventListener('load', () => { drawLogo('logo-login'); drawLogo('logo-header'); });
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBbd5GSe2dAOuDPFy3K3h6r53Op9y1iFbw",
-            authDomain: "doiscorpos-2f241.firebaseapp.com",
-            projectId: "doiscorpos-2f241",
-            storageBucket: "doiscorpos-2f241.firebasestorage.app",
-            messagingSenderId: "924599762554",
-            appId: "1:924599762554:web:5a61ad6d21580a74a105c3"
-        };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        let currentUser = null;
-        let isRegistering = false;
-        
-        const getAppId = () => typeof __app_id !== 'undefined' ? __app_id : 'doiscorpos-default';
-        const getUserRoot = () => currentUser ? `artifacts/${getAppId()}/users/${currentUser.uid}` : null;
-
-        window.toggleAuthMode = () => {
-            isRegistering = !isRegistering;
-            document.getElementById('btn-auth').innerText = isRegistering ? "Cadastrar & Entrar" : "Entrar";
-            document.getElementById('toggle-btn').innerText = isRegistering ? "Já tenho conta" : "Criar conta nova";
-        };
-
-        window.handleAuth = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const err = document.getElementById('auth-error');
-            const btn = document.getElementById('btn-auth');
-            
-            if(!email || !pass) { err.innerText = "Preencha tudo."; return; }
-            btn.disabled = true; btn.innerText = "Processando...";
-
-            try {
-                if(isRegistering) await createUserWithEmailAndPassword(auth, email, pass);
-                else await signInWithEmailAndPassword(auth, email, pass);
-            } catch(e) {
-                console.error(e);
-                let msg = "Erro desconhecido.";
-                if(e.code.includes('password')) msg = "Senha errada/fraca.";
-                if(e.code.includes('user-not-found')) msg = "Usuário não existe.";
-                if(e.code.includes('email-already-in-use')) msg = "Email já usado.";
-                err.innerText = msg;
-                btn.disabled = false; btn.innerText = isRegistering ? "Cadastrar" : "Entrar";
-            }
-        };
-
-        window.handleLogout = async () => { await signOut(auth); location.reload(); };
-
-        const init = async () => {
-            if(typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                try {
-                    if(typeof __firebase_config !== 'undefined' && JSON.parse(__firebase_config).projectId === firebaseConfig.projectId) {
-                        document.getElementById('auth-form').classList.add('hidden');
-                        document.getElementById('auth-loading').classList.remove('hidden');
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    }
-                } catch(e) { console.warn("Auto-login fallback"); }
-            }
-        };
-        init();
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-overlay').classList.add('opacity-0', 'pointer-events-none');
-                document.getElementById('connection-status').innerText = "ONLINE";
-                document.getElementById('connection-status').className = "text-[9px] uppercase font-bold text-green-600";
-                setupListeners();
-            } else {
-                document.getElementById('login-overlay').classList.remove('opacity-0', 'pointer-events-none');
-                document.getElementById('auth-form').classList.remove('hidden');
-                document.getElementById('auth-loading').classList.add('hidden');
-            }
-        });
-
-        const handleDbError = (err) => {
-            console.error("DB Error:", err);
-            if(err.code === 'permission-denied') {
-                alert("ERRO DE PERMISSÃO!\n\nO Firebase bloqueou a escrita. Vá ao Console > Firestore > Rules e mude para:\nallow read, write: if request.auth != null;");
-            } else {
-                alert("Erro ao salvar: " + err.message);
-            }
-        };
-
-        let state = { budget: [], guests: [], tasks: [], customTags: [], vendors: [], settings: {} };
-        let activeVendorCats = [];
-
-        function setupListeners() {
-            const root = getUserRoot();
-            if(!root) return;
-
-            onSnapshot(doc(db, root, 'settings', 'general'), (snap) => {
-                if(snap.exists()) {
-                    const d = snap.data();
-                    state.settings = d; 
-                    document.getElementById('wedding-date-input').value = d.date || '';
-                    document.getElementById('wedding-time-input').value = d.time || '';
-                    document.getElementById('total-budget-input').value = d.budgetTotal || '';
-                    updateUI(d);
-                    startCountdown(); 
-                }
-            }, (err) => console.warn("Read settings error", err));
-
-            onSnapshot(collection(db, root, 'expenses'), s => {
-                state.budget = []; s.forEach(d => state.budget.push({id: d.id, ...d.data()})); updateUI();
-            });
-            onSnapshot(collection(db, root, 'guests'), s => {
-                state.guests = []; s.forEach(d => state.guests.push({id: d.id, ...d.data()})); updateUI();
-            });
-            onSnapshot(collection(db, root, 'tasks'), s => {
-                state.tasks = []; s.forEach(d => state.tasks.push({id: d.id, ...d.data()})); updateUI();
-            });
-            onSnapshot(collection(db, root, 'custom_tags'), s => {
-                state.customTags = []; 
-                s.forEach(d => state.customTags.push({id: d.id, ...d.data()})); 
-                renderTagSelectors(); 
-            });
-            onSnapshot(collection(db, root, 'vendors'), s => {
-                state.vendors = [];
-                s.forEach(d => state.vendors.push({id: d.id, ...d.data()}));
-                renderVendorList();
-                updateCopyDropdown();
-            });
-        }
-
-        let timerInterval = null;
-        function startCountdown() {
-            if(timerInterval) clearInterval(timerInterval);
-            const run = () => {
-                if(!state.settings.date) return;
-                const [y, m, d] = state.settings.date.split('-');
-                let targetDate = new Date(y, m-1, d);
-                if(state.settings.time) {
-                    const [th, tm] = state.settings.time.split(':');
-                    targetDate.setHours(th, tm, 0);
-                } else { targetDate.setHours(0,0,0); }
-
-                const now = new Date();
-                let diff = targetDate - now;
-                if (diff < 0) diff = 0;
-
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                const elD = document.getElementById('cd-days');
-                const elH = document.getElementById('cd-hours');
-                const elM = document.getElementById('cd-mins');
-                const elS = document.getElementById('cd-secs');
-
-                if(elD) elD.innerText = String(days).padStart(2, '0');
-                if(elH) elH.innerText = String(hours).padStart(2, '0');
-                if(elM) elM.innerText = String(minutes).padStart(2, '0');
-                if(elS) elS.innerText = String(seconds).padStart(2, '0');
-            };
-            run(); timerInterval = setInterval(run, 1000);
-        }
-
-        window.toggleTagCreator = () => { document.getElementById('tag-creator').classList.toggle('hidden'); }
-
-        window.createNewTag = async () => {
-            const name = document.getElementById('new-tag-name').value;
-            const color = document.getElementById('new-tag-color').value;
-            if(name) {
-                try {
-                    await addDoc(collection(db, getUserRoot(), 'custom_tags'), { name, color, timestamp: serverTimestamp() });
-                    document.getElementById('new-tag-name').value = '';
-                    document.getElementById('tag-creator').classList.add('hidden');
-                } catch(e) { handleDbError(e); }
-            }
-        }
-
-        function renderTagSelectors() {
-            const quickTags = document.getElementById('task-quick-tags');
-            if(quickTags) {
-                quickTags.innerHTML = '';
-                state.customTags.forEach(tag => {
-                    const el = document.createElement('span');
-                    el.className = 'tag-selector-pill';
-                    el.innerText = tag.name;
-                    el.style.borderLeft = `3px solid ${tag.color}`;
-                    el.onclick = function() { this.classList.toggle('selected'); };
-                    el.dataset.tagObj = JSON.stringify(tag); 
-                    quickTags.appendChild(el);
-                });
-            }
-        }
-
-        window.saveGlobalSettings = async () => {
-            if(!getUserRoot()) return;
-            const date = document.getElementById('wedding-date-input').value;
-            const time = document.getElementById('wedding-time-input').value;
-            const budgetTotal = parseFloat(document.getElementById('total-budget-input').value) || 0;
-            try {
-                await setDoc(doc(db, getUserRoot(), 'settings', 'general'), { date, time, budgetTotal }, { merge: true });
-                alert("Configurações salvas com sucesso!");
-            } catch(e) { handleDbError(e); }
-        };
-
-        async function addItem(coll, data) { try { await addDoc(collection(db, getUserRoot(), coll), { ...data, timestamp: serverTimestamp() }); } catch(e) { handleDbError(e); } }
-        async function updateItem(coll, id, data) { try { await updateDoc(doc(db, getUserRoot(), coll, id), data); } catch(e) { handleDbError(e); } }
-        async function deleteItem(coll, id) { if(!confirm("Excluir item?")) return; try { await deleteDoc(doc(db, getUserRoot(), coll, id)); } catch(e) { handleDbError(e); } }
-
-        window.addExpense = () => {
-            const cat = document.getElementById('new-exp-cat').value;
-            const val = parseFloat(document.getElementById('new-exp-val').value);
-            if(cat && val) { addItem('expenses', { category: cat, amount: val }); document.getElementById('new-exp-val').value = ''; }
-        };
-        window.deleteExpense = (id) => deleteItem('expenses', id);
-
-        window.addGuest = () => {
-            const name = document.getElementById('new-guest-name').value;
-            const partners = parseInt(document.getElementById('new-guest-partners').value) || 0;
-            const tags = [];
-            document.querySelectorAll('#guest-tags-selector .tag-selector-pill.selected').forEach(el => tags.push(el.innerText));
-            if(name) {
-                addItem('guests', { name, partners, tags, status: 'pending' });
-                document.getElementById('new-guest-name').value = '';
-                document.querySelectorAll('.tag-selector-pill.selected').forEach(el => el.classList.remove('selected'));
-            }
-        };
-        window.deleteGuest = (id) => deleteItem('guests', id);
-        window.toggleTag = (el) => el.classList.toggle('selected');
-        window.updateGuestStatus = (id, val) => updateItem('guests', id, { status: val });
-
-        window.addTask = () => {
-            const text = document.getElementById('new-task-input').value;
-            const cat = document.getElementById('new-task-cat').value;
-            const date = document.getElementById('new-task-date').value;
-            const obs = document.getElementById('new-task-obs').value;
-            const address = document.getElementById('new-task-address').value;
-            const selectedTags = [];
-            document.querySelectorAll('#task-quick-tags .tag-selector-pill.selected').forEach(el => {
-                selectedTags.push(JSON.parse(el.dataset.tagObj));
-            });
-
-            if(text) {
-                addItem('tasks', { text, category: cat, deadline: date, done: false, observation: obs, address: address, tags: selectedTags });
-                document.getElementById('new-task-input').value = '';
-                document.getElementById('new-task-obs').value = '';
-                document.getElementById('new-task-address').value = '';
-                document.querySelectorAll('#task-quick-tags .tag-selector-pill.selected').forEach(el => el.classList.remove('selected'));
-            }
-        };
-        window.toggleTask = (id, current) => updateItem('tasks', id, { done: !current });
-        window.deleteTask = (id) => deleteItem('tasks', id);
-
-        window.viewTask = (id) => {
-            const task = state.tasks.find(t => t.id === id);
-            if(!task) return;
-            document.getElementById('view-category').innerText = task.category || 'Geral';
-            document.getElementById('view-title').innerText = task.text;
-            if(task.deadline) {
-                const [y, m, d] = task.deadline.split('-');
-                document.getElementById('view-date').innerText = `${d}/${m}/${y}`;
-            } else { document.getElementById('view-date').innerText = 'Sem data'; }
-
-            // View Address
-            const addrContainer = document.getElementById('view-address-container');
-            if(task.address) {
-                addrContainer.classList.remove('hidden');
-                document.getElementById('view-address-text').innerText = task.address;
-                document.getElementById('view-address-link').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.address)}`;
-            } else {
-                addrContainer.classList.add('hidden');
-            }
-            
-            const tagContainer = document.getElementById('view-tags');
-            tagContainer.innerHTML = '';
-            if(task.tags && task.tags.length > 0) {
-                task.tags.forEach(t => {
-                    tagContainer.innerHTML += `<span class="text-[10px] px-2 py-1 rounded bg-stone-100 border border-stone-200" style="border-left: 3px solid ${t.color}">${t.name}</span>`;
-                });
-            } else { tagContainer.innerHTML = '<span class="text-xs text-stone-300 italic">Sem tags</span>'; }
-
-            const obsEl = document.getElementById('view-obs');
-            if(task.observation) { obsEl.innerText = task.observation; obsEl.classList.remove('italic', 'text-stone-400'); } 
-            else { obsEl.innerText = 'Nenhuma observação registrada.'; obsEl.classList.add('italic', 'text-stone-400'); }
-
-            document.getElementById('view-edit-btn').onclick = () => { closeViewModal(); openEditModal('tasks', id); };
-            document.getElementById('view-modal').classList.remove('hidden');
-        };
-        window.closeViewModal = () => document.getElementById('view-modal').classList.add('hidden');
-
-        // VENDOR LOGIC
-        const vendorCategories = [
-            "Espaço", "Buffet", "Decoração", "Som e música", "Iluminação", "Taxas", "Bolo", "Extras",
-            "Fotografia / Filmagem", "Cerimonial", "Convites", "Doces", "Lembrancinhas", "Noiva", "Noivo",
-            "Beleza", "Beleza extra", "Papelaria", "Imprevistos", "Cartório", "Aliança", "Apartamento",
-            "Reserva Investimento", "Primeira Compra", "Básico (Luz/Água...)", "Viagem", "Enxoval"
-        ];
-
-        const criteriaConfig = {
-            "Espaço": ["Localização", "Capacidade", "Ar Condicionado", "Beleza", "Infraestrutura", "Mobiliário", "Limpeza", "Horário"],
-            "Buffet": ["Sabor", "Apresentação", "Variedade", "Bebidas", "Serviço (Garçons)", "Quantidade", "Louças"],
-            "Decoração": ["Criatividade", "Flores (Qualidade)", "Acervo", "Iluminação Cênica", "Projeto", "Buquê", "Manutenção"],
-            "Som e música": ["Repertório", "Equipamento", "Animação", "Iluminação Pista", "Profissionalismo", "Pontualidade", "Interação"],
-            "Iluminação": ["Cênica", "Pista", "Qualidade Equipamento", "Segurança", "Estética"],
-            "Bolo": ["Sabor", "Estética", "Recheio", "Durabilidade", "Tamanho", "Topo de Bolo"],
-            "Doces": ["Sabor", "Variedade", "Apresentação", "Tamanho", "Embalagem"],
-            "Fotografia / Filmagem": ["Olhar Artístico", "Edição", "Equipe", "Prazos", "Álbuns", "Drone", "Making Of", "Empatia", "Resolução"],
-            "Cerimonial": ["Organização", "Experiência", "Equipe", "Indicações", "Tranquilidade", "Cronograma"],
-            "Beleza": ["Teste", "Durabilidade", "Produtos", "Penteado", "Maquiagem", "Pontualidade"],
-            "default": ["Qualidade", "Atendimento", "Flexibilidade", "Prazos", "Custo-Benefício"]
-        };
-
-        window.openVendorModal = () => {
-            const catSelect = document.getElementById('vend-cat-select');
-            catSelect.innerHTML = '<option value="" disabled selected>Selecionar Categoria...</option>';
-            vendorCategories.forEach(c => {
-               const opt = document.createElement('option');
-               opt.value = c; opt.innerText = c;
-               catSelect.appendChild(opt);
-            });
-
-            document.getElementById('vend-name').value = '';
-            document.getElementById('vend-value').value = '';
-            
-            activeVendorCats = [];
-            document.getElementById('vend-cat-pills').innerHTML = '<p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>';
-            document.getElementById('custom-criteria-list').innerHTML = '<p class="text-xs text-stone-400 italic col-span-full">Selecione uma categoria acima para carregar critérios.</p>';
-            
-            updateCopyDropdown();
-            document.getElementById('vendor-modal').classList.remove('hidden');
-        }
-
-        window.closeVendorModal = () => document.getElementById('vendor-modal').classList.add('hidden');
-
-        window.addVendorCategory = () => {
-            const select = document.getElementById('vend-cat-select');
-            const cat = select.value;
-            if(!cat) return;
-            
-            if(!activeVendorCats.includes(cat)) {
-                activeVendorCats.push(cat);
-                
-                const container = document.getElementById('vend-cat-pills');
-                const emptyMsg = container.querySelector('.empty-msg');
-                if(emptyMsg) emptyMsg.remove();
-                
-                const pill = document.createElement('span');
-                pill.className = "cat-pill-removable";
-                pill.innerHTML = `${cat} <button onclick="removeVendorCat('${cat}')">✕</button>`;
-                container.appendChild(pill);
-                
-                const list = document.getElementById('custom-criteria-list');
-                const existing = list.querySelectorAll('.criterion-row').length;
-                
-                if (existing === 0) {
-                     let srcList = criteriaConfig['default'];
-                     if (criteriaConfig[cat]) srcList = criteriaConfig[cat];
-                     else if (cat.includes("Som")) srcList = criteriaConfig["Som e música"];
-                     else if (cat.includes("Foto")) srcList = criteriaConfig["Fotografia / Filmagem"];
-                     
-                     list.innerHTML = '';
-                     srcList.slice(0, 10).forEach(c => addCustomCriterion(c));
-                }
-            }
-        };
-
-        window.removeVendorCat = (cat) => {
-            activeVendorCats = activeVendorCats.filter(c => c !== cat);
-            const container = document.getElementById('vend-cat-pills');
-            container.innerHTML = '';
-            if(activeVendorCats.length === 0) {
-                container.innerHTML = '<p class="text-xs text-stone-400 italic w-full text-center py-1 empty-msg">Nenhuma categoria adicionada.</p>';
-            } else {
-                activeVendorCats.forEach(c => {
-                    container.innerHTML += `<span class="cat-pill-removable">${c} <button onclick="removeVendorCat('${c}')">✕</button></span>`;
-                });
-            }
-        }
-
-        window.addCustomCriterion = (prefillName = '') => {
-             const list = document.getElementById('custom-criteria-list');
-             if(list.children.length > 0 && list.children[0].tagName === 'P') list.innerHTML = '';
-             
-             const div = document.createElement('div');
-             div.className = "flex gap-1 items-center mb-1 col-span-2 sm:col-span-1 criterion-row";
-             div.innerHTML = `
-                <input type="text" placeholder="Nome" class="input-elegant w-2/3 text-[10px] p-1 crit-name" value="${prefillName}">
-                <input type="number" placeholder="0-10" min="0" max="10" class="input-elegant w-1/3 text-center p-1 font-bold crit-score" onchange="limitInput(this)">
-                <button onclick="this.parentElement.remove()" class="text-stone-300 hover:text-red-500 text-[10px] px-1">✕</button>
-             `;
-             list.appendChild(div);
-        };
-
-        window.limitInput = (el) => {
-            if(el.value > 10) el.value = 10;
-            if(el.value < 0) el.value = 0;
-        }
-        
-        window.saveVendor = () => {
-            const name = document.getElementById('vend-name').value;
-            const val = parseFloat(document.getElementById('vend-value').value)||0;
-            
-            if(!name || activeVendorCats.length === 0) {
-                alert("Preencha o nome e adicione pelo menos uma categoria.");
-                return;
-            }
-
-            const rows = document.querySelectorAll('.criterion-row');
-            let scores = {};
-            
-            rows.forEach(row => {
-                const cName = row.querySelector('.crit-name').value;
-                const cScore = parseInt(row.querySelector('.crit-score').value) || 0;
-                if(cName) scores[cName] = cScore;
-            });
-            
-            addItem('vendors', { 
-                name, categories: activeVendorCats, monetaryValue: val, scores 
-            });
-            
-            closeVendorModal();
-        };
-        
-        window.updateCopyDropdown = () => {
-            const sel = document.getElementById('copy-criteria-select');
-            if(!sel) return;
-            sel.innerHTML = '<option value="">-- Copiar de Outro --</option>';
-            state.vendors.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.id;
-                opt.innerText = v.name;
-                sel.appendChild(opt);
-            });
-        };
-
-        window.copyCriteriaFrom = () => {
-            const sel = document.getElementById('copy-criteria-select');
-            const targetId = sel.value;
-            if(!targetId) return;
-            
-            const targetVendor = state.vendors.find(v => v.id === targetId);
-            if(targetVendor && targetVendor.scores) {
-                const list = document.getElementById('custom-criteria-list');
-                list.innerHTML = ''; 
-                Object.keys(targetVendor.scores).forEach(cName => {
-                     addCustomCriterion(cName);
-                });
-            }
-        };
-
-        window.deleteVendor = (id) => deleteItem('vendors', id);
-
-        function renderVendorList() {
-            const list = document.getElementById('vendor-list-container');
-            if(!list) return;
-            list.innerHTML = '';
-            
-            if(state.vendors.length === 0) {
-                list.innerHTML = `<p class="text-center text-stone-400 col-span-full py-8">Nenhum fornecedor comparado ainda.</p>`;
-                return;
-            }
-
-            const groups = {};
-            state.vendors.forEach(v => {
-                const primary = (v.categories && v.categories.length > 0) ? v.categories[0] : 'Outros';
-                if(!groups[primary]) groups[primary] = [];
-                groups[primary].push(v);
-            });
-
-            Object.keys(groups).sort().forEach(catName => {
-                const group = groups[catName];
-                
-                let minP = Infinity, maxP = -Infinity;
-                group.forEach(v => {
-                    if(v.monetaryValue < minP) minP = v.monetaryValue;
-                    if(v.monetaryValue > maxP) maxP = v.monetaryValue;
-                });
-
-                const processed = group.map(v => {
-                    const scoreValues = Object.values(v.scores || {});
-                    const qualAvg = scoreValues.length > 0 ? scoreValues.reduce((a,b)=>a+b,0)/scoreValues.length : 0;
-                    
-                    let priceScore = 0;
-                    if(v.monetaryValue === 0) priceScore = 0;
-                    else if(maxP === minP) priceScore = 10;
-                    else priceScore = 10 * (1 - ((v.monetaryValue - minP) / (maxP - minP)));
-                    
-                    const totalItems = scoreValues.length + 1; 
-                    const finalScore = totalItems > 0 ? ((qualAvg * scoreValues.length) + priceScore) / totalItems : 0;
-                    
-                    return { ...v, priceScore, finalScore, qualAvg };
-                });
-
-                processed.sort((a,b) => b.finalScore - a.finalScore);
-
-                const header = document.createElement('div');
-                header.className = "vendor-category-header";
-                header.innerText = catName;
-                list.appendChild(header);
-
-                const grid = document.createElement('div');
-                grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8";
-                
-                processed.forEach(v => {
-                    let scoreClass = 'score-low';
-                    if(v.finalScore >= 8) scoreClass = 'score-high'; else if(v.finalScore >= 5) scoreClass = 'score-med';
-                    const priceVal = v.monetaryValue.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-                    
-                    let critHtml = '';
-                    const entries = Object.entries(v.scores || {});
-                    entries.forEach(([key, val]) => {
-                        critHtml += `<div class="score-item"><span>${key}</span><b>${val}</b></div>`;
-                    });
-                    critHtml += `<div class="score-item bg-emerald-50"><span class="text-emerald-700 font-bold">Preço (Auto)</span><b class="text-emerald-700">${v.priceScore.toFixed(1)}</b></div>`;
-
-                    const catPills = (v.categories||[]).map(c => `<span class="text-[9px] bg-stone-100 px-1 rounded text-stone-500 border border-stone-200">${c}</span>`).join(' ');
-
-                    grid.innerHTML += `
-                        <div class="card p-5 relative group">
-                            <button onclick="deleteVendor('${v.id}')" class="absolute top-2 right-2 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition text-lg">✕</button>
-                            
-                            <div class="flex justify-between items-start mb-2 pr-6">
-                                <div>
-                                    <h3 class="font-bold text-stone-800 text-lg leading-tight truncate w-32" title="${v.name}">${v.name}</h3>
-                                    <div class="flex flex-wrap gap-1 mt-1">${catPills}</div>
-                                </div>
-                                <div class="flex flex-col items-center ml-1">
-                                    <div class="vendor-score-circle ${scoreClass}">${v.finalScore.toFixed(1)}</div>
-                                    <span class="text-[8px] text-stone-400 uppercase mt-1">Média</span>
-                                </div>
-                            </div>
-                            <div class="mb-4 bg-stone-50 p-2 rounded text-center">
-                                <span class="text-sm font-bold text-emerald-800">${priceVal}</span>
-                            </div>
-                            <div class="score-grid" style="grid-template-columns: repeat(3, 1fr);">
-                                ${critHtml}
-                            </div>
-                        </div>
-                    `;
-                });
-                list.appendChild(grid);
-            });
-        }
-
-        let currentEditInfo = null; 
-        window.createTagInModal = async () => {
-            const name = document.getElementById('modal-new-tag-name').value;
-            const color = document.getElementById('modal-new-tag-color').value;
-            if(name) {
-                try {
-                    await addDoc(collection(db, getUserRoot(), 'custom_tags'), { name, color, timestamp: serverTimestamp() });
-                    document.getElementById('modal-new-tag-name').value = '';
-                } catch(e) { handleDbError(e); }
-            }
-        }
-
-        window.openEditModal = (coll, id) => {
-            const modal = document.getElementById('edit-modal');
-            const content = document.getElementById('modal-content');
-            currentEditInfo = { coll, id };
-            content.innerHTML = ''; 
-
-            let item;
-            if(coll === 'expenses') item = state.budget.find(x => x.id === id);
-            if(coll === 'guests') item = state.guests.find(x => x.id === id);
-            if(coll === 'tasks') item = state.tasks.find(x => x.id === id);
-
-            if(!item) return;
-
-            if(coll === 'expenses') {
-                content.innerHTML = `
-                    <label class="text-xs font-bold text-stone-500">Valor</label>
-                    <input id="edit-val" type="number" class="input-elegant w-full mb-3" value="${item.amount}">
-                    <label class="text-xs font-bold text-stone-500">Categoria</label>
-                    <select id="edit-cat" class="input-elegant w-full">
-                        <option value="${item.category}" selected>${item.category}</option>
-                        <option>Buffet & Comida</option><option>Local</option><option>Foto & Vídeo</option>
-                        <option>Decoração</option><option>Música/DJ</option><option>Outros</option>
-                    </select>
-                `;
-            } else if(coll === 'guests') {
-                const currentTags = item.tags || [];
-                const allTags = ['Padrinho','Madrinha','Família','Amigos','Fornecedor','Deu Presente'];
-                let tagsHtml = `<div class="flex flex-wrap gap-2 mt-2" id="edit-guest-tags">`;
-                allTags.forEach(t => {
-                    const isSel = currentTags.includes(t) ? 'selected' : '';
-                    tagsHtml += `<span onclick="toggleTag(this)" class="tag-selector-pill ${isSel}">${t}</span>`;
-                });
-                tagsHtml += `</div>`;
-
-                content.innerHTML = `
-                    <label class="text-xs font-bold text-stone-500">Nome</label>
-                    <input id="edit-name" type="text" class="input-elegant w-full mb-3" value="${item.name}">
-                    <label class="text-xs font-bold text-stone-500">Acompanhantes</label>
-                    <input id="edit-partners" type="number" class="input-elegant w-full mb-3" value="${item.partners}">
-                    <label class="text-xs font-bold text-stone-500">Tags</label>
-                    ${tagsHtml}
-                `;
-            } else if(coll === 'tasks') {
-                const currentTaskTags = item.tags || [];
-                let tagsHtml = `<div class="flex flex-wrap gap-1 mt-2" id="edit-task-tags">`;
-                state.customTags.forEach(tag => {
-                    const isSel = currentTaskTags.some(t => (t.id && t.id === tag.id) || t.name === tag.name) ? 'selected' : '';
-                    tagsHtml += `<span class="tag-selector-pill ${isSel}" onclick="this.classList.toggle('selected')" data-tag-obj='${JSON.stringify(tag)}' style="border-left: 3px solid ${tag.color}">${tag.name}</span>`;
-                });
-                tagsHtml += `</div>`;
-                
-                const createTagHtml = `
-                    <div class="mt-3 pt-3 border-t border-stone-100 flex items-center gap-2">
-                        <input type="text" id="modal-new-tag-name" placeholder="Nova Tag..." class="text-xs border p-1 rounded w-full">
-                        <input type="color" id="modal-new-tag-color" value="#10B981" class="color-swatch">
-                        <button onclick="createTagInModal()" class="text-xs bg-stone-700 text-white px-2 py-1 rounded">Criar</button>
-                    </div>
-                `;
-
-                content.innerHTML = `
-                    <label class="text-xs font-bold text-stone-500">Descrição</label>
-                    <input id="edit-text" type="text" class="input-elegant w-full mb-3" value="${item.text}">
-                    <label class="text-xs font-bold text-stone-500">Categoria</label>
-                    <select id="edit-cat" class="input-elegant w-full mb-3">
-                        <option value="${item.category}" selected>${item.category}</option>
-                        <option value="Geral">Geral</option><option value="Cerimônia">Cerimônia</option>
-                        <option value="Festa/Buffet">Festa/Buffet</option>
-                        <option value="Burocracia">Burocracia</option>
-                        <option value="Trajes/Beleza">Trajes/Beleza</option>
-                        <option value="Lua de Mel">Lua de Mel</option>
-                        <option value="Buffet & Comida">Buffet & Comida</option>
-                        <option value="Local">Local</option>
-                        <option value="Foto & Vídeo">Foto & Vídeo</option>
-                        <option value="Decoração">Decoração</option>
-                        <option value="Música/DJ">Música/DJ</option>
-                        <option value="Doces/Bolo">Doces/Bolo</option>
-                        <option value="Assessoria">Assessoria</option>
-                    </select>
-                    <label class="text-xs font-bold text-stone-500">Data Limite</label>
-                    <input id="edit-date" type="date" class="input-elegant w-full mb-3" value="${item.deadline}">
-                    <label class="text-xs font-bold text-stone-500">Observações</label>
-                    <textarea id="edit-obs" class="input-elegant w-full h-24 resize-none mb-3">${item.observation || ''}</textarea>
-                    <label class="text-xs font-bold text-stone-500">Tags</label>
-                    ${tagsHtml}
-                    ${createTagHtml}
-                `;
-            }
-            modal.classList.remove('hidden');
-        };
-
-        window.closeModal = () => { document.getElementById('edit-modal').classList.add('hidden'); currentEditInfo = null; };
-
-        document.getElementById('modal-save-btn').onclick = async () => {
-            if(!currentEditInfo) return;
-            const { coll, id } = currentEditInfo;
-            let data = {};
-
-            if(coll === 'expenses') {
-                data.amount = parseFloat(document.getElementById('edit-val').value);
-                data.category = document.getElementById('edit-cat').value;
-            } else if(coll === 'guests') {
-                data.name = document.getElementById('edit-name').value;
-                data.partners = parseInt(document.getElementById('edit-partners').value);
-                const tags = [];
-                document.querySelectorAll('#edit-guest-tags .tag-selector-pill.selected').forEach(el => tags.push(el.innerText));
-                data.tags = tags;
-            } else if(coll === 'tasks') {
-                data.text = document.getElementById('edit-text').value;
-                data.category = document.getElementById('edit-cat').value;
-                data.deadline = document.getElementById('edit-date').value;
-                data.observation = document.getElementById('edit-obs').value;
-                const tags = [];
-                document.querySelectorAll('#edit-task-tags .tag-selector-pill.selected').forEach(el => {
-                    tags.push(JSON.parse(el.dataset.tagObj));
-                });
-                data.tags = tags;
-            }
-            await updateItem(coll, id, data);
-            closeModal();
-        };
-
-        window.calculateDrinks = () => {
-             const guests = parseInt(document.getElementById('calc-guests').value)||0;
-            const profile = document.getElementById('calc-profile').value;
-            let b=2, w=0.8, s=0.6, sp=0.25;
-            if (profile === 'high') { b=4; w=1; s=0.4; } else if (profile === 'low') { b=1.5; sp=0.4; }
-            document.getElementById('res-beer').innerText = Math.ceil(guests*b);
-            document.getElementById('res-water').innerText = Math.ceil(guests*w);
-            document.getElementById('res-soda').innerText = Math.ceil(guests*s);
-            document.getElementById('res-sparkling').innerText = Math.ceil(guests*sp);
-        }
-
-        window.switchTab = (tabId) => {
-            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll(`button[onclick="switchTab('${tabId}')"]`).forEach(b => b.classList.add('active'));
-            if(tabId === 'tools') window.calculateDrinks();
-            window.scrollTo(0,0);
-        }
-    </script>
+          </div>
+        </div>
+
+      </div>
+
+      <aside class="sidebar">
+        <h3>Ícone de app</h3>
+        <div class="mockup" style="height:120px;display:flex;align-items:center;justify-content:center">
+          <div style="font-weight:800;color:rgba(255,255,255,0.9)">Símbolo isolado</div>
+        </div>
+        <p class="small" style="margin-top:8px">App icon: símbolo isolado, centralizado, preferencialmente em caixa escura.</p>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Aplicações conceituais</div>
+        <div class="foot-right">Mockups limpos</div>
+      </footer>
+    </section>
+
+    <!-- Slide 10 — Tom de Voz e Exemplos -->
+    <section class="slide" id="tom" aria-label="Tom de Voz">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
+          <div>
+            <h1 style="font-size:20px">Tom de Voz</h1>
+            <p class="muted" style="font-size:13px">Modelos e exemplos práticos</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <h2>Como escrever como FYCash</h2>
+        <p class="lead" style="margin-top:8px">Claro, direto e confiável. Linguagem que empodera o usuário com informação prática.</p>
+
+        <div style="margin-top:18px">
+          <h3>Frases exemplo</h3>
+          <ul style="color:rgba(255,255,255,0.86);line-height:1.6">
+            <li><strong>Assinatura:</strong> Não é software. É tempo de vida de volta.</li>
+            <li><strong>Notificação:</strong> Seu relatório mensal está pronto — descubra onde otimizar em 3 cliques.</li>
+            <li><strong>CTA:</strong> Ver minha visão em tempo real</li>
+          </ul>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Princípios</h3>
+        <ol style="color:rgba(255,255,255,0.82);line-height:1.6">
+          <li>Seja útil primeiro.</li>
+          <li>Explique sem complicar.</li>
+          <li>Coloque clareza no centro.</li>
+        </ol>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Tom de voz e exemplos</div>
+        <div class="foot-right">Comunicação prática</div>
+      </footer>
+    </section>
+
+    <!-- Slide 11 — Exportação e arquivos -->
+    <section class="slide" id="export" aria-label="Exportacao">
+      <header class="slide-header">
+        <div class="brand-block">
+          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
+          <div>
+            <h1 style="font-size:20px">Exportação</h1>
+            <p class="muted" style="font-size:13px">Formatos finais e recomendações</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <h2>Formatos recomendados</h2>
+        <ul style="color:rgba(255,255,255,0.86);margin-top:10px;line-height:1.6">
+          <li><strong>PDF vetorial:</strong> para apresentações e manual final (preserva vetores).</li>
+          <li><strong>SVG:</strong> para web e ícones — sempre vetor.</li>
+          <li><strong>AI / EPS:</strong> arquivos fonte para impressão e edições avançadas.</li>
+        </ul>
+
+        <div style="margin-top:16px">
+          <h3>Configurações de exportação</h3>
+          <p class="small">PDF: vetor, embed fonts, RGB para digital / CMYK para impressão; 300 DPI para imagens rasterizadas apenas.</p>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <h3>Entrega</h3>
+        <p class="small">Este manual foi gerado em widescreen 1920×1080. Para salvar como PDF, utilizar impressão em escala 100% ou exportar direto do editor vetorial.</p>
+      </aside>
+
+      <footer class="slide-foot">
+        <div class="foot-left">Exportação e arquivos</div>
+        <div class="foot-right">Mantenha vetorial sempre que possível</div>
+      </footer>
+    </section>
+
+    <!-- Slide 12 — Encerramento / Assinatura -->
+    <section class="slide full" id="fim" aria-label="Encerramento">
+      <header class="slide-header" style="justify-content:center;">
+        <div style="text-align:center">
+          <div class="logo-wrap" style="margin:0 auto">
+            <svg class="hero-logo" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FYCash logo">
+              <defs><linearGradient id="g4" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#D9D9D9"/></linearGradient></defs>
+              <g transform="translate(30,20) scale(0.9)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g4)"/></g>
+              <g transform="translate(320,64) scale(1)"><text x="0" y="48" font-family="Montserrat, Arial" font-weight="800" font-size="66" fill="#FFFFFF">FYCash</text></g>
+            </svg>
+          </div>
+
+          <h2 style="font-size:42px;margin-top:18px">FYCash</h2>
+          <p class="lead" style="max-width:980px;margin:12px auto">Simplificar o complexo. Devolver tempo. Dar clareza. Nossa promessa é criar sistemas que libertam, não que aprisionam.</p>
+
+          <div style="display:flex;gap:14px;justify-content:center;margin-top:20px">
+            <div style="padding:12px 18px;border-radius:10px;background:var(--violet);font-weight:700">Contato: contato@fycash.example</div>
+            <div style="padding:12px 18px;border-radius:10px;background:var(--teal);font-weight:700">Website: www.fycash.example</div>
+          </div>
+
+          <p class="small" style="margin-top:26px;color:rgba(255,255,255,0.66)">Gerado: Manual da Marca — Widescreen 1920×1080 • Versão 1.0</p>
+        </div>
+      </header>
+
+      <footer class="slide-foot" style="justify-content:center">
+        <div class="foot-left">FYCash • Não é software. É tempo de vida de volta.</div>
+      </footer>
+    </section>
+
+  </div>
+
+  <!-- Optional JS: facilitate keyboard navigation (left/right) and full-screen view -->
+  <script>
+    (function(){
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      let idx = 0;
+      function show(i){
+        slides.forEach((s, j)=> s.style.opacity = (j===i ? '1' : '0.03'));
+        window.scrollTo({top: slides[i].offsetTop - 24, behavior: 'smooth'});
+      }
+      show(idx);
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'ArrowRight' || e.key === 'PageDown'){ idx = Math.min(slides.length-1, idx+1); show(idx); }
+        if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ idx = Math.max(0, idx-1); show(idx); }
+      });
+
+      // Click to focus slide
+      slides.forEach((s,i)=> s.addEventListener('click', ()=> { idx = i; show(idx); }));
+    })();
+  </script>
 </body>
 </html>
