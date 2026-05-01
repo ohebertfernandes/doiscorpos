@@ -1,811 +1,452 @@
-<!doctype html>
-<html lang="pt-BR">
+```html
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=1920, height=1080, initial-scale=1" />
-  <title>Manual da Marca — FYCash</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg-dark:#0f1112; /* slightly softer than pure black */
-      --black-fy:#1A1A1A;
-      --gray-fy:#4F4F4F;
-      --silver:#D9D9D9;
-      --white:#FFFFFF;
-      --violet:#8D5AE4;
-      --teal:#21E9CA;
-      --w:1920px;
-      --h:1080px;
-      --gutter:72px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCALE X | Kanban de Conteúdo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    /* Basic reset */
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:var(--white);font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-    .deck{
-      width:100%;
-      min-height:100%;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:48px;
-      padding:40px 24px;
-      background:linear-gradient(180deg,var(--white),#f6f7f8);
-    }
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-    /* Slide container sized to widescreen */
-    .slide{
-      width:calc(var(--w) * 0.9);
-      max-width:100%;
-      aspect-ratio: 16 / 9;
-      background:var(--bg-dark);
-      color:var(--white);
-      border-radius:14px;
-      box-shadow:0 12px 40px rgba(12,13,14,0.45);
-      overflow:hidden;
-      display:grid;
-      grid-template-columns: 1fr 520px;
-      grid-template-rows: auto 1fr auto;
-      padding:48px;
-      position:relative;
-    }
+    <!-- SortableJS para Drag & Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
-    /* For slides that want full-bleed single column */
-    .slide.full{ grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#F97316',
+                            dark: '#0A0A0A',
+                            panel: '#141414',
+                            border: '#2A2A2A'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
-    header.slide-header{
-      grid-column:1/-1;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:20px;
-    }
-    .brand-block{display:flex;align-items:center;gap:18px}
-    .brand-block h1{font-size:36px;letter-spacing:0.6px;margin:0;font-weight:800}
-    .brand-block p{margin:0;font-size:14px;color:rgba(255,255,255,0.72)}
-
-    /* Logo box */
-    .logo-wrap{width:160px;height:64px;display:flex;align-items:center;justify-content:center}
-    /* Content columns */
-    .content{padding-right:24px; overflow:auto}
-    .sidebar{
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
-      border-left:1px solid rgba(255,255,255,0.03);
-      padding:28px;
-      display:flex;
-      flex-direction:column;
-      gap:18px;
-    }
-
-    h2{font-size:28px;margin-bottom:10px;color:var(--white);font-weight:700}
-    h3{font-size:18px;margin:0 0 8px 0;color:var(--silver);font-weight:600}
-    p.lead{font-size:18px;color:rgba(255,255,255,0.92);line-height:1.45}
-    p.small{font-size:14px;color:rgba(255,255,255,0.76)}
-
-    /* Palette row */
-    .palette{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
-    .swatch{width:120px;height:80px;border-radius:8px;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;color:#fff;font-weight:700;box-shadow:inset 0 -6px 12px rgba(0,0,0,0.18)}
-    .swatch .hex{font-size:12px;font-weight:600;opacity:0.9}
-
-    /* Examples grid */
-    .examples{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:18px}
-    .card{background:rgba(255,255,255,0.03);border-radius:10px;padding:16px;min-height:120px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;}
-    .mockup{width:100%;height:220px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);font-weight:700}
-
-    /* Logo big render */
-    .hero-logo { width:420px;height:auto; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.65)); }
-
-    /* area de proteção visual */
-    .protection-visual{display:flex;gap:18px;align-items:center}
-    .prot-rect{width:180px;height:180px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center}
-
-    /* usage dos tipos */
-    .type-sample{display:flex;flex-direction:column;gap:8px}
-    .type-sample .t1{font-size:36px;font-weight:800}
-    .type-sample .t2{font-size:20px;font-weight:600;color:var(--silver)}
-
-    /* Footer for each slide */
-    footer.slide-foot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.03)}
-    footer.slide-foot .foot-left{font-size:13px;color:rgba(255,255,255,0.55)} 
-    footer.slide-foot .foot-right{font-size:13px;color:rgba(255,255,255,0.45)}
-
-    /* Utility */
-    .muted{color:rgba(255,255,255,0.6)}
-    .accent-v{color:var(--violet);font-weight:700}
-    .accent-t{color:var(--teal);font-weight:700}
-
-    /* Print friendly adjustments */
-    @media print {
-      body{background:white}
-      .deck{padding:0}
-      .slide{box-shadow:none;border-radius:0; page-break-after:always; width:1920px;height:1080px;transform:scale(1);display:block}
-      .slide{overflow:visible}
-    }
-
-    /* Responsive smaller screens — scale slides */
-    @media (max-width:1600px){
-      .slide{transform:scale(0.9)}
-    }
-    @media (max-width:1200px){
-      .slide{transform:scale(0.65)}
-    }
-  </style>
+    <style>
+        body { background-color: #0A0A0A; color: #F3F4F6; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0A0A0A; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F97316; }
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .kanban-col {
+            min-height: 200px;
+        }
+        /* Efeito ao arrastar */
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: rgba(249, 115, 22, 0.1) !important;
+            border: 1px dashed #F97316 !important;
+        }
+        .sortable-drag {
+            cursor: grabbing !important;
+        }
+    </style>
 </head>
-<body>
-  <div class="deck">
+<body class="h-screen flex flex-col overflow-hidden font-sans antialiased">
 
-    <!-- Slide 1 — Capa -->
-    <section class="slide full" id="capa" aria-label="Capa">
-      <header class="slide-header" style="justify-content:flex-start;">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true">
-            <!-- SVG logotipo vetorial (recriado com fidelidade ao traço original) -->
-            <svg class="hero-logo" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FYCash logo">
-              <!-- wing-F simplified vector preserving original shape -->
-              <defs>
-                <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
-                  <stop offset="100%" stop-color="#D9D9D9" stop-opacity="1"/>
-                </linearGradient>
-              </defs>
-
-              <!-- Symbol -->
-              <g transform="translate(30,20) scale(0.9)">
-                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g1)" />
-                <!-- top wing lines -->
-                <path d="M52 42 C88 26 132 24 170 34" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.98"/>
-                <path d="M76 72 C114 60 160 56 198 68" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-                <path d="M102 104 C146 94 188 88 224 98" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-              </g>
-
-              <!-- Wordmark FYCash (vector text-like shapes) -->
-              <g transform="translate(320,64) scale(1)">
-                <text x="0" y="48" font-family="Montserrat, Arial" font-weight="800" font-size="66" fill="#FFFFFF">FYCash</text>
-              </g>
-            </svg>
-          </div>
-          <div>
-            <h1>FYCash</h1>
-            <p class="muted">Não é software. É tempo de vida de volta.</p>
-          </div>
+    <!-- Header -->
+    <header class="glass-panel border-b border-brand-border h-16 flex items-center justify-between px-6 shrink-0 z-10 relative">
+        <div class="flex items-center gap-3">
+            <div class="w-2 h-6 bg-brand-orange skew-x-12 shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
+            <h1 class="text-xl font-display font-black tracking-widest text-white uppercase">SCALE <span class="text-brand-orange">X</span> <span class="text-gray-600 font-medium text-sm tracking-normal capitalize ml-2">| Board de Produção</span></h1>
         </div>
-
-        <div style="display:flex;flex-direction:column;align-items:flex-end;">
-          <p class="muted" style="font-size:13px;">Manual da Marca — Widescreen 1920×1080</p>
-          <p class="muted" style="font-size:12px;margin-top:4px;">Versão: 1.0 • Hebert</p>
+        <div class="flex items-center gap-4">
+            <button onclick="openModal()" class="bg-brand-orange hover:bg-orange-600 text-black font-bold px-4 py-2 rounded-lg text-sm transition-all shadow-[0_0_15px_rgba(249,115,22,0.3)] flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> Nova Ideia
+            </button>
         </div>
-      </header>
+    </header>
 
-      <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:center;height:calc(100% - 160px);">
-        <div style="display:flex;gap:36px;align-items:center;justify-content:center">
-          <div style="max-width:680px">
-            <h2 style="font-size:52px;margin-bottom:8px">Manual da Marca — FYCash</h2>
-            <p class="lead">Transformar o complexo em simples. Dar controle, clareza, velocidade e liberdade. <span class="accent-v">#8D5AE4</span> • <span class="accent-t">#21E9CA</span></p>
-            <p class="small" style="margin-top:18px;color:rgba(255,255,255,0.74)">Formato: Widescreen • Mockups conceituais • Clean. Este documento contém diretrizes de uso, paleta, tipografia e aplicações da marca.</p>
-          </div>
-
-          <div style="width:340px;height:240px;border-radius:12px;background:linear-gradient(180deg,var(--violet),var(--teal));display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px rgba(141,90,228,0.18);padding:18px;">
-            <div style="text-align:center;color:white;">
-              <div style="font-weight:800;font-size:20px">Paleta Destaque</div>
-              <div style="margin-top:12px;font-weight:700">#8D5AE4 — #21E9CA</div>
+    <!-- Main Workspace -->
+    <main class="flex-1 overflow-x-auto overflow-y-hidden bg-[#0A0A0A] p-6 relative flex gap-6">
+        <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#F97316 1px, transparent 1px); background-size: 40px 40px;"></div>
+        
+        <!-- Coluna: Ideia -->
+        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-gray-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
+                    💡 Ideias <span class="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-xs" id="count-ideia">0</span>
+                </h2>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <footer class="slide-foot">
-        <div class="foot-left">FYCash • Manual da Marca</div>
-        <div class="foot-right">www.fycash.example • contato@fycash.example</div>
-      </footer>
-    </section>
-
-    <!-- Slide 2 — História / Manifesto -->
-    <section class="slide" id="historia" aria-label="História">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true">
-            <!-- small svg -->
-            <svg viewBox="0 0 240 90" width="160" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <linearGradient id="g2" x1="0" x2="1" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#FFFFFF"/>
-                  <stop offset="100%" stop-color="#D9D9D9"/>
-                </linearGradient>
-              </defs>
-              <g transform="translate(8,4) scale(0.6)">
-                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g2)" />
-              </g>
-              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="36" fill="#fff">FYCash</text>
-            </svg>
-          </div>
-          <div>
-            <h1 style="font-size:22px">História & Manifesto</h1>
-            <p class="muted" style="font-size:13px">A origem da FYCash — propósito e narrativa.</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div style="padding:8px 14px;background:rgba(255,255,255,0.04);border-radius:8px;font-weight:700">Manifesto</div>
-        </div>
-      </header>
-
-      <div class="content">
-        <h2>Desde o começo, a humanidade sempre buscou a mesma coisa</h2>
-        <p class="lead" style="margin-top:12px;">
-          Viver melhor gastando menos energia. Foi assim que nasceu a roda, o fogo, as máquinas, a internet e a inteligência artificial.
-        </p>
-        <p class="small" style="margin-top:14px;color:rgba(255,255,255,0.8)">
-          Não por preguiça, mas por inteligência. Evoluímos quando paramos de desperdiçar força com o que pode ser simplificado.
-          É daí que nasce a FYCash — de pessoas que perguntaram: “Por que isso precisa ser tão complicado?”.
-        </p>
-
-        <div style="margin-top:22px;padding:18px;border-left:4px solid var(--violet);background:rgba(141,90,228,0.06);border-radius:8px">
-          <p class="small" style="color:var(--white)"><strong>Visão:</strong> Construir um hub — um ecossistema onde tecnologia, inteligência e estratégia se unem para simplificar a vida de quem quer crescer.</p>
-        </div>
-
-        <div style="margin-top:20px;">
-          <h3>Fragmentos do Manifesto</h3>
-          <ul style="margin-top:8px;color:rgba(255,255,255,0.78);line-height:1.6">
-            <li>Enquanto o mercado romantiza o esforço, nós romantizamos a clareza.</li>
-            <li>Não criamos tecnologia por vaidade. Criamos por propósito.</li>
-            <li>Não vendemos software. Vendemos tempo de vida de volta.</li>
-          </ul>
-        </div>
-      </div>
-
-      <aside class="sidebar">
-        <div>
-          <h3>Promessa</h3>
-          <p class="small">Transformar o complexo em simples, o confuso em claro e o pesado em leve, devolvendo controle total sobre números, decisões e operações.</p>
-        </div>
-
-        <div>
-          <h3>Slogan</h3>
-          <p class="small">Não é software. É tempo de vida de volta.</p>
-        </div>
-
-        <div>
-          <h3>O que queremos transmitir</h3>
-          <p class="small">Leveza • Facilidade • Interatividade • Confiança • Humanização</p>
-        </div>
-      </aside>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Manifesto e promessa</div>
-        <div class="foot-right">FYCash • Identidade</div>
-      </footer>
-    </section>
-
-    <!-- Slide 3 — Essência e Arquétipos -->
-    <section class="slide" id="essencia" aria-label="Essência">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true">
-            <!-- tiny svg -->
-            <svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <g transform="translate(8,4) scale(0.5)">
-                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" />
-              </g>
-              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text>
-            </svg>
-          </div>
-          <div>
-            <h1 style="font-size:20px">Essência & Arquétipos</h1>
-            <p class="muted" style="font-size:13px">Sábio + Rebelde</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div style="padding:8px 14px;background:rgba(255,255,255,0.02);border-radius:8px;font-weight:700">Arquetipos</div>
-        </div>
-      </header>
-
-      <div class="content">
-        <h2>Arquétipos</h2>
-        <p class="lead" style="margin-top:12px">A FYCash combina a autoridade refletida pelo Sábio com a ousadia do Rebelde. Educamos, questionamos e reformulamos o status quo.</p>
-
-        <div class="examples" style="margin-top:18px">
-          <div class="card">
-            <h3>Sábio</h3>
-            <p class="small">Posicionamento: Orientação por conhecimento. A FYCash ensina, organiza e transforma informação em compreensão.</p>
-            <div class="mockup">Guias, insights e dashboards claros</div>
-          </div>
-
-          <div class="card">
-            <h3>Rebelde</h3>
-            <p class="small">Posicionamento: Provocador inteligente. Questionamos práticas que travam empresas e libertamos por design.</p>
-            <div class="mockup">Soluções que rompem com o complicado</div>
-          </div>
-        </div>
-      </div>
-
-      <aside class="sidebar">
-        <div>
-          <h3>Valores</h3>
-          <p class="small">Clareza • Eficiência • Liberdade • Confiança</p>
-        </div>
-
-        <div>
-          <h3>Tom de Voz</h3>
-          <p class="small">Claro, confiante, objetivo. Linguagem que ensina sem esnobar; provoca sem agredir.</p>
-        </div>
-      </aside>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Arquétipos e tom de voz</div>
-        <div class="foot-right">FYCash — Sábio + Rebelde</div>
-      </footer>
-    </section>
-
-    <!-- Slide 4 — Identidade Visual / Logo -->
-    <section class="slide" id="identidade" aria-label="Identidade Visual">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true">
-            <!-- svg miniature -->
-            <svg viewBox="0 0 240 90" width="140" height="46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <g transform="translate(8,4) scale(0.6)">
-                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" />
-              </g>
-              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="28" fill="#fff">FYCash</text>
-            </svg>
-          </div>
-          <div>
-            <h1 style="font-size:20px">Identidade Visual</h1>
-            <p class="muted" style="font-size:13px">Logotipo, símbolo isolado e variações oficiais</p>
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Versão Principal</div>
-        </div>
-      </header>
-
-      <div style="display:flex;gap:36px;align-items:flex-start;padding-top:6px">
-        <div style="flex:1;padding-right:12px" class="content">
-          <h2>Logo</h2>
-          <p class="lead" style="margin-top:8px">O logotipo é composto pelo símbolo “F alado” e a palavra FYCash. Nunca altere proporção, ângulo ou traço.</p>
-
-          <div style="margin-top:22px;display:flex;gap:18px;align-items:center">
-            <div style="background:rgba(255,255,255,0.03);padding:18px;border-radius:12px">
-              <!-- large symbol -->
-              <svg viewBox="0 0 600 200" width="360" height="160" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
-                <defs>
-                  <linearGradient id="g3" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#FFFFFF"/>
-                    <stop offset="100%" stop-color="#D9D9D9"/>
-                  </linearGradient>
-                </defs>
-                <g transform="translate(10,10) scale(0.9)">
-                  <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g3)" />
-                  <path d="M52 42 C88 26 132 24 170 34" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.98"/>
-                  <path d="M76 72 C114 60 160 56 198 68" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-                  <path d="M102 104 C146 94 188 88 224 98" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-                </g>
-                <g transform="translate(320,64) scale(1)">
-                  <text x="0" y="48" font-family="Montserrat, Arial" font-weight="800" font-size="66" fill="#FFFFFF">FYCash</text>
-                </g>
-              </svg>
+            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-ideia">
+                <!-- Cards aqui -->
             </div>
+        </div>
 
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <p class="small">Versões oficiais:</p>
-              <ul style="color:rgba(255,255,255,0.82);line-height:1.6">
-                <li>Logotipo completo (símbolo + wordmark) — uso preferencial.</li>
-                <li>Símbolo isolado — para ícones, favicons, app icons e espaços reduzidos.</li>
-                <li>Contraste: branco ou prata em fundos escuros; cinza escuro ou preto em fundos claros.</li>
-              </ul>
+        <!-- Coluna: Em Produção -->
+        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-blue-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
+                    ✍️ Em Produção <span class="bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded text-xs" id="count-producao">0</span>
+                </h2>
             </div>
-          </div>
-        </div>
-
-        <aside class="sidebar" style="width:520px">
-          <h3>Área de proteção</h3>
-          <div class="protection-visual">
-            <div class="prot-rect">
-              <!-- simplified visual for safe area -->
-              <svg viewBox="0 0 180 180" width="140" height="140" xmlns="http://www.w3.org/2000/svg">
-                <rect x="0" y="0" width="180" height="180" rx="12" fill="rgba(255,255,255,0.02)"/>
-                <rect x="24" y="24" width="132" height="132" rx="8" fill="rgba(255,255,255,0.04)"/>
-                <g transform="translate(36,36)"><path d="M0 40 C30 20 60 16 80 26 C90 32 96 40 86 46 C70 56 40 52 10 48 Z" fill="#fff" opacity="0.9"/></g>
-              </svg>
+            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-producao">
+                <!-- Cards aqui -->
             </div>
+        </div>
 
-            <div style="font-size:13px;color:rgba(255,255,255,0.8)">
-              A área mínima de respiro é igual à altura da letra “F” do símbolo. Nenhum elemento pode invadir essa área.
+        <!-- Coluna: Agendado -->
+        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-yellow-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
+                    📅 Agendado <span class="bg-yellow-900/50 text-yellow-400 px-2 py-0.5 rounded text-xs" id="count-agendado">0</span>
+                </h2>
             </div>
-          </div>
-
-          <div style="margin-top:18px">
-            <h3>Tamanho mínimo</h3>
-            <p class="small">Impressão: 25mm largura. Digital: 120px largura. Evite reduções além desses valores.</p>
-          </div>
-
-        </aside>
-      </div>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Logo — versões e regras</div>
-        <div class="foot-right">Não altere nenhum elemento.</div>
-      </footer>
-    </section>
-
-    <!-- Slide 5 — Paleta de Cores -->
-    <section class="slide" id="cores" aria-label="Cores">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true">
-            <svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <g transform="translate(8,4) scale(0.5)">
-                <path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" />
-              </g>
-              <text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text>
-            </svg>
-          </div>
-          <div>
-            <h1 style="font-size:20px">Paleta de Cores</h1>
-            <p class="muted" style="font-size:13px">Principais e complementares</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Cores</div>
-        </div>
-      </header>
-
-      <div class="content">
-        <h2>Paleta Oficial</h2>
-        <p class="small" style="margin-top:8px;color:rgba(255,255,255,0.84)">Cores principais usadas em todas as aplicações</p>
-
-        <div class="palette" style="margin-top:14px">
-          <div class="swatch" style="background:var(--black-fy)"><div class="hex">Preto FY</div><div class="hex" style="opacity:0.85">#1A1A1A</div></div>
-          <div class="swatch" style="background:var(--gray-fy)"><div class="hex">Cinza FY</div><div class="hex" style="opacity:0.85">#4F4F4F</div></div>
-          <div class="swatch" style="background:var(--silver)"><div class="hex" style="color:#111">Prata FY</div><div class="hex" style="color:#111;opacity:0.85">#D9D9D9</div></div>
-          <div class="swatch" style="background:var(--white);color:#111"><div class="hex" style="color:#111">Branco</div><div class="hex" style="color:#111;opacity:0.85">#FFFFFF</div></div>
-          <div class="swatch" style="background:var(--violet)"><div class="hex">Roxo FY</div><div class="hex">#8D5AE4</div></div>
-          <div class="swatch" style="background:var(--teal)"><div class="hex">Turquesa FY</div><div class="hex">#21E9CA</div></div>
+            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-agendado">
+                <!-- Cards aqui -->
+            </div>
         </div>
 
-        <div style="margin-top:18px">
-          <h3>Regras de aplicação</h3>
-          <ul style="color:rgba(255,255,255,0.82);line-height:1.6">
-            <li>Fundo principal: Preto FY (#1A1A1A) para materiais institucionais.</li>
-            <li>Roxo (#8D5AE4) e Turquesa (#21E9CA) como cores de destaque e chamadas à ação.</li>
-            <li>Evitar fundos muito saturados que comprometam contraste com o logotipo.</li>
-          </ul>
+        <!-- Coluna: Postado -->
+        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-green-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
+                    ✅ Postado <span class="bg-green-900/50 text-green-400 px-2 py-0.5 rounded text-xs" id="count-postado">0</span>
+                </h2>
+            </div>
+            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-postado">
+                <!-- Cards aqui -->
+            </div>
         </div>
-      </div>
+    </main>
 
-      <aside class="sidebar">
-        <h3>Notas técnicas</h3>
-        <p class="small">Fornecer valores em CMYK/RGB e Pantone quando necessário para impressão. Ex.: Roxo FY — RGB(141,90,228).</p>
-      </aside>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Paleta e regras</div>
-        <div class="foot-right">Cores: primárias e de destaque</div>
-      </footer>
-    </section>
-
-    <!-- Slide 6 — Tipografia -->
-    <section class="slide" id="tipografia" aria-label="Tipografia">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true">
-            <svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg>
-          </div>
-          <div>
-            <h1 style="font-size:20px">Tipografia</h1>
-            <p class="muted" style="font-size:13px">Famílias recomendadas e usos</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Fonts</div>
-        </div>
-      </header>
-
-      <div class="content">
-        <h2>Famílias Tipográficas</h2>
-        <p class="lead" style="margin-top:8px">A recomendação primária é Montserrat (Bold para títulos, Regular para corpo). Poppins pode ser alternativa.</p>
-
-        <div style="margin-top:18px" class="type-sample">
-          <div class="t1">Montserrat Bold • Título — 48px</div>
-          <div class="t2">Montserrat Regular • Texto corrido — 18px</div>
-          <p class="small" style="margin-top:8px">Usos: títulos, CTAs, labels e textos informativos. Manter hierarquia clara e espaçamento generoso.</p>
-        </div>
-
-        <div style="margin-top:20px">
-          <h3>Exemplos rápidos</h3>
-          <p class="small" style="line-height:1.6">Título: Controle em tempo real — <strong>Montserrat Bold</strong> • Corpo: Nossa plataforma centraliza tudo, revela o que estava escondido e traz transparência absoluta. — <strong>Montserrat Regular</strong></p>
-        </div>
-      </div>
-
-      <aside class="sidebar">
-        <h3>Contraste e legibilidade</h3>
-        <p class="small">Evitar pesos muito finos em fundos escuros. 1.4–1.6 de line-height recomendado para leitura digital.</p>
-      </aside>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Tipografia e uso</div>
-        <div class="foot-right">Montserrat — títulos e corpo</div>
-      </footer>
-    </section>
-
-    <!-- Slide 7 — Regras de Uso / Proibições -->
-    <section class="slide" id="usos" aria-label="Usos">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
-          <div>
-            <h1 style="font-size:20px">Regras de Uso</h1>
-            <p class="muted" style="font-size:13px">O que não fazer com o logo</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:12px;align-items:center;"><div style="padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.02)">Proibições</div></div>
-      </header>
-
-      <div class="content">
-        <h2>Usos Indevidos</h2>
-        <ul style="color:rgba(255,255,255,0.87);margin-top:10px;line-height:1.7">
-          <li>Não alterar cores do logotipo.</li>
-          <li>Não distorcer, girar ou espelhar o símbolo.</li>
-          <li>Não aplicar efeitos de sombra/artifício além do padrão do manual.</li>
-          <li>Não sobrepor o logo em fundos com baixo contraste.</li>
-        </ul>
-
-        <div style="margin-top:18px;display:flex;gap:14px;">
-          <div style="flex:1" class="card">
-            <div style="font-weight:700">Exemplo errado</div>
-            <div class="mockup">Logo sobre imagem muito contrastada (evitar)</div>
-          </div>
-          <div style="flex:1" class="card">
-            <div style="font-weight:700">Exemplo correto</div>
-            <div class="mockup">Logo em caixa de contraste ou sobre fundo sólido</div>
-          </div>
-        </div>
-      </div>
-
-      <aside class="sidebar">
-        <h3>Checklist</h3>
-        <p class="small">Sempre validar: proporção, respiro, contraste, cor e clareza.</p>
-      </aside>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Regras e proibições</div>
-        <div class="foot-right">Preserve a integridade do signo</div>
-      </footer>
-    </section>
-
-    <!-- Slide 8 — Tamanhos e Área de Proteção (detalhado) -->
-    <section class="slide" id="tamanhos" aria-label="Tamanhos">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
-          <div>
-            <h1 style="font-size:20px">Tamanhos & Respiros</h1>
-            <p class="muted" style="font-size:13px">Dimensões mínimas e espaçamento</p>
-          </div>
-        </div>
-        <div></div>
-      </header>
-
-      <div class="content">
-        <h2>Tamanhos mínimos</h2>
-        <ul style="color:rgba(255,255,255,0.86);margin-top:10px;line-height:1.6">
-          <li>Impressão: largura mínima 25 mm.</li>
-          <li>Digital: largura mínima 120 px.</li>
-          <li>Ícone (app): usar símbolo isolado com margens adequadas.</li>
-        </ul>
-
-        <div style="margin-top:16px">
-          <h3>Área de proteção (visual)</h3>
-          <p class="small">A distância mínima entre o logotipo e qualquer outro elemento deve ser igual à altura do “F” do símbolo no arquivo final.</p>
-        </div>
-      </div>
-
-      <aside class="sidebar">
-        <h3>Exportação</h3>
-        <p class="small">Exportar SVG para web e PDF em vetorial para manter qualidade. Para impressão, exportar em CMYK com 300 DPI.</p>
-      </aside>
-
-      <footer class="slide-foot">
-        <div class="foot-left">Tamanhos e exportação</div>
-        <div class="foot-right">Manter vetorial sempre que possível</div>
-      </footer>
-    </section>
-
-    <!-- Slide 9 — Aplicações Conceituais (cartão + capa) -->
-    <section class="slide" id="aplicacoes" aria-label="Aplicações">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
-          <div>
-            <h1 style="font-size:20px">Aplicações Conceituais</h1>
-            <p class="muted" style="font-size:13px">Cartão de visita • Capa • Post digital • Dashboard</p>
-          </div>
-        </div>
-      </header>
-
-      <div class="content">
-        <h2>Modelos conceituais</h2>
-        <p class="small" style="margin-top:8px">Layouts vetoriais e limpos para aplicações básicas da marca.</p>
-
-        <div style="display:flex;flex-direction:column;gap:18px;margin-top:16px">
-          <div style="display:flex;gap:18px">
-            <div style="flex:1" class="card">
-              <div style="font-weight:800">Cartão de Visita — Versão Dark</div>
-              <div class="mockup" style="height:120px">
-                <div style="text-align:center">
-                  <div style="font-weight:800;font-size:18px">FYCash</div>
-                  <div style="font-size:12px;margin-top:6px;color:rgba(255,255,255,0.7)">Nome • Cargo</div>
+    <!-- Modal Adicionar / Editar -->
+    <div id="post-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-brand-panel border border-brand-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transform scale-95 transition-transform duration-300" id="modal-content">
+            
+            <div class="flex justify-between items-center p-5 border-b border-brand-border bg-[#0d0d0d]">
+                <h2 id="modal-heading" class="text-lg font-display font-bold text-white">Nova Ideia</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 space-y-4">
+                <input type="hidden" id="post-id">
+                
+                <!-- Título -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título do Post</label>
+                    <input type="text" id="post-title" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange" placeholder="Ex: O Custo do Churn">
                 </div>
-              </div>
-              <p class="small">Fundo: Preto FY; Elementos: Roxo/Turquesa para destaque.</p>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Autor -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Autor / Voz</label>
+                        <select id="post-author" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange">
+                            <option value="Luan">Luan (Marketing/Performance)</option>
+                            <option value="Hebert">Hebert (Estratégia/Finanças)</option>
+                            <option value="Raniele">Raniele (Orgânico/Autoridade)</option>
+                            <option value="Scale X">Scale X (Institucional)</option>
+                        </select>
+                    </div>
+                    <!-- Formato -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Formato</label>
+                        <select id="post-format" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange">
+                            <option value="Reels">Reels / Vídeo</option>
+                            <option value="Carrossel">Carrossel</option>
+                            <option value="Estático">Post Estático</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Objetivo -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Objetivo da Postagem</label>
+                    <input type="text" id="post-objective" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange" placeholder="O que o cliente deve sentir/fazer?">
+                </div>
+
+                <!-- Script / Briefing -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Roteiro / Legenda</label>
+                    <textarea id="post-script" rows="6" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange resize-none" placeholder="Escreva o gancho, desenvolvimento e CTA aqui..."></textarea>
+                </div>
             </div>
 
-            <div style="flex:1" class="card">
-              <div style="font-weight:800">Capa de Apresentação</div>
-              <div class="mockup" style="height:120px">Logo central + slogan</div>
-              <p class="small">Formato widescreen, bom contraste e fundo escuro com detalhe gradiente.</p>
+            <div class="p-5 border-t border-brand-border bg-[#0d0d0d] flex justify-between items-center">
+                <button onclick="deletePost()" id="btn-delete" class="text-red-500 hover:text-red-400 text-sm font-bold hidden">
+                    <i class="fa-solid fa-trash"></i> Excluir
+                </button>
+                <button onclick="savePost()" class="bg-brand-orange hover:bg-orange-600 text-black font-bold uppercase tracking-widest text-xs px-6 py-3 rounded-lg shadow-lg ml-auto transition-transform hover:scale-105">
+                    Salvar Card
+                </button>
             </div>
-          </div>
-
-          <div style="display:flex;gap:18px">
-            <div style="flex:1" class="card">
-              <div style="font-weight:800">Post Digital (Feed)</div>
-              <div class="mockup" style="height:120px">Texto curto, CTA em Turquesa</div>
-              <p class="small">Manter margem segura e foco em clareza.</p>
-            </div>
-
-            <div style="flex:1" class="card">
-              <div style="font-weight:800">Tela de Dashboard</div>
-              <div class="mockup" style="height:120px">Componentes claros, ícones simples, foco em informação</div>
-              <p class="small">Usar Roxo para destaques e Turquesa para estados positivos.</p>
-            </div>
-          </div>
         </div>
+    </div>
 
-      </div>
+    <script>
+        let editorialPlan = [
+            { id: 'p1', author: 'Luan', format: 'Reels', title: 'A armadilha do "Lead Barato"', objective: 'Focar em Vendas, não em CPL', script: '**Gancho:** Seu marketing comemora o lead a 2 reais, mas o comercial não bate meta?\n\n**Desenvolvimento:** Luan explica que lead barato geralmente é curioso. No marketing de performance, o foco não é o custo do clique, é o custo do contrato assinado. O vendedor perde tempo com curioso e a empresa queima dinheiro.\n\n**CTA:** Pare de olhar pro CPC e olhe pro seu funil de vendas.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p2', author: 'Hebert', format: 'Carrossel', title: 'A conta que quebra empresas', objective: 'Introduzir o Unit Economics', script: '**Slide 1:** A matemática silenciosa que quebra empresas na internet.\n**Slide 2:** O erro: Escalar o Meta Ads sem saber seu CAC máximo (Custo de Aquisição).\n**Slide 3:** A solução: Unit Economics. Você precisa saber o limite de gasto por cliente.\n**Slide 4:** LTV (Lifetime Value). Seu cliente compra uma vez ou fica 1 ano? O seu modelo de negócios dita seu marketing.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p3', author: 'Raniele', format: 'Reels', title: 'Por que seu Instagram não vende?', objective: 'Desmistificar o Orgânico B2B', script: '**Gancho:** Você posta todos os dias, mas seu Instagram parece uma vitrine morta?\n\n**Desenvolvimento:** Raniele explica que empresa não precisa viralizar com dancinha. Orgânico B2B serve para construir um "ecossistema de confiança". Conteúdo profundo, que educa o lead, mata dúvidas técnicas e prova que você é especialista.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p4', author: 'Scale X', format: 'Estático', title: 'A Máquina e o Gargalo', objective: 'Reforçar o método e a Teoria das Restrições', script: '**Imagem:** Ilustração de engrenagens / Máquina.\n\n**Legenda:** Toda empresa é uma máquina. E se você colocar mais combustível (tráfego pago) enquanto o cano está furado (retenção ou comercial fraco), o motor explode. A Scale X não acelera antes de consertar a sua engrenagem.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p5', author: 'Luan', format: 'Carrossel', title: 'Engenharia > Criatividade', objective: 'Mostrar que performance é processo', script: '**Slide 1:** O marketing "fofinho" não paga a folha de pagamento.\n**Slide 2:** Agência comum: Foca em Layout bonito e posts de bom dia.\n**Slide 3:** Engenharia de Vendas (Nós): Funil mapeado, script alinhado, traqueamento de eventos (Pixel) e remarketing dinâmico.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p6', author: 'Raniele', format: 'Reels', title: 'Orgânico como Quebra de Objeções', objective: 'Conectar Orgânico ao Tráfego Pago', script: '**Gancho:** Você acha que orgânico e tráfego pago não se misturam? Errado.\n\n**Desenvolvimento:** Raniele ensina que quando o lead clica no seu anúncio, a primeira coisa que ele faz é ir no seu perfil stalkear. Se o seu perfil tem conteúdo forte explicando o método e quebrando objeções comuns, o lead chega no seu comercial 50% mais pronto para comprar.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p7', author: 'Scale X', format: 'Carrossel', title: 'A Metodologia I.O.E.', objective: 'Apresentar a arquitetura da Scale X', script: '**Slide 1:** A anatomia do crescimento previsível da Scale X.\n**Slide 2:** [ I ] Intelligence: O Raio-X de 30 dias. Onde está o gargalo?\n**Slide 3:** [ O ] Operation: Arrumar a casa. Implementar CRM, LPs, Dados.\n**Slide 4:** [ E ] Escala: O pé no acelerador. Advisory de Growth.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p8', author: 'Hebert', format: 'Reels', title: 'O Custo Invisível do Churn', objective: 'Focar na Retenção Financeira', script: '**Gancho:** Você gasta rios de dinheiro comprando cliente novo, só para perder os antigos no mês seguinte.\n\n**Desenvolvimento:** Hebert explica o conceito financeiro do balde furado. Na lógica de consultoria de negócios, não adianta tracionar vendas se o "Churn" (taxa de cancelamento) é alto. O verdadeiro lucro mora no LTV e no Upsell.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p9', author: 'Luan', format: 'Reels', title: 'O Fim do Mkt de Esperança', objective: 'Atacar o mercado de achismos', script: '**Gancho:** "Impulsionei um post aqui, vamos cruzar os dedos pra vender". Se você age assim, sua empresa corre risco.\n\n**Desenvolvimento:** Luan ataca o modelo de intuição. Explica que crescimento real é um loop de dados: Teste -> Análise de CAC -> Otimização -> Escala. Se não é rastreável, não é growth.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p10', author: 'Hebert', format: 'Carrossel', title: 'O custo de não ter processos', objective: 'A dor da desorganização comercial', script: '**Slide 1:** Quanto custa a desorganização do seu time comercial hoje?\n**Slide 2:** O marketing traz o lead, mas o vendedor demora 2 horas para chamar = Dinheiro rasgado.\n**Slide 3:** O lead não compra hoje e ninguém faz follow-up amanhã = Dinheiro rasgado.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p11', author: 'Scale X', format: 'Reels', title: 'Bastidores: A Reunião do Board', objective: 'Prova Social (Skin in the game)', script: '**Formato:** Vídeo estilo vlog corporativo.\n\n**Cena:** O Board da Scale X discutindo a operação de um cliente. Luan falando sobre CAC e CPC, Hebert cruzando isso com a estrutura do funil no CRM, Raniele propondo uma linha editorial para reduzir atrito.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p12', author: 'Raniele', format: 'Estático', title: 'Autoridade não se compra', objective: 'Focar na base orgânica de longo prazo', script: '**Imagem Limpa e Direta:** "Tráfego pago compra atenção. Conteúdo orgânico compra confiança."\n\n**Legenda:** Raniele explica que injetar dinheiro no Meta Ads vai atrair olhos para a sua empresa, mas se a pessoa entrar na sua "casa" (seu Instagram/Site) e não vir profundidade, ela vai comprar do seu concorrente.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p13', author: 'Luan', format: 'Carrossel', title: 'Qual dessas 4 travas é a sua?', objective: 'Diagnóstico rápido para o leitor', script: '**Slide 1:** Onde a sua máquina de receita engasgou?\n**Slide 2:** 1. Cegueira de Dados? (Não sabe de onde o cliente vem).\n**Slide 3:** 2. Tráfego desqualificado? (Muito curioso, pouco decisor).\n**Slide 4:** 3. Script falho? (Lead bom chega, mas o time não fecha).\n**Slide 5:** 4. Churn alto? (Vende muito e cancela muito).', status: 'ideia', day: 'Sem Data' },
+            { id: 'p14', author: 'Hebert', format: 'Reels', title: 'Faça a conta: Calculadora ROI', objective: 'Prova Lógica Financeira', script: '**Gancho:** Você sabe me dizer exatamente quanto lucra a cada 100 reais investidos em marketing?\n\n**Desenvolvimento:** Hebert apresenta a lógica do Simulador de ROI. Explica que o papel do CEO não é aprovar layout, é olhar para o painel de Unit Economics e entender se a máquina está imprimindo ou rasgando dinheiro.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p15', author: 'Scale X', format: 'Reels', title: 'Por que recusamos clientes', objective: 'Gerar Escassez e Autoridade', script: '**Locução Oficial:** Todo mês nós recusamos projetos na Scale X.\n\n**Desenvolvimento:** Se a empresa chega querendo "pular etapas" e recusa fazer o Diagnóstico inicial (Blueprint), nós não assumimos a conta. Entrar operando tráfego sem entender os processos comerciais da empresa é receita pro fracasso.', status: 'ideia', day: 'Sem Data' },
+            { id: 'p16', author: 'Scale X', format: 'Estático', title: 'Sua empresa qualifica para o I.O.E?', objective: 'Chamada Final (Blueprint)', script: '**Imagem:** Layout premium convidando para a Sessão Estratégica.\n\n**Legenda:** Buscamos empresas que entendem que o marketing precisa ser gerido por dados financeiros e engenharia de vendas. Abrimos aplicações para a Fase 1 da nossa metodologia (Blueprint Estratégico).', status: 'ideia', day: 'Sem Data' }
+        ];
 
-      <aside class="sidebar">
-        <h3>Ícone de app</h3>
-        <div class="mockup" style="height:120px;display:flex;align-items:center;justify-content:center">
-          <div style="font-weight:800;color:rgba(255,255,255,0.9)">Símbolo isolado</div>
-        </div>
-        <p class="small" style="margin-top:8px">App icon: símbolo isolado, centralizado, preferencialmente em caixa escura.</p>
-      </aside>
+        // Cores dos Autores
+        const authorConfig = {
+            'Luan': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+            'Hebert': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+            'Raniele': { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+            'Scale X': { bg: 'bg-brand-orange/20', text: 'text-brand-orange', border: 'border-brand-orange/30' }
+        };
 
-      <footer class="slide-foot">
-        <div class="foot-left">Aplicações conceituais</div>
-        <div class="foot-right">Mockups limpos</div>
-      </footer>
-    </section>
+        const formatIcons = {
+            'Reels': '<i class="fa-brands fa-instagram text-pink-500"></i>',
+            'Carrossel': '<i class="fa-solid fa-layer-group text-blue-400"></i>',
+            'Estático': '<i class="fa-regular fa-image text-gray-400"></i>'
+        };
 
-    <!-- Slide 10 — Tom de Voz e Exemplos -->
-    <section class="slide" id="tom" aria-label="Tom de Voz">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
-          <div>
-            <h1 style="font-size:20px">Tom de Voz</h1>
-            <p class="muted" style="font-size:13px">Modelos e exemplos práticos</p>
-          </div>
-        </div>
-      </header>
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderKanban();
+            initSortable();
+        });
 
-      <div class="content">
-        <h2>Como escrever como FYCash</h2>
-        <p class="lead" style="margin-top:8px">Claro, direto e confiável. Linguagem que empodera o usuário com informação prática.</p>
+        function loadData() {
+            const savedData = localStorage.getItem('scalex_editorial_v4');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                // Atualizar os status salvos no array principal
+                editorialPlan.forEach(post => {
+                    const savedPost = parsed.find(p => p.id === post.id);
+                    if (savedPost) {
+                        post.status = savedPost.status;
+                        post.title = savedPost.title;
+                        post.script = savedPost.script;
+                        post.objective = savedPost.objective;
+                    }
+                });
+                // Adicionar posts criados manualmente
+                parsed.forEach(savedPost => {
+                    if (!editorialPlan.find(p => p.id === savedPost.id)) {
+                        editorialPlan.push(savedPost);
+                    }
+                });
+            }
+        }
 
-        <div style="margin-top:18px">
-          <h3>Frases exemplo</h3>
-          <ul style="color:rgba(255,255,255,0.86);line-height:1.6">
-            <li><strong>Assinatura:</strong> Não é software. É tempo de vida de volta.</li>
-            <li><strong>Notificação:</strong> Seu relatório mensal está pronto — descubra onde otimizar em 3 cliques.</li>
-            <li><strong>CTA:</strong> Ver minha visão em tempo real</li>
-          </ul>
-        </div>
-      </div>
+        function saveData() {
+            localStorage.setItem('scalex_editorial_v4', JSON.stringify(editorialPlan));
+            updateCounters();
+        }
 
-      <aside class="sidebar">
-        <h3>Princípios</h3>
-        <ol style="color:rgba(255,255,255,0.82);line-height:1.6">
-          <li>Seja útil primeiro.</li>
-          <li>Explique sem complicar.</li>
-          <li>Coloque clareza no centro.</li>
-        </ol>
-      </aside>
+        function updateCounters() {
+            document.getElementById('count-ideia').innerText = editorialPlan.filter(p => p.status === 'ideia').length;
+            document.getElementById('count-producao').innerText = editorialPlan.filter(p => p.status === 'producao').length;
+            document.getElementById('count-agendado').innerText = editorialPlan.filter(p => p.status === 'agendado').length;
+            document.getElementById('count-postado').innerText = editorialPlan.filter(p => p.status === 'postado').length;
+        }
 
-      <footer class="slide-foot">
-        <div class="foot-left">Tom de voz e exemplos</div>
-        <div class="foot-right">Comunicação prática</div>
-      </footer>
-    </section>
+        function renderKanban() {
+            const columns = ['ideia', 'producao', 'agendado', 'postado'];
+            
+            columns.forEach(col => {
+                const el = document.getElementById(`col-${col}`);
+                el.innerHTML = ''; // Limpar coluna
+                
+                const posts = editorialPlan.filter(p => p.status === col);
+                
+                posts.forEach(post => {
+                    const style = authorConfig[post.author] || authorConfig['Scale X'];
+                    const icon = formatIcons[post.format] || '<i class="fa-solid fa-file"></i>';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'glass-panel p-4 rounded-xl cursor-grab mb-3 hover:border-brand-orange/50 transition-colors border border-brand-border bg-black/40 group';
+                    card.dataset.id = post.id;
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${style.bg} ${style.text} ${style.border} border">${post.author}</span>
+                            <div class="flex gap-2">
+                                <button onclick="openModal('${post.id}')" class="text-gray-600 hover:text-white transition-colors opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                            </div>
+                        </div>
+                        <h3 class="text-white font-bold text-sm leading-snug mb-3 pr-2">${post.title}</h3>
+                        <div class="flex items-center justify-between mt-2 pt-3 border-t border-brand-border/50">
+                            <div class="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
+                                ${icon} <span>${post.format}</span>
+                            </div>
+                            ${post.week ? `<span class="text-[9px] text-gray-500 font-mono">Sem ${post.week}</span>` : ''}
+                        </div>
+                    `;
+                    el.appendChild(card);
+                });
+            });
+            updateCounters();
+        }
 
-    <!-- Slide 11 — Exportação e arquivos -->
-    <section class="slide" id="export" aria-label="Exportacao">
-      <header class="slide-header">
-        <div class="brand-block">
-          <div class="logo-wrap" aria-hidden="true"><svg viewBox="0 0 240 90" width="120" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(8,4) scale(0.5)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="#fff" /></g><text x="160" y="52" font-family="Montserrat" font-weight="700" font-size="26" fill="#fff">FYCash</text></svg></div>
-          <div>
-            <h1 style="font-size:20px">Exportação</h1>
-            <p class="muted" style="font-size:13px">Formatos finais e recomendações</p>
-          </div>
-        </div>
-      </header>
+        function initSortable() {
+            const columns = ['ideia', 'producao', 'agendado', 'postado'];
+            
+            columns.forEach(col => {
+                const el = document.getElementById(`col-${col}`);
+                new Sortable(el, {
+                    group: 'kanban', // set both lists to same group
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    onEnd: function (evt) {
+                        const itemEl = evt.item;
+                        const newStatus = evt.to.id.replace('col-', '');
+                        const postId = itemEl.dataset.id;
+                        
+                        // Atualizar status no banco
+                        const postIndex = editorialPlan.findIndex(p => p.id === postId);
+                        if (postIndex !== -1) {
+                            editorialPlan[postIndex].status = newStatus;
+                            saveData();
+                        }
+                    },
+                });
+            });
+        }
 
-      <div class="content">
-        <h2>Formatos recomendados</h2>
-        <ul style="color:rgba(255,255,255,0.86);margin-top:10px;line-height:1.6">
-          <li><strong>PDF vetorial:</strong> para apresentações e manual final (preserva vetores).</li>
-          <li><strong>SVG:</strong> para web e ícones — sempre vetor.</li>
-          <li><strong>AI / EPS:</strong> arquivos fonte para impressão e edições avançadas.</li>
-        </ul>
+        // --- MODAL LÓGICA ---
+        function openModal(id = null) {
+            const modal = document.getElementById('post-modal');
+            const content = document.getElementById('modal-content');
+            const btnDelete = document.getElementById('btn-delete');
+            
+            if (id) {
+                // Editar
+                const post = editorialPlan.find(p => p.id === id);
+                document.getElementById('modal-heading').innerText = 'Editar Post';
+                document.getElementById('post-id').value = post.id;
+                document.getElementById('post-title').value = post.title;
+                document.getElementById('post-author').value = post.author;
+                document.getElementById('post-format').value = post.format;
+                document.getElementById('post-objective').value = post.objective || '';
+                // Como o script antigo tem tags HTML (<br>), trocamos por quebra de linha normal para edição no textarea
+                let cleanScript = post.script ? post.script.replace(/<br\s*[\/]?>/gi, "\n") : '';
+                document.getElementById('post-script').value = cleanScript;
+                
+                btnDelete.classList.remove('hidden');
+            } else {
+                // Novo
+                document.getElementById('modal-heading').innerText = 'Nova Ideia';
+                document.getElementById('post-id').value = '';
+                document.getElementById('post-title').value = '';
+                document.getElementById('post-author').value = 'Luan';
+                document.getElementById('post-format').value = 'Reels';
+                document.getElementById('post-objective').value = '';
+                document.getElementById('post-script').value = '';
+                
+                btnDelete.classList.add('hidden');
+            }
 
-        <div style="margin-top:16px">
-          <h3>Configurações de exportação</h3>
-          <p class="small">PDF: vetor, embed fonts, RGB para digital / CMYK para impressão; 300 DPI para imagens rasterizadas apenas.</p>
-        </div>
-      </div>
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
 
-      <aside class="sidebar">
-        <h3>Entrega</h3>
-        <p class="small">Este manual foi gerado em widescreen 1920×1080. Para salvar como PDF, utilizar impressão em escala 100% ou exportar direto do editor vetorial.</p>
-      </aside>
+        function closeModal() {
+            const modal = document.getElementById('post-modal');
+            const content = document.getElementById('modal-content');
+            
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
 
-      <footer class="slide-foot">
-        <div class="foot-left">Exportação e arquivos</div>
-        <div class="foot-right">Mantenha vetorial sempre que possível</div>
-      </footer>
-    </section>
+        function savePost() {
+            const id = document.getElementById('post-id').value;
+            const title = document.getElementById('post-title').value;
+            
+            if(!title.trim()) {
+                alert('O título é obrigatório.');
+                return;
+            }
 
-    <!-- Slide 12 — Encerramento / Assinatura -->
-    <section class="slide full" id="fim" aria-label="Encerramento">
-      <header class="slide-header" style="justify-content:center;">
-        <div style="text-align:center">
-          <div class="logo-wrap" style="margin:0 auto">
-            <svg class="hero-logo" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FYCash logo">
-              <defs><linearGradient id="g4" x1="0" x2="1" y1="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#D9D9D9"/></linearGradient></defs>
-              <g transform="translate(30,20) scale(0.9)"><path d="M160 40 C120 30 80 26 52 42 C40 50 36 64 46 74 C64 92 98 86 130 80 C154 76 184 72 208 86 C234 102 230 124 200 134 C170 144 128 148 96 168 L86 176 C78 182 74 190 76 198 C78 206 92 210 106 204 C140 190 186 176 228 158 C256 146 292 128 310 104 C332 72 316 48 280 44 C248 40 210 44 160 40 Z" fill="url(#g4)"/></g>
-              <g transform="translate(320,64) scale(1)"><text x="0" y="48" font-family="Montserrat, Arial" font-weight="800" font-size="66" fill="#FFFFFF">FYCash</text></g>
-            </svg>
-          </div>
+            let scriptText = document.getElementById('post-script').value;
+            // Opcional: Converter quebras de linha de volta para <br> para manter o layout da outra tela, mas se for só texto não tem problema.
+            scriptText = scriptText.replace(/\n/g, "<br>");
 
-          <h2 style="font-size:42px;margin-top:18px">FYCash</h2>
-          <p class="lead" style="max-width:980px;margin:12px auto">Simplificar o complexo. Devolver tempo. Dar clareza. Nossa promessa é criar sistemas que libertam, não que aprisionam.</p>
+            const postData = {
+                title: title,
+                author: document.getElementById('post-author').value,
+                format: document.getElementById('post-format').value,
+                objective: document.getElementById('post-objective').value,
+                script: scriptText,
+                status: 'ideia', // Se for novo, vai para ideias. Se for edição, mantém o que estava
+                week: null, // Posts soltos não têm semana fixa obrigatória
+                day: 'Sem Data'
+            };
 
-          <div style="display:flex;gap:14px;justify-content:center;margin-top:20px">
-            <div style="padding:12px 18px;border-radius:10px;background:var(--violet);font-weight:700">Contato: contato@fycash.example</div>
-            <div style="padding:12px 18px;border-radius:10px;background:var(--teal);font-weight:700">Website: www.fycash.example</div>
-          </div>
+            if (id) {
+                // Atualizar existente
+                const index = editorialPlan.findIndex(p => p.id === id);
+                if(index !== -1) {
+                    postData.status = editorialPlan[index].status; // manter a coluna
+                    postData.week = editorialPlan[index].week;
+                    postData.day = editorialPlan[index].day;
+                    editorialPlan[index] = { id: id, ...postData };
+                }
+            } else {
+                // Criar novo
+                postData.id = 'post-' + Date.now();
+                editorialPlan.push(postData);
+            }
 
-          <p class="small" style="margin-top:26px;color:rgba(255,255,255,0.66)">Gerado: Manual da Marca — Widescreen 1920×1080 • Versão 1.0</p>
-        </div>
-      </header>
+            saveData();
+            renderKanban();
+            closeModal();
+        }
 
-      <footer class="slide-foot" style="justify-content:center">
-        <div class="foot-left">FYCash • Não é software. É tempo de vida de volta.</div>
-      </footer>
-    </section>
-
-  </div>
-
-  <!-- Optional JS: facilitate keyboard navigation (left/right) and full-screen view -->
-  <script>
-    (function(){
-      const slides = Array.from(document.querySelectorAll('.slide'));
-      let idx = 0;
-      function show(i){
-        slides.forEach((s, j)=> s.style.opacity = (j===i ? '1' : '0.03'));
-        window.scrollTo({top: slides[i].offsetTop - 24, behavior: 'smooth'});
-      }
-      show(idx);
-
-      document.addEventListener('keydown', (e)=>{
-        if(e.key === 'ArrowRight' || e.key === 'PageDown'){ idx = Math.min(slides.length-1, idx+1); show(idx); }
-        if(e.key === 'ArrowLeft' || e.key === 'PageUp'){ idx = Math.max(0, idx-1); show(idx); }
-      });
-
-      // Click to focus slide
-      slides.forEach((s,i)=> s.addEventListener('click', ()=> { idx = i; show(idx); }));
-    })();
-  </script>
+        function deletePost() {
+            const id = document.getElementById('post-id').value;
+            if(confirm('Tem certeza que deseja excluir esta ideia?')) {
+                editorialPlan = editorialPlan.filter(p => p.id !== id);
+                saveData();
+                renderKanban();
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
+
+
+```
