@@ -1,10 +1,10 @@
 ```html
 <!DOCTYPE html>
-<html lang="pt-BR" class="scroll-smooth">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCALE X | Kanban de Conteúdo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SCALE X | Calendário Editorial</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,9 +13,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- SortableJS para Drag & Drop -->
+    <!-- SortableJS para Drag & Drop (Touch Support) -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <!-- Tailwind Config -->
@@ -26,9 +26,9 @@
                     colors: {
                         brand: {
                             orange: '#F97316',
-                            dark: '#0A0A0A',
-                            panel: '#141414',
-                            border: '#2A2A2A'
+                            dark: '#050505',
+                            panel: '#111111',
+                            border: '#222222'
                         }
                     },
                     fontFamily: {
@@ -41,334 +41,517 @@
     </script>
 
     <style>
-        body { background-color: #0A0A0A; color: #F3F4F6; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0A0A0A; }
+        body { background-color: #050505; color: #F3F4F6; overscroll-behavior-y: none; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #F97316; }
+        
         .glass-panel {
-            background: rgba(20, 20, 20, 0.8);
+            background: rgba(17, 17, 17, 0.95);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .kanban-col {
-            min-height: 200px;
+        
+        /* Calendar Grid */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(120px, 1fr)); /* Min width for mobile scroll */
+            gap: 1px;
+            background-color: #222;
+            border: 1px solid #222;
         }
-        /* Efeito ao arrastar */
+        
+        .calendar-day {
+            background-color: #0A0A0A;
+            min-height: 120px;
+            padding: 6px;
+            transition: background-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .calendar-day:hover {
+            background-color: #111;
+        }
+
+        .calendar-day.empty-day {
+            background-color: #050505;
+            color: #333;
+        }
+
+        .calendar-day.today {
+            background-color: rgba(249, 115, 22, 0.05);
+        }
+
         .sortable-ghost {
             opacity: 0.4;
             background-color: rgba(249, 115, 22, 0.1) !important;
             border: 1px dashed #F97316 !important;
         }
-        .sortable-drag {
-            cursor: grabbing !important;
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Overlay for mobile sidebar */
+        #mobile-overlay {
+            display: none;
+        }
+        #mobile-overlay.active {
+            display: block;
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden font-sans antialiased">
+<body class="h-screen flex flex-col overflow-hidden font-sans antialiased selection:bg-brand-orange selection:text-white">
 
-    <!-- Header -->
-    <header class="glass-panel border-b border-brand-border h-16 flex items-center justify-between px-6 shrink-0 z-10 relative">
-        <div class="flex items-center gap-3">
-            <div class="w-2 h-6 bg-brand-orange skew-x-12 shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
-            <h1 class="text-xl font-display font-black tracking-widest text-white uppercase">SCALE <span class="text-brand-orange">X</span> <span class="text-gray-600 font-medium text-sm tracking-normal capitalize ml-2">| Board de Produção</span></h1>
+    <!-- Header Principal -->
+    <header class="glass-panel border-b border-brand-border h-16 flex items-center justify-between px-4 md:px-6 shrink-0 z-30 relative">
+        <div class="flex items-center gap-2 md:gap-3">
+            <div class="w-1.5 md:w-2 h-5 md:h-6 bg-brand-orange skew-x-12 shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
+            <h1 class="text-base md:text-xl font-display font-black tracking-widest text-white uppercase">SCALE <span class="text-brand-orange">X</span></h1>
         </div>
-        <div class="flex items-center gap-4">
-            <button onclick="openModal()" class="bg-brand-orange hover:bg-orange-600 text-black font-bold px-4 py-2 rounded-lg text-sm transition-all shadow-[0_0_15px_rgba(249,115,22,0.3)] flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Nova Ideia
+
+        <!-- Controles do Mês e Botões -->
+        <div class="flex items-center gap-2 md:gap-6">
+            <!-- Mês Selector -->
+            <div class="flex items-center gap-1 md:gap-2 bg-black border border-brand-border rounded-lg p-1">
+                <button onclick="prevMonth()" class="w-6 md:w-8 h-6 md:h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"><i class="fa-solid fa-chevron-left text-xs md:text-sm"></i></button>
+                <span id="current-month-year" class="font-display font-bold text-[10px] md:text-sm w-20 md:w-36 text-center uppercase tracking-widest text-white truncate">MAI 2026</span>
+                <button onclick="nextMonth()" class="w-6 md:w-8 h-6 md:h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"><i class="fa-solid fa-chevron-right text-xs md:text-sm"></i></button>
+            </div>
+            
+            <!-- Botão Gaveta -->
+            <button onclick="toggleSidebar()" id="toggle-sidebar-btn" class="bg-black border border-brand-border hover:bg-gray-800 text-gray-400 hover:text-white px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-sm transition-all flex items-center gap-2" title="Esconder/Mostrar Gaveta">
+                <i class="fa-solid fa-inbox text-brand-orange"></i> <span class="hidden md:inline text-xs">Gaveta</span>
+            </button>
+            
+            <!-- Botão Novo Post -->
+            <button onclick="openModal()" class="bg-brand-orange hover:bg-orange-600 text-black font-bold px-2 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm transition-all shadow-[0_0_15px_rgba(249,115,22,0.3)] flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Novo</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <main class="flex-1 overflow-x-auto overflow-y-hidden bg-[#0A0A0A] p-6 relative flex gap-6">
-        <div class="absolute inset-0 z-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#F97316 1px, transparent 1px); background-size: 40px 40px;"></div>
-        
-        <!-- Coluna: Ideia -->
-        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
-            <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-gray-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
-                    💡 Ideias <span class="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-xs" id="count-ideia">0</span>
-                </h2>
-            </div>
-            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-ideia">
-                <!-- Cards aqui -->
-            </div>
-        </div>
+    <main class="flex-1 flex overflow-hidden relative">
+        <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#F97316 1px, transparent 1px); background-size: 40px 40px;"></div>
 
-        <!-- Coluna: Em Produção -->
-        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
-            <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-blue-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
-                    ✍️ Em Produção <span class="bg-blue-900/50 text-blue-400 px-2 py-0.5 rounded text-xs" id="count-producao">0</span>
-                </h2>
-            </div>
-            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-producao">
-                <!-- Cards aqui -->
-            </div>
-        </div>
+        <!-- Overlay de Fundo para Mobile -->
+        <div id="mobile-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onclick="toggleSidebar()"></div>
 
-        <!-- Coluna: Agendado -->
-        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
-            <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-yellow-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
-                    📅 Agendado <span class="bg-yellow-900/50 text-yellow-400 px-2 py-0.5 rounded text-xs" id="count-agendado">0</span>
-                </h2>
+        <!-- Sidebar: Backlog (Ideias sem data) -->
+        <!-- No desktop: lado a lado. No mobile: absolute por cima de tudo -->
+        <aside id="sidebar-backlog" class="hidden absolute md:relative z-50 h-full w-64 md:w-72 bg-[#050505] md:bg-transparent glass-panel md:border-r border-r-brand-border flex-col shrink-0 shadow-2xl md:shadow-none transition-transform">
+            <div class="p-4 border-b border-brand-border flex justify-between items-center">
+                <div>
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-inbox text-brand-orange"></i> Gaveta de Ideias
+                    </h2>
+                    <p class="text-[9px] text-gray-500 mt-1 hidden md:block">Arraste para o calendário.</p>
+                </div>
+                <!-- Botão fechar só no mobile -->
+                <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-agendado">
-                <!-- Cards aqui -->
+            
+            <div class="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3" id="backlog-container">
+                <!-- Posts sem data entram aqui -->
             </div>
-        </div>
+        </aside>
 
-        <!-- Coluna: Postado -->
-        <div class="w-80 flex flex-col h-full shrink-0 relative z-10">
-            <div class="mb-3 flex items-center justify-between">
-                <h2 class="text-green-400 font-bold uppercase text-sm tracking-widest flex items-center gap-2">
-                    ✅ Postado <span class="bg-green-900/50 text-green-400 px-2 py-0.5 rounded text-xs" id="count-postado">0</span>
-                </h2>
-            </div>
-            <div class="bg-brand-panel/50 border border-brand-border rounded-xl p-3 flex-1 overflow-y-auto kanban-col" id="col-postado">
-                <!-- Cards aqui -->
+        <!-- Calendário Area -->
+        <div class="flex-1 flex flex-col z-10 overflow-hidden bg-[#0A0A0A]">
+            
+            <!-- Área com Scroll Horizontal e Vertical para o Grid -->
+            <div class="flex-1 overflow-auto p-2 md:p-4 relative">
+                <!-- Header dos Dias da Semana -->
+                <div class="grid grid-cols-7 gap-1 border-b border-brand-border shrink-0 bg-brand-panel sticky top-0 z-20 min-w-[840px] md:min-w-0 rounded-t-xl">
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Dom</div>
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Seg</div>
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Ter</div>
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Qua</div>
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Qui</div>
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Sex</div>
+                    <div class="py-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Sáb</div>
+                </div>
+
+                <!-- Grid do Calendário (Mínimo de 840px força o scroll no mobile) -->
+                <div id="calendar-grid" class="calendar-grid min-w-[840px] md:min-w-0 rounded-b-xl overflow-hidden shadow-2xl pb-10">
+                    <!-- Dias gerados via JS -->
+                </div>
             </div>
         </div>
     </main>
 
     <!-- Modal Adicionar / Editar -->
-    <div id="post-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
-        <div class="bg-brand-panel border border-brand-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transform scale-95 transition-transform duration-300" id="modal-content">
+    <div id="post-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 opacity-0 transition-opacity duration-300">
+        <div class="bg-brand-panel border border-brand-border w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] md:max-h-[95vh] transform scale-95 transition-transform duration-300" id="modal-content">
             
-            <div class="flex justify-between items-center p-5 border-b border-brand-border bg-[#0d0d0d]">
-                <h2 id="modal-heading" class="text-lg font-display font-bold text-white">Nova Ideia</h2>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-white transition-colors">
-                    <i class="fa-solid fa-xmark text-xl"></i>
+            <div class="flex justify-between items-center p-4 border-b border-brand-border bg-[#0d0d0d]">
+                <h2 id="modal-heading" class="text-base md:text-lg font-display font-bold text-white">Agendar Postagem</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white transition-colors p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
-            <div class="p-6 overflow-y-auto flex-1 space-y-4">
+            <div class="p-4 md:p-6 overflow-y-auto flex-1 space-y-4">
                 <input type="hidden" id="post-id">
                 
-                <!-- Título -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título do Post</label>
-                    <input type="text" id="post-title" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange" placeholder="Ex: O Custo do Churn">
+                <!-- Data e Hora -->
+                <div class="grid grid-cols-2 gap-3 pb-4 border-b border-brand-border/50">
+                    <div>
+                        <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Data</label>
+                        <input type="date" id="post-date" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange [color-scheme:dark]">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Hora</label>
+                        <input type="time" id="post-time" value="18:00" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange [color-scheme:dark]">
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Título -->
+                <div>
+                    <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Título do Post</label>
+                    <input type="text" id="post-title" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange" placeholder="Ex: O Custo do Churn">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
                     <!-- Autor -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Autor / Voz</label>
-                        <select id="post-author" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange">
-                            <option value="Luan">Luan (Marketing/Performance)</option>
-                            <option value="Hebert">Hebert (Estratégia/Finanças)</option>
-                            <option value="Raniele">Raniele (Orgânico/Autoridade)</option>
-                            <option value="Scale X">Scale X (Institucional)</option>
+                        <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Autor / Voz</label>
+                        <select id="post-author" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange cursor-pointer">
+                            <option value="Luan">Luan</option>
+                            <option value="Hebert">Hebert</option>
+                            <option value="Raniele">Raniele</option>
+                            <option value="Scale X">Scale X</option>
                         </select>
                     </div>
                     <!-- Formato -->
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Formato</label>
-                        <select id="post-format" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange">
+                        <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Formato</label>
+                        <select id="post-format" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange cursor-pointer">
                             <option value="Reels">Reels / Vídeo</option>
                             <option value="Carrossel">Carrossel</option>
-                            <option value="Estático">Post Estático</option>
+                            <option value="Estático">Estático</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Objetivo -->
+                <!-- Status -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Objetivo da Postagem</label>
-                    <input type="text" id="post-objective" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange" placeholder="O que o cliente deve sentir/fazer?">
+                    <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
+                    <select id="post-status" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange cursor-pointer">
+                        <option value="ideia">💡 Ideia / Briefing</option>
+                        <option value="producao">✍️ Em Produção</option>
+                        <option value="agendado">📅 Agendado</option>
+                        <option value="postado">✅ Postado</option>
+                    </select>
                 </div>
 
                 <!-- Script / Briefing -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Roteiro / Legenda</label>
-                    <textarea id="post-script" rows="6" class="w-full bg-black border border-brand-border text-white text-sm rounded-lg px-4 py-2 outline-none focus:border-brand-orange resize-none" placeholder="Escreva o gancho, desenvolvimento e CTA aqui..."></textarea>
+                    <label class="block text-[10px] md:text-xs font-bold text-gray-500 uppercase mb-1">Roteiro Estratégico</label>
+                    <textarea id="post-script" rows="4" class="w-full bg-black border border-brand-border text-white text-xs md:text-sm rounded-lg px-3 py-2 outline-none focus:border-brand-orange resize-none leading-relaxed" placeholder="Gancho, desenvolvimento e CTA..."></textarea>
                 </div>
             </div>
 
-            <div class="p-5 border-t border-brand-border bg-[#0d0d0d] flex justify-between items-center">
-                <button onclick="deletePost()" id="btn-delete" class="text-red-500 hover:text-red-400 text-sm font-bold hidden">
-                    <i class="fa-solid fa-trash"></i> Excluir
+            <div class="p-4 border-t border-brand-border bg-[#0d0d0d] flex justify-between items-center">
+                <button onclick="deletePost()" id="btn-delete" class="text-red-500 hover:text-red-400 text-xs md:text-sm font-bold hidden transition-colors flex items-center gap-2 p-2">
+                    <i class="fa-solid fa-trash"></i> <span class="hidden xs:inline">Excluir</span>
                 </button>
-                <button onclick="savePost()" class="bg-brand-orange hover:bg-orange-600 text-black font-bold uppercase tracking-widest text-xs px-6 py-3 rounded-lg shadow-lg ml-auto transition-transform hover:scale-105">
-                    Salvar Card
+                <button onclick="savePost()" class="bg-brand-orange hover:bg-orange-600 text-black font-bold uppercase tracking-widest text-[10px] md:text-xs px-4 md:px-6 py-2 md:py-3 rounded-lg shadow-[0_0_15px_rgba(249,115,22,0.3)] ml-auto transition-transform hover:scale-105">
+                    Salvar
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- DB & Lógica Principal -->
     <script>
-        let editorialPlan = [
-            { id: 'p1', author: 'Luan', format: 'Reels', title: 'A armadilha do "Lead Barato"', objective: 'Focar em Vendas, não em CPL', script: '**Gancho:** Seu marketing comemora o lead a 2 reais, mas o comercial não bate meta?\n\n**Desenvolvimento:** Luan explica que lead barato geralmente é curioso. No marketing de performance, o foco não é o custo do clique, é o custo do contrato assinado. O vendedor perde tempo com curioso e a empresa queima dinheiro.\n\n**CTA:** Pare de olhar pro CPC e olhe pro seu funil de vendas.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p2', author: 'Hebert', format: 'Carrossel', title: 'A conta que quebra empresas', objective: 'Introduzir o Unit Economics', script: '**Slide 1:** A matemática silenciosa que quebra empresas na internet.\n**Slide 2:** O erro: Escalar o Meta Ads sem saber seu CAC máximo (Custo de Aquisição).\n**Slide 3:** A solução: Unit Economics. Você precisa saber o limite de gasto por cliente.\n**Slide 4:** LTV (Lifetime Value). Seu cliente compra uma vez ou fica 1 ano? O seu modelo de negócios dita seu marketing.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p3', author: 'Raniele', format: 'Reels', title: 'Por que seu Instagram não vende?', objective: 'Desmistificar o Orgânico B2B', script: '**Gancho:** Você posta todos os dias, mas seu Instagram parece uma vitrine morta?\n\n**Desenvolvimento:** Raniele explica que empresa não precisa viralizar com dancinha. Orgânico B2B serve para construir um "ecossistema de confiança". Conteúdo profundo, que educa o lead, mata dúvidas técnicas e prova que você é especialista.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p4', author: 'Scale X', format: 'Estático', title: 'A Máquina e o Gargalo', objective: 'Reforçar o método e a Teoria das Restrições', script: '**Imagem:** Ilustração de engrenagens / Máquina.\n\n**Legenda:** Toda empresa é uma máquina. E se você colocar mais combustível (tráfego pago) enquanto o cano está furado (retenção ou comercial fraco), o motor explode. A Scale X não acelera antes de consertar a sua engrenagem.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p5', author: 'Luan', format: 'Carrossel', title: 'Engenharia > Criatividade', objective: 'Mostrar que performance é processo', script: '**Slide 1:** O marketing "fofinho" não paga a folha de pagamento.\n**Slide 2:** Agência comum: Foca em Layout bonito e posts de bom dia.\n**Slide 3:** Engenharia de Vendas (Nós): Funil mapeado, script alinhado, traqueamento de eventos (Pixel) e remarketing dinâmico.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p6', author: 'Raniele', format: 'Reels', title: 'Orgânico como Quebra de Objeções', objective: 'Conectar Orgânico ao Tráfego Pago', script: '**Gancho:** Você acha que orgânico e tráfego pago não se misturam? Errado.\n\n**Desenvolvimento:** Raniele ensina que quando o lead clica no seu anúncio, a primeira coisa que ele faz é ir no seu perfil stalkear. Se o seu perfil tem conteúdo forte explicando o método e quebrando objeções comuns, o lead chega no seu comercial 50% mais pronto para comprar.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p7', author: 'Scale X', format: 'Carrossel', title: 'A Metodologia I.O.E.', objective: 'Apresentar a arquitetura da Scale X', script: '**Slide 1:** A anatomia do crescimento previsível da Scale X.\n**Slide 2:** [ I ] Intelligence: O Raio-X de 30 dias. Onde está o gargalo?\n**Slide 3:** [ O ] Operation: Arrumar a casa. Implementar CRM, LPs, Dados.\n**Slide 4:** [ E ] Escala: O pé no acelerador. Advisory de Growth.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p8', author: 'Hebert', format: 'Reels', title: 'O Custo Invisível do Churn', objective: 'Focar na Retenção Financeira', script: '**Gancho:** Você gasta rios de dinheiro comprando cliente novo, só para perder os antigos no mês seguinte.\n\n**Desenvolvimento:** Hebert explica o conceito financeiro do balde furado. Na lógica de consultoria de negócios, não adianta tracionar vendas se o "Churn" (taxa de cancelamento) é alto. O verdadeiro lucro mora no LTV e no Upsell.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p9', author: 'Luan', format: 'Reels', title: 'O Fim do Mkt de Esperança', objective: 'Atacar o mercado de achismos', script: '**Gancho:** "Impulsionei um post aqui, vamos cruzar os dedos pra vender". Se você age assim, sua empresa corre risco.\n\n**Desenvolvimento:** Luan ataca o modelo de intuição. Explica que crescimento real é um loop de dados: Teste -> Análise de CAC -> Otimização -> Escala. Se não é rastreável, não é growth.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p10', author: 'Hebert', format: 'Carrossel', title: 'O custo de não ter processos', objective: 'A dor da desorganização comercial', script: '**Slide 1:** Quanto custa a desorganização do seu time comercial hoje?\n**Slide 2:** O marketing traz o lead, mas o vendedor demora 2 horas para chamar = Dinheiro rasgado.\n**Slide 3:** O lead não compra hoje e ninguém faz follow-up amanhã = Dinheiro rasgado.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p11', author: 'Scale X', format: 'Reels', title: 'Bastidores: A Reunião do Board', objective: 'Prova Social (Skin in the game)', script: '**Formato:** Vídeo estilo vlog corporativo.\n\n**Cena:** O Board da Scale X discutindo a operação de um cliente. Luan falando sobre CAC e CPC, Hebert cruzando isso com a estrutura do funil no CRM, Raniele propondo uma linha editorial para reduzir atrito.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p12', author: 'Raniele', format: 'Estático', title: 'Autoridade não se compra', objective: 'Focar na base orgânica de longo prazo', script: '**Imagem Limpa e Direta:** "Tráfego pago compra atenção. Conteúdo orgânico compra confiança."\n\n**Legenda:** Raniele explica que injetar dinheiro no Meta Ads vai atrair olhos para a sua empresa, mas se a pessoa entrar na sua "casa" (seu Instagram/Site) e não vir profundidade, ela vai comprar do seu concorrente.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p13', author: 'Luan', format: 'Carrossel', title: 'Qual dessas 4 travas é a sua?', objective: 'Diagnóstico rápido para o leitor', script: '**Slide 1:** Onde a sua máquina de receita engasgou?\n**Slide 2:** 1. Cegueira de Dados? (Não sabe de onde o cliente vem).\n**Slide 3:** 2. Tráfego desqualificado? (Muito curioso, pouco decisor).\n**Slide 4:** 3. Script falho? (Lead bom chega, mas o time não fecha).\n**Slide 5:** 4. Churn alto? (Vende muito e cancela muito).', status: 'ideia', day: 'Sem Data' },
-            { id: 'p14', author: 'Hebert', format: 'Reels', title: 'Faça a conta: Calculadora ROI', objective: 'Prova Lógica Financeira', script: '**Gancho:** Você sabe me dizer exatamente quanto lucra a cada 100 reais investidos em marketing?\n\n**Desenvolvimento:** Hebert apresenta a lógica do Simulador de ROI. Explica que o papel do CEO não é aprovar layout, é olhar para o painel de Unit Economics e entender se a máquina está imprimindo ou rasgando dinheiro.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p15', author: 'Scale X', format: 'Reels', title: 'Por que recusamos clientes', objective: 'Gerar Escassez e Autoridade', script: '**Locução Oficial:** Todo mês nós recusamos projetos na Scale X.\n\n**Desenvolvimento:** Se a empresa chega querendo "pular etapas" e recusa fazer o Diagnóstico inicial (Blueprint), nós não assumimos a conta. Entrar operando tráfego sem entender os processos comerciais da empresa é receita pro fracasso.', status: 'ideia', day: 'Sem Data' },
-            { id: 'p16', author: 'Scale X', format: 'Estático', title: 'Sua empresa qualifica para o I.O.E?', objective: 'Chamada Final (Blueprint)', script: '**Imagem:** Layout premium convidando para a Sessão Estratégica.\n\n**Legenda:** Buscamos empresas que entendem que o marketing precisa ser gerido por dados financeiros e engenharia de vendas. Abrimos aplicações para a Fase 1 da nossa metodologia (Blueprint Estratégico).', status: 'ideia', day: 'Sem Data' }
-        ];
-
-        // Cores dos Autores
         const authorConfig = {
-            'Luan': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
-            'Hebert': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-            'Raniele': { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
-            'Scale X': { bg: 'bg-brand-orange/20', text: 'text-brand-orange', border: 'border-brand-orange/30' }
+            'Luan': { border: 'border-l-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400' },
+            'Hebert': { border: 'border-l-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+            'Raniele': { border: 'border-l-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' },
+            'Scale X': { border: 'border-l-brand-orange', bg: 'bg-brand-orange/10', text: 'text-brand-orange' }
         };
 
         const formatIcons = {
-            'Reels': '<i class="fa-brands fa-instagram text-pink-500"></i>',
-            'Carrossel': '<i class="fa-solid fa-layer-group text-blue-400"></i>',
-            'Estático': '<i class="fa-regular fa-image text-gray-400"></i>'
+            'Reels': '<i class="fa-brands fa-instagram"></i>',
+            'Carrossel': '<i class="fa-solid fa-layer-group"></i>',
+            'Estático': '<i class="fa-regular fa-image"></i>'
         };
 
-        // Inicialização
+        let currentDate = new Date(2026, 4, 1); // Maio 2026
+        let editorialPlan = [];
+        let sortables = [];
+
+        // Posts iniciais (AS 16 IDEIAS COMPLETAS VOLTARAM AQUI)
+        const initialPlan = [
+            // SEMANA 1: CONSCIENTIZAÇÃO
+            { id: 'p1', author: 'Luan', format: 'Reels', title: 'A armadilha do Lead Barato', script: 'Gancho: Seu marketing comemora o lead a 2 reais, mas o comercial não bate meta?\n\nDesenvolvimento: Luan explica que lead barato geralmente é curioso. No marketing de performance, o foco não é o custo do clique, é o custo do contrato assinado. O vendedor perde tempo com curioso e a empresa queima dinheiro.\n\nCTA: Pare de olhar pro CPC e olhe pro seu funil de vendas.', status: 'ideia', date: '2026-05-04', time: '12:00' },
+            { id: 'p2', author: 'Hebert', format: 'Carrossel', title: 'A conta que quebra empresas', script: 'Slide 1: A matemática silenciosa que quebra empresas na internet.\nSlide 2: O erro: Escalar o Meta Ads sem saber seu CAC máximo (Custo de Aquisição).\nSlide 3: A solução: Unit Economics. Você precisa saber o limite de gasto por cliente.\nSlide 4: LTV (Lifetime Value). Seu cliente compra uma vez ou fica 1 ano? O seu modelo de negócios dita seu marketing.\nSlide 5: Entenda como diagnosticamos isso na Scale X.', status: 'ideia', date: '2026-05-06', time: '18:00' },
+            { id: 'p3', author: 'Raniele', format: 'Reels', title: 'Por que seu Instagram não vende?', script: 'Gancho: Você posta todos os dias, mas seu Instagram parece uma vitrine morta?\n\nDesenvolvimento: Raniele explica que empresa não precisa viralizar com dancinha. Orgânico B2B serve para construir um "ecossistema de confiança". Conteúdo profundo, que educa o lead, mata dúvidas técnicas e prova que você é especialista.\n\nCTA: Orgânico é o seu melhor vendedor trabalhando 24h por dia. Comece a educar seu mercado.', status: 'ideia', date: '2026-05-07', time: '19:00' },
+            { id: 'p4', author: 'Scale X', format: 'Estático', title: 'A Máquina e o Gargalo', script: 'Imagem: Ilustração de engrenagens / Máquina.\n\nLegenda: Toda empresa é uma máquina. E se você colocar mais combustível (tráfego pago) enquanto o cano está furado (retenção ou comercial fraco), o motor explode. A Scale X não acelera antes de consertar a sua engrenagem. É por isso que exigimos o Blueprint Estratégico.', status: 'ideia', date: '2026-05-08', time: '15:00' },
+            
+            // SEMANA 2: MÉTODOS
+            { id: 'p5', author: 'Luan', format: 'Carrossel', title: 'Engenharia > Criatividade', script: 'Slide 1: O marketing "fofinho" não paga a folha de pagamento.\nSlide 2: Agência comum: Foca em Layout bonito e posts de bom dia.\nSlide 3: Engenharia de Vendas (Nós): Funil mapeado, script alinhado, traqueamento de eventos (Pixel) e remarketing dinâmico.\nSlide 4: Seu time comercial não quer likes. Quer oportunidades prontas.\nSlide 5: Se o seu marketing não é intencional, ele é inútil.', status: 'ideia', date: '2026-05-11', time: '18:00' },
+            { id: 'p6', author: 'Raniele', format: 'Reels', title: 'Orgânico quebra Objeções', script: 'Gancho: Você acha que orgânico e tráfego pago não se misturam? Errado.\n\nDesenvolvimento: Raniele ensina que quando o lead clica no seu anúncio, a primeira coisa que ele faz é ir no seu perfil stalkear. Se o seu perfil tem conteúdo forte explicando o método e quebrando objeções comuns, o lead chega no seu comercial 50% mais pronto para comprar.\n\nCTA: O orgânico abaixa o CAC do seu tráfego pago. Construa sua base.', status: 'ideia', date: '2026-05-13', time: '18:00' },
+            { id: 'p7', author: 'Scale X', format: 'Carrossel', title: 'A Metodologia I.O.E.', script: 'Slide 1: A anatomia do crescimento previsível da Scale X.\nSlide 2: [ I ] Intelligence: O Raio-X de 30 dias. Onde está o gargalo?\nSlide 3: [ O ] Operation: Arrumar a casa. Implementar CRM, LPs, Dados.\nSlide 4: [ E ] Escala: O pé no acelerador. Advisory de Growth.\nSlide 5: Profissionais seniores não pulam etapas.', status: 'ideia', date: '2026-05-14', time: '12:00' },
+            { id: 'p8', author: 'Hebert', format: 'Reels', title: 'O Custo Invisível do Churn', script: 'Gancho: Você gasta rios de dinheiro comprando cliente novo, só para perder os antigos no mês seguinte.\n\nDesenvolvimento: Hebert explica o conceito financeiro do balde furado. Na lógica de consultoria de negócios, não adianta tracionar vendas se o "Churn" (taxa de cancelamento) é alto. O verdadeiro lucro mora no LTV e no Upsell.\n\nCTA: Marketing não termina quando o contrato é assinado. Ele começa ali.', status: 'ideia', date: '2026-05-15', time: '18:00' },
+
+            // SEMANA 3: AUTORIDADE
+            { id: 'p9', author: 'Luan', format: 'Reels', title: 'O Fim do Mkt de Esperança', script: 'Gancho: "Impulsionei um post aqui, vamos cruzar os dedos pra vender". Se você age assim, sua empresa corre risco.\n\nDesenvolvimento: Luan ataca o modelo de intuição. Explica que crescimento real é um loop de dados: Teste -> Análise de CAC -> Otimização -> Escala. Se não é rastreável, não é growth.\n\nCTA: Quer previsibilidade? Pare de apostar e comece a metrificar.', status: 'ideia', date: '2026-05-18', time: '18:00' },
+            { id: 'p10', author: 'Hebert', format: 'Carrossel', title: 'O custo de não ter processos', script: 'Slide 1: Quanto custa a desorganização do seu time comercial hoje?\nSlide 2: O marketing traz o lead, mas o vendedor demora 2 horas para chamar = Dinheiro rasgado.\nSlide 3: O lead não compra hoje e ninguém faz follow-up amanhã = Dinheiro rasgado.\nSlide 4: Nossa Fase de Operation implementa a estrutura de CRM e SLA de atendimento para o marketing fazer sentido.\nSlide 5: Conheça a Scale X.', status: 'ideia', date: '2026-05-20', time: '12:00' },
+            { id: 'p11', author: 'Scale X', format: 'Reels', title: 'Bastidores: A Reunião', script: 'Formato: Vídeo estilo vlog corporativo.\n\nCena: O Board da Scale X discutindo a operação de um cliente. Luan falando sobre CAC e CPC, Hebert cruzando isso com a estrutura do funil no CRM, Raniele propondo uma linha editorial para reduzir atrito.\n\nLegenda: Não terceirize a inteligência da sua empresa para estagiários. Aqui nós instalamos cérebros na sua operação.', status: 'ideia', date: '2026-05-21', time: '19:00' },
+            { id: 'p12', author: 'Raniele', format: 'Estático', title: 'Autoridade não se compra', script: 'Imagem Limpa e Direta: "Tráfego pago compra atenção. Conteúdo orgânico compra confiança."\n\nLegenda: Raniele explica que injetar dinheiro no Meta Ads vai atrair olhos para a sua empresa, mas se a pessoa entrar na sua "casa" (seu Instagram/Site) e não vir profundidade, autoridade e conhecimento, ela vai comprar do seu concorrente. A construção orgânica é o pilar da conversão.', status: 'ideia', date: '2026-05-22', time: '18:00' },
+
+            // SEMANA 4: OFERTA (BLUEPRINT)
+            { id: 'p13', author: 'Luan', format: 'Carrossel', title: 'As 4 travas de Receita', script: 'Slide 1: Onde a sua máquina de receita engasgou?\nSlide 2: 1. Cegueira de Dados? (Não sabe de onde o cliente vem).\nSlide 3: 2. Tráfego desqualificado? (Muito curioso, pouco decisor).\nSlide 4: 3. Script falho? (Lead bom chega, mas o time não fecha).\nSlide 5: 4. Churn alto? (Vende muito e cancela muito).\nSlide 6: Identificar é o passo 1. Aplique para o nosso Blueprint.', status: 'ideia', date: '2026-05-25', time: '18:00' },
+            { id: 'p14', author: 'Hebert', format: 'Reels', title: 'Calculadora ROI', script: 'Gancho: Você sabe me dizer exatamente quanto lucra a cada 100 reais investidos em marketing?\n\nDesenvolvimento: Hebert apresenta a lógica do Simulador de ROI (mostrando a tela da Landing Page). Explica que o papel do CEO não é aprovar layout, é olhar para o painel de Unit Economics e entender se a máquina está imprimindo ou rasgando dinheiro.\n\nCTA: Acesse a nossa calculadora no link da bio e descubra seu potencial.', status: 'ideia', date: '2026-05-27', time: '18:00' },
+            { id: 'p15', author: 'Scale X', format: 'Reels', title: 'Por que recusamos clientes', script: 'Locução Oficial: Todo mês nós recusamos projetos na Scale X.\n\nDesenvolvimento: Se a empresa chega querendo "pular etapas" e recusa fazer o Diagnóstico inicial (Blueprint), nós não assumimos a conta. Entrar operando tráfego sem entender os processos comerciais da empresa é receita pro fracasso. Somos parceiros de negócio, não uma agência tarefeira.\n\nCTA: Buscamos clientes maduros.', status: 'ideia', date: '2026-05-28', time: '12:00' },
+            { id: 'p16', author: 'Scale X', format: 'Estático', title: 'Sua empresa qualifica?', script: 'Imagem: Layout premium convidando para a Sessão Estratégica.\n\nLegenda: Buscamos empresas que entendem que o marketing precisa ser gerido por dados financeiros e engenharia de vendas. Abrimos vagas limitadas para aplicar a Fase 1 da nossa metodologia (Blueprint Estratégico). Clique no link da bio, preencha o formulário e agende uma conversa com nosso Board.', status: 'ideia', date: '2026-05-29', time: '18:00' }
+        ];
+
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
-            renderKanban();
-            initSortable();
+            
+            // Garantir que a sidebar comece no estado certo no desktop
+            if(window.innerWidth >= 768) {
+                const sidebar = document.getElementById('sidebar-backlog');
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+            }
+            
+            renderCalendar();
         });
 
         function loadData() {
-            const savedData = localStorage.getItem('scalex_editorial_v4');
+            // Mudei a chave do localStorage para v3, assim forçamos o navegador a buscar as 16 ideias novas que acabei de reinserir, e não o cache da visualização antiga.
+            const savedData = localStorage.getItem('scalex_calendar_v3');
             if (savedData) {
-                const parsed = JSON.parse(savedData);
-                // Atualizar os status salvos no array principal
-                editorialPlan.forEach(post => {
-                    const savedPost = parsed.find(p => p.id === post.id);
-                    if (savedPost) {
-                        post.status = savedPost.status;
-                        post.title = savedPost.title;
-                        post.script = savedPost.script;
-                        post.objective = savedPost.objective;
-                    }
-                });
-                // Adicionar posts criados manualmente
-                parsed.forEach(savedPost => {
-                    if (!editorialPlan.find(p => p.id === savedPost.id)) {
-                        editorialPlan.push(savedPost);
-                    }
-                });
+                editorialPlan = JSON.parse(savedData);
+            } else {
+                editorialPlan = [...initialPlan];
+                saveData();
             }
         }
 
         function saveData() {
-            localStorage.setItem('scalex_editorial_v4', JSON.stringify(editorialPlan));
-            updateCounters();
+            localStorage.setItem('scalex_calendar_v3', JSON.stringify(editorialPlan));
         }
 
-        function updateCounters() {
-            document.getElementById('count-ideia').innerText = editorialPlan.filter(p => p.status === 'ideia').length;
-            document.getElementById('count-producao').innerText = editorialPlan.filter(p => p.status === 'producao').length;
-            document.getElementById('count-agendado').innerText = editorialPlan.filter(p => p.status === 'agendado').length;
-            document.getElementById('count-postado').innerText = editorialPlan.filter(p => p.status === 'postado').length;
+        function prevMonth() { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
+        function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
+
+        function getMonthName(monthIndex) {
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            return months[monthIndex];
         }
 
-        function renderKanban() {
-            const columns = ['ideia', 'producao', 'agendado', 'postado'];
+        function formatDate(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            document.getElementById('current-month-year').innerText = `${getMonthName(month)} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
             
-            columns.forEach(col => {
-                const el = document.getElementById(`col-${col}`);
-                el.innerHTML = ''; // Limpar coluna
-                
-                const posts = editorialPlan.filter(p => p.status === col);
-                
-                posts.forEach(post => {
-                    const style = authorConfig[post.author] || authorConfig['Scale X'];
-                    const icon = formatIcons[post.format] || '<i class="fa-solid fa-file"></i>';
-                    
-                    const card = document.createElement('div');
-                    card.className = 'glass-panel p-4 rounded-xl cursor-grab mb-3 hover:border-brand-orange/50 transition-colors border border-brand-border bg-black/40 group';
-                    card.dataset.id = post.id;
-                    
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${style.bg} ${style.text} ${style.border} border">${post.author}</span>
-                            <div class="flex gap-2">
-                                <button onclick="openModal('${post.id}')" class="text-gray-600 hover:text-white transition-colors opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                            </div>
-                        </div>
-                        <h3 class="text-white font-bold text-sm leading-snug mb-3 pr-2">${post.title}</h3>
-                        <div class="flex items-center justify-between mt-2 pt-3 border-t border-brand-border/50">
-                            <div class="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
-                                ${icon} <span>${post.format}</span>
-                            </div>
-                            ${post.week ? `<span class="text-[9px] text-gray-500 font-mono">Sem ${post.week}</span>` : ''}
-                        </div>
-                    `;
-                    el.appendChild(card);
-                });
-            });
-            updateCounters();
-        }
+            sortables.forEach(s => s.destroy());
+            sortables = [];
 
-        function initSortable() {
-            const columns = ['ideia', 'producao', 'agendado', 'postado'];
-            
-            columns.forEach(col => {
-                const el = document.getElementById(`col-${col}`);
-                new Sortable(el, {
-                    group: 'kanban', // set both lists to same group
-                    animation: 150,
-                    ghostClass: 'sortable-ghost',
-                    dragClass: 'sortable-drag',
-                    onEnd: function (evt) {
-                        const itemEl = evt.item;
-                        const newStatus = evt.to.id.replace('col-', '');
-                        const postId = itemEl.dataset.id;
-                        
-                        // Atualizar status no banco
-                        const postIndex = editorialPlan.findIndex(p => p.id === postId);
-                        if (postIndex !== -1) {
-                            editorialPlan[postIndex].status = newStatus;
-                            saveData();
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+
+            let dayCount = 1;
+            let nextMonthDayCount = 1;
+            const totalCells = (firstDay + daysInMonth > 35) ? 42 : 35;
+
+            // Opções do Sortable focadas em Touch
+            const sortableOptions = {
+                group: 'calendar',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                delay: 150, // Permite scrolling no mobile sem acionar o drag
+                delayOnTouchOnly: true, // Só aplica o delay no mobile
+                fallbackTolerance: 3,
+                onEnd: handleDragEnd
+            };
+
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day relative group cursor-pointer';
+
+                let cellDate = null;
+                let isCurrentMonthCell = false;
+
+                if (i < firstDay) {
+                    cell.classList.add('empty-day');
+                    cell.innerHTML = `<span class="text-[10px] font-bold opacity-30">${daysInPrevMonth - firstDay + i + 1}</span>`;
+                } else if (dayCount <= daysInMonth) {
+                    cellDate = formatDate(year, month, dayCount);
+                    isCurrentMonthCell = true;
+                    
+                    if (isCurrentMonth && dayCount === today.getDate()) {
+                        cell.classList.add('today');
+                        cell.innerHTML = `
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[10px] font-bold text-brand-orange bg-brand-orange/10 px-1.5 py-0.5 rounded">${dayCount}</span>
+                            </div>
+                        `;
+                    } else {
+                        cell.innerHTML = `
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[10px] font-bold text-gray-400 group-hover:text-white transition-colors">${dayCount}</span>
+                            </div>
+                        `;
+                    }
+
+                    const postContainer = document.createElement('div');
+                    postContainer.className = 'flex-1 flex flex-col gap-1 mt-1 min-h-[30px]';
+                    postContainer.dataset.date = cellDate;
+                    
+                    const dayPosts = editorialPlan.filter(p => p.date === cellDate);
+                    dayPosts.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+                    dayPosts.forEach(post => postContainer.appendChild(createPostCard(post)));
+
+                    cell.appendChild(postContainer);
+                    
+                    cell.addEventListener('click', (e) => {
+                        if(e.target === cell || e.target.classList.contains('flex-1')) {
+                            openModal(null, cellDate);
                         }
-                    },
-                });
-            });
+                    });
+                    dayCount++;
+                } else {
+                    cell.classList.add('empty-day');
+                    cell.innerHTML = `<span class="text-[10px] font-bold opacity-30">${nextMonthDayCount++}</span>`;
+                }
+
+                grid.appendChild(cell);
+
+                if (isCurrentMonthCell) {
+                    sortables.push(new Sortable(cell.querySelector('.flex-1'), sortableOptions));
+                }
+            }
+            renderBacklog(sortableOptions);
         }
 
-        // --- MODAL LÓGICA ---
-        function openModal(id = null) {
+        function renderBacklog(sortableOptions) {
+            const backlog = document.getElementById('backlog-container');
+            backlog.innerHTML = '';
+            
+            const backlogPosts = editorialPlan.filter(p => !p.date);
+            if (backlogPosts.length === 0) {
+                backlog.innerHTML = `<div class="text-center p-3 border border-dashed border-brand-border rounded-lg text-gray-600 text-[10px]">A gaveta está vazia.</div>`;
+            } else {
+                backlogPosts.forEach(post => backlog.appendChild(createPostCard(post, true)));
+            }
+
+            sortables.push(new Sortable(backlog, sortableOptions));
+        }
+
+        function createPostCard(post, isBacklog = false) {
+            const style = authorConfig[post.author] || authorConfig['Scale X'];
+            const icon = formatIcons[post.format] || '<i class="fa-solid fa-file"></i>';
+            
+            let statusDot = '';
+            if (post.status === 'postado') statusDot = '<div class="w-1.5 h-1.5 rounded-full bg-green-500 absolute top-1 right-1"></div>';
+            else if (post.status === 'producao') statusDot = '<div class="w-1.5 h-1.5 rounded-full bg-blue-500 absolute top-1 right-1"></div>';
+
+            const card = document.createElement('div');
+            card.className = `relative flex items-center gap-1.5 p-1.5 md:p-2 rounded border-l-2 ${style.border} ${style.bg} bg-opacity-40 border border-t-white/5 border-r-white/5 border-b-white/5 cursor-grab hover:brightness-125 transition-all shadow-sm`;
+            card.dataset.id = post.id;
+            card.onclick = (e) => { e.stopPropagation(); openModal(post.id); };
+
+            const timeStr = post.time ? `<span class="text-[8px] md:text-[9px] text-gray-400 font-mono ml-auto bg-black/50 px-1 rounded hidden xs:inline">${post.time}</span>` : '';
+
+            card.innerHTML = `
+                ${statusDot}
+                <div class="text-[9px] ${style.text} opacity-70 w-3 text-center shrink-0">${icon}</div>
+                <div class="truncate flex-1">
+                    <p class="text-[9px] md:text-[10px] font-bold text-gray-200 truncate leading-tight">${post.title}</p>
+                </div>
+                ${!isBacklog ? timeStr : ''}
+            `;
+            return card;
+        }
+
+        function handleDragEnd(evt) {
+            const itemEl = evt.item;
+            const postId = itemEl.dataset.id;
+            const newContainer = evt.to;
+            
+            const postIndex = editorialPlan.findIndex(p => p.id === postId);
+            if (postIndex === -1) return;
+
+            if (newContainer.id === 'backlog-container') {
+                editorialPlan[postIndex].date = '';
+            } else {
+                editorialPlan[postIndex].date = newContainer.dataset.date || '';
+            }
+            saveData();
+            renderCalendar();
+        }
+
+        // --- Gaveta (Sidebar) Logic ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar-backlog');
+            const overlay = document.getElementById('mobile-overlay');
+            const btnIcon = document.querySelector('#toggle-sidebar-btn i');
+            
+            if (sidebar.classList.contains('hidden')) {
+                // Show
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+                overlay.classList.add('active'); // show mobile dark bg
+                btnIcon.className = 'fa-solid fa-inbox text-brand-orange';
+            } else {
+                // Hide
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex');
+                overlay.classList.remove('active'); // hide mobile dark bg
+                btnIcon.className = 'fa-solid fa-inbox opacity-50';
+            }
+        }
+
+        // --- Modal Logic ---
+        function openModal(id = null, defaultDate = null, event = null) {
+            if (event) event.stopPropagation();
+
             const modal = document.getElementById('post-modal');
             const content = document.getElementById('modal-content');
             const btnDelete = document.getElementById('btn-delete');
             
             if (id) {
-                // Editar
                 const post = editorialPlan.find(p => p.id === id);
-                document.getElementById('modal-heading').innerText = 'Editar Post';
+                document.getElementById('modal-heading').innerText = 'Editar Postagem';
                 document.getElementById('post-id').value = post.id;
                 document.getElementById('post-title').value = post.title;
                 document.getElementById('post-author').value = post.author;
                 document.getElementById('post-format').value = post.format;
-                document.getElementById('post-objective').value = post.objective || '';
-                // Como o script antigo tem tags HTML (<br>), trocamos por quebra de linha normal para edição no textarea
-                let cleanScript = post.script ? post.script.replace(/<br\s*[\/]?>/gi, "\n") : '';
-                document.getElementById('post-script').value = cleanScript;
-                
+                document.getElementById('post-date').value = post.date || '';
+                document.getElementById('post-time').value = post.time || '18:00';
+                document.getElementById('post-status').value = post.status || 'ideia';
+                document.getElementById('post-script').value = post.script ? post.script.replace(/<br\s*[\/]?>/gi, "\n") : '';
                 btnDelete.classList.remove('hidden');
             } else {
-                // Novo
-                document.getElementById('modal-heading').innerText = 'Nova Ideia';
+                document.getElementById('modal-heading').innerText = 'Agendar Postagem';
                 document.getElementById('post-id').value = '';
                 document.getElementById('post-title').value = '';
                 document.getElementById('post-author').value = 'Luan';
                 document.getElementById('post-format').value = 'Reels';
-                document.getElementById('post-objective').value = '';
+                document.getElementById('post-date').value = defaultDate || '';
+                document.getElementById('post-time').value = '18:00';
+                document.getElementById('post-status').value = 'ideia';
                 document.getElementById('post-script').value = '';
-                
                 btnDelete.classList.add('hidden');
             }
 
@@ -382,71 +565,53 @@
         function closeModal() {
             const modal = document.getElementById('post-modal');
             const content = document.getElementById('modal-content');
-            
             modal.classList.add('opacity-0');
             content.classList.add('scale-95');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
         function savePost() {
             const id = document.getElementById('post-id').value;
             const title = document.getElementById('post-title').value;
             
-            if(!title.trim()) {
-                alert('O título é obrigatório.');
-                return;
-            }
-
-            let scriptText = document.getElementById('post-script').value;
-            // Opcional: Converter quebras de linha de volta para <br> para manter o layout da outra tela, mas se for só texto não tem problema.
-            scriptText = scriptText.replace(/\n/g, "<br>");
+            if(!title.trim()) { alert('O título é obrigatório.'); return; }
 
             const postData = {
                 title: title,
                 author: document.getElementById('post-author').value,
                 format: document.getElementById('post-format').value,
-                objective: document.getElementById('post-objective').value,
-                script: scriptText,
-                status: 'ideia', // Se for novo, vai para ideias. Se for edição, mantém o que estava
-                week: null, // Posts soltos não têm semana fixa obrigatória
-                day: 'Sem Data'
+                date: document.getElementById('post-date').value,
+                time: document.getElementById('post-time').value,
+                status: document.getElementById('post-status').value,
+                script: document.getElementById('post-script').value.replace(/\n/g, "<br>")
             };
 
             if (id) {
-                // Atualizar existente
                 const index = editorialPlan.findIndex(p => p.id === id);
-                if(index !== -1) {
-                    postData.status = editorialPlan[index].status; // manter a coluna
-                    postData.week = editorialPlan[index].week;
-                    postData.day = editorialPlan[index].day;
-                    editorialPlan[index] = { id: id, ...postData };
-                }
+                if(index !== -1) editorialPlan[index] = { id: id, ...postData };
             } else {
-                // Criar novo
                 postData.id = 'post-' + Date.now();
                 editorialPlan.push(postData);
             }
 
             saveData();
-            renderKanban();
+            renderCalendar();
             closeModal();
         }
 
         function deletePost() {
             const id = document.getElementById('post-id').value;
-            if(confirm('Tem certeza que deseja excluir esta ideia?')) {
+            if(confirm('Tem certeza?')) {
                 editorialPlan = editorialPlan.filter(p => p.id !== id);
                 saveData();
-                renderKanban();
+                renderCalendar();
                 closeModal();
             }
         }
     </script>
 </body>
 </html>
+
 
 
 ```
